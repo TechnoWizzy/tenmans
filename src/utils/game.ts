@@ -1,4 +1,4 @@
-import {ephemeralReply, getEnv, noReply} from "./utils.ts";
+import {ephemeralReply, getEnv, noReply, reply} from "./utils.ts";
 import {ActionRowBuilder, ButtonBuilder, type ButtonInteraction, ButtonStyle, ModalSubmitInteraction} from "discord.js";
 import Game, {Team} from "../models/game.ts";
 import Player from "../models/player.ts";
@@ -10,7 +10,6 @@ export async function handleGameAction(interaction: ButtonInteraction | ModalSub
 
         case "set-url": {
             if (interaction.isModalSubmit()) {
-                await interaction.deferUpdate();
                 const url = interaction.fields.getTextInputValue("url")
                 const segments = url.split("/");
                 const matchId = segments[segments.length - 1];
@@ -20,50 +19,46 @@ export async function handleGameAction(interaction: ButtonInteraction | ModalSub
                     return;
                 }
 
-                let teamRed;
-                let teamBlue;
                 for (const segment of trackerMatch.data.segments) {
                     if (segment.type == "team-summary") {
                         const teamId = segment.attributes.teamId;
                         const score = segment.stats.roundsWon.value;
                         const hasWon = segment.metadata.hasWon;
                         if (teamId == "Red") {
-                            teamRed = new Team("Red", score, hasWon, [])
+                            game.teamRed = new Team("Red", score, hasWon, [])
                         } else {
-                            teamBlue = new Team("Blue", score, hasWon, [])
+                            game.teamBlue = new Team("Blue", score, hasWon, [])
                         }
                     }
                 }
 
-                if (!teamRed || !teamBlue) {
+                if (!game.teamRed.hasWon && !game.teamBlue.hasWon) {
                     await ephemeralReply(interaction, { content: `Failed to load teams, please contact <@${getEnv("OWNER_ID")}>` });
                     return;
                 }
 
-                const players = [];
                 for (const segment of trackerMatch.data.segments) {
                     if (segment.type == "player-summary") {
                         const username = segment.attributes.platformUserIdentifier;
-                        const player = await Player.fetchByUsername(username);
+                        const player = game.players.find(player => player.username == username);
 
                         if (player == null) {
                             await ephemeralReply(interaction, { content: `Unregistered player in match: ${username}` });
                             return;
                         }
 
-                        player.stats.acs = segment.stats.scorePerRound.value;
-                        players.push(player);
+                        player.stats.acs = Math.round(segment.stats.scorePerRound.value);
 
                         const teamId = segment.metadata.teamId;
                         if (teamId == "Red") {
-                            teamRed.players.push(player);
+                            game.teamRed.players.push(player);
                         } else {
-                            teamBlue.players.push(player);
+                            game.teamBlue.players.push(player);
                         }
                     }
                 }
 
-                if (players.length != 10) {
+                if (game.players.length != 10) {
                     await ephemeralReply(interaction, { content: `Failed to load all 10 players, please contact <@${getEnv("OWNER_ID")}>` });
                     return;
                 }
@@ -113,7 +108,6 @@ export async function handleGameAction(interaction: ButtonInteraction | ModalSub
 }
 
 export async function propagateGameChange(interaction: ButtonInteraction | ModalSubmitInteraction, game: Game) {
-    await noReply(interaction);
     const games = await game.fetchAllAfter();
     games.unshift(game);
 
@@ -124,8 +118,8 @@ export async function propagateGameChange(interaction: ButtonInteraction | Modal
         if (game.cancelled) {
             const embed = game.createEmbed();
             const components = game.createComponents();
-            await channel.send({ content: `Game ${game.id} has been cancelled.`, embeds: [ embed ] });
-            await modChannel.send({ content: `Game ${game.id} has been cancelled.`, embeds: [ embed ], components: [ components ] });
+            await channel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ] });
+            await modChannel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
             return;
         }
     }
@@ -197,11 +191,21 @@ export async function propagateGameChange(interaction: ButtonInteraction | Modal
             modifiedPlayers.set(player.id, modifiedPlayer);
         }
 
+        for (const player of modifiedPlayers.values()) {
+            await player.save();
+        }
+
         await game.save();
         const embed = game.createEmbed();
         const components = game.createComponents();
         const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!"
-        await channel.send({ content: `Game ${game.id} has been updated. ${winnerText}`, embeds: [ embed ] });
-        await modChannel.send({ content: `Game ${game.id} has been updated.`, embeds: [ embed ], components: [ components ] });
+        await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
+        await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+        await reply(interaction, { content: `${games.length} game ${games.length == 1 ? "update was" : "updates were"} applied successfully.` });
+        if (interaction.message?.deletable) {
+            try {
+                await interaction.message?.delete()
+            } catch (_) { }
+        }
     }
 }

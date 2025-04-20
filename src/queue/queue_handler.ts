@@ -1,4 +1,4 @@
-import {type ButtonInteraction, type Client, Colors, type User} from "discord.js";
+import {type ButtonInteraction, type ChatInputCommandInteraction, type Client, Colors, type User} from "discord.js";
 import Queue from "./queue.ts";
 import Settings from "../settings/settings.ts";
 
@@ -22,7 +22,7 @@ export default class QueueHandler {
             if (message.author.id != client.user?.id) {
                 return false
             }
-            return !message.embeds.at(0)?.title?.includes(QueueHandler.queue.name);
+            return message.embeds.at(0)?.title?.includes(Queue.name);
         });
 
         QueueHandler.queue = new Queue(channel, modChannel, lastMessage)
@@ -37,7 +37,7 @@ export default class QueueHandler {
         return this.queue.getModChannel();
     }
 
-    public static async join(user: User, interaction: ButtonInteraction) {
+    public static async join(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
         await QueueHandler.queue.join(user, interaction);
     }
 

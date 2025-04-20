@@ -1,4 +1,15 @@
-FROM ubuntu:latest
-LABEL authors="Kaden"
+FROM oven/bun:1.2.10-debian
 
-ENTRYPOINT ["top", "-b"]
+RUN apt-get update && apt-get install -y tini wget && apt-get clean
+
+WORKDIR /app
+
+COPY package.json bun.lockb .env ./
+RUN bun install --frozen-lockfile
+
+COPY *.ts ./
+COPY ./src ./src
+COPY tracker.json ./
+COPY settings.json ./
+
+ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./index.ts"]

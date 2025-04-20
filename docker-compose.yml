@@ -1,0 +1,35 @@
+volumes:
+  cache:
+    driver: local
+  database:
+    driver: local
+
+services:
+  mongo-tenmans:
+    image: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    ports:
+      - "27100:27017"
+    volumes:
+      - database:/var/lib/mongodb/data
+
+  tenmans:
+    container_name: tenmans
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - cache:/var/lib/cache
+    depends_on:
+      - mongo-tenmans
+
+networks:
+  default:
+    name: network
+    driver: bridge

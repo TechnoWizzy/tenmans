@@ -8,7 +8,7 @@ export default class Player {
     public constructor(id: string, username: string, stats: PlayerStats = new PlayerStats()) {
         this.id = id;
         this.username = username;
-        this.stats = stats;
+        this.stats = new PlayerStats(stats.games, stats.wins, stats.losses, stats.elo, stats.acs);
     }
 
     public async save() {
@@ -48,12 +48,17 @@ export default class Player {
         } else {
             const a = 25 * (150 / this.stats.acs) * (1 - (opponentElo - teamElo) / teamElo);
             const b = 1 - (opponentElo - this.stats.elo) / opponentElo;
-            return Math.round(-1 * a * b * c);
+            const loss = Math.round(-1 * a * b * c);
+            if (this.stats.elo + loss < 0) {
+                return -this.stats.elo;
+            } else {
+                return loss;
+            }
         }
     }
 
-    public getEmote() {
-        const elo = this.stats.elo;
+    public getEmote(delta: number = 0) {
+        const elo = this.stats.elo + delta;
         if (elo >= 1100) return Emote.Radiant
         if (elo >= 1000) return Emote.ImmortalIII;
         if (elo >= 900) return Emote.ImmortalII;

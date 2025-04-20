@@ -1,4 +1,4 @@
-name: Deploy API
+name: Deploy
 
 on:
   push:
@@ -16,12 +16,7 @@ jobs:
       # Load Environment Variables
       - name: Load Environment Variables
         run: |
-          cp /home/kaden/calenduh/.env .
-
-      # Compile SQL Queries
-      - name: Compile SQL Queries
-        run: |
-          make sqlc
+          cp /home/kaden/tenmans/.env
 
       # Login To Docker
       - name: Login to Docker
@@ -40,5 +35,5 @@ jobs:
       # Clean up Docker Resources
       - name: Clean up Docker resources
         run: |
-          docker system prune -af
-          docker builder prune -af
+          docker system prune -a
+          docker builder prune -a

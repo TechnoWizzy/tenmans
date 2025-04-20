@@ -2,6 +2,7 @@ import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder} from "disc
 import Command from "./command.ts";
 import {ephemeralReply} from "../utils/utils.ts";
 import Player from "../models/player.ts";
+import Tracker from "../utils/tracker.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("register")
@@ -18,6 +19,23 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         await ephemeralReply(interaction, { content: `You are already registered as **${player.username}** - Please contact an Admin to change your registration` });
         return;
     }
+
+    const username = interaction.options.getString("riot-id", true);
+    const user = await Tracker.fetchUser(username);
+
+    if (user == null) {
+        await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}** - This RiotId does not exist` });
+        return;
+    }
+
+    const existingPlayer = await Player.fetchByUsername(username);
+    if (existingPlayer != null) {
+        await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** - Please contact an Admin for further assistance` });
+        return;
+    }
+
+    await new Player(interaction.user.id, username).save();
+    await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
 }
 
 export default class RegisterCommand extends Command {

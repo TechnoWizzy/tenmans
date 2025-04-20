@@ -45,31 +45,13 @@ export default class Game {
             builder.setTitle(`Game ${this.id}`);
         }
 
-        if (this.teamRed && this.teamBlue) {
+        if (this.teamRed.hasWon || this.teamBlue.hasWon) {
             const teamRedText = this.teamRed.players
-                .map(player => {
-                    const acs = player.stats.acs;
-                    const teamElo = this.teamRed.getAverageElo();
-                    const opponentElo = this.teamBlue.getAverageElo();
-                    const opponentScore = this.teamBlue.score;
-                    const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, this.teamRed.hasWon);
-                    const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-                    const emote = `<:test:${player.getEmote()}>`;
-                    return `${emote}: **${player.username}** - ${player.stats.elo} ${eloDeltaString} elo - ${acs} acs`;
-                })
+                .map(player => this.formatPlayer(player, this.teamRed, this.teamBlue))
                 .join('\n');
 
             const teamBlueText = this.teamBlue.players
-                .map(player => {
-                    const acs = player.stats.acs;
-                    const teamElo = this.teamBlue.getAverageElo();
-                    const opponentElo = this.teamRed.getAverageElo();
-                    const opponentScore = this.teamRed.score;
-                    const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, this.teamBlue.hasWon);
-                    const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-                    const emote = `<:test:${player.getEmote()}>`;
-                    return `${emote}: **${player.username}** - ${player.stats.elo} ${eloDeltaString} elo - ${acs} acs`;
-                })
+                .map(player => this.formatPlayer(player, this.teamBlue, this.teamRed))
                 .join('\n');
 
             builder.setDescription(`Team Red: **${this.teamRed.score}**\n${teamRedText}\n\nTeam Blue: **${this.teamBlue.score}**\n${teamBlueText}`)
@@ -94,12 +76,21 @@ export default class Game {
         return builder;
     }
 
+    private formatPlayer(player: Player, team: Team, opponent: Team) {
+        const acs = player.stats.acs;
+        const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon);
+        const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
+        const emote = `<:test:${player.getEmote(eloDelta)}>`;
+        return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+    }
+
     public createComponents() {
         return new ActionRowBuilder<ButtonBuilder>().setComponents(
             new ButtonBuilder()
                 .setLabel("Set Match URL")
                 .setStyle(ButtonStyle.Primary)
-                .setCustomId(createCustomId("game", this.id, "set-url")),
+                .setCustomId(createCustomId("game", this.id, "set-url"))
+                .setDisabled(this.cancelled),
             new ButtonBuilder()
                 .setLabel("Cancel Game")
                 .setStyle(ButtonStyle.Danger)
@@ -109,20 +100,23 @@ export default class Game {
     }
 
     public createModal() {
-        return new ModalBuilder().setTitle(`Game ${this.id}`).setCustomId(createCustomId("game", this.id, "set-url")).setComponents(
-            new ActionRowBuilder<TextInputBuilder>().setComponents(
-                new TextInputBuilder()
-                    .setCustomId(createCustomId("url"))
-                    .setLabel("Match URL")
-                    .setStyle(TextInputStyle.Short)
+        return new ModalBuilder()
+            .setTitle(`Game ${this.id}`)
+            .setCustomId(createCustomId("game", this.id, "set-url"))
+            .setComponents(
+                new ActionRowBuilder<TextInputBuilder>().setComponents(
+                    new TextInputBuilder()
+                        .setCustomId(createCustomId("url"))
+                        .setLabel("Match URL")
+                        .setStyle(TextInputStyle.Short)
+                )
             )
-        )
     }
 
     public static async fetch(id: number) {
         const query = { id: id };
         const game = await Database.games.findOne(query);
-        if (!game) throw new Error(`Player Not Found: ${id}`);
+        if (!game) throw new Error(`Game Not Found: ${id}`);
         const players = game.players.map(player => new Player(player.id, player.username, player.stats));
         const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
         const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);

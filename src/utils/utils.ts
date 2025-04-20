@@ -4,15 +4,13 @@ import {
     type MessageMentionTypes,
     type Interaction,
     type InteractionEditReplyOptions,
-    type MessageCreateOptions
+    type MessageCreateOptions, type EmbedBuilder, type ActionRowBuilder, type ComponentBuilder, type AnyComponentBuilder
 } from "discord.js";
 
 export const BOT_OPTIONS = {
     intents: [
         GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent
+        GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent
     ],
     partials: [
         Partials.Message
@@ -28,9 +26,16 @@ export function getEnv(key: string) {
     return value;
 }
 
-export async function ephemeralReply(interaction: Interaction, options: InteractionEditReplyOptions) {
+type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[] }
+
+export async function ephemeralReply(interaction: Interaction, options: ReplyOptions) {
     if (interaction.isRepliable()) {
-        await interaction.editReply(options);
+        if (interaction.deferred) {
+            await interaction.editReply(options);
+        } else {
+            await interaction.reply({ ...options, flags: 'Ephemeral' });
+        }
+
     } else {
         throw new Error("Interaction is not repliable");
     }
@@ -48,7 +53,7 @@ export async function reply(interaction: Interaction, options: MessageCreateOpti
         } else {
             if (interaction.isChatInputCommand()) {
                 const content = `<@${interaction.user.id}> </${interaction.commandName}:${interaction.commandId}>\n` + (options.content ?? "");
-                await channel?.send({ ...options, content: content });
+                await channel?.send({ ...options, content: content + (options.content ?? "") });
             } else {
                 await channel?.send(options);
             }
@@ -58,7 +63,9 @@ export async function reply(interaction: Interaction, options: MessageCreateOpti
 
 export async function noReply(interaction: Interaction) {
     if (interaction.isRepliable()) {
-        await interaction.deleteReply();
+        if (interaction.replied) {
+            await interaction.deleteReply();
+        }
     } else {
         throw new Error("Interaction is not repliable");
     }

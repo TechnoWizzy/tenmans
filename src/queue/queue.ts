@@ -7,7 +7,7 @@ import {
     type Message,
     type SendableChannels,
     type User,
-    type ColorResolvable,
+    type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
 import {createCustomId, ephemeralReply} from "../utils/utils.ts";
 import Game from "../models/game.ts";
@@ -15,7 +15,7 @@ import Database from "../database/database.ts";
 import Player from "../models/player.ts";
 
 export default class Queue extends Map<string, [User, Timer]> {
-    public readonly name = "Val 10mans BETA"
+    public static readonly name = "Val 10mans BETA"
     public readonly maxSize = 10;
     public readonly timeout = 1000 * 60 * 30;
 
@@ -44,7 +44,7 @@ export default class Queue extends Map<string, [User, Timer]> {
         return this.modChannel;
     }
 
-    public async join(user: User, interaction: ButtonInteraction) {
+    public async join(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
         const player = await Player.fetch(user.id)
 
         if (!player) {
@@ -201,9 +201,9 @@ export default class Queue extends Map<string, [User, Timer]> {
             builder.setDescription(users.map((user, index) => `**${index + 1}.** ${user.username}`).join('\n'));
         }
         if (this.maxSize > 1) {
-            builder.setTitle(`${this.name}: ${title}`.concat(` [${users.length}/${this.maxSize}]`));
+            builder.setTitle(`${Queue.name}: ${title}`.concat(` [${users.length}/${this.maxSize}]`));
         } else {
-            builder.setTitle(`${this.name}: ${title}`);
+            builder.setTitle(`${Queue.name}: ${title}`);
         }
 
         builder.setColor(color);
