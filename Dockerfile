@@ -9,7 +9,5 @@ RUN bun install --frozen-lockfile
 
 COPY *.ts ./
 COPY ./src ./src
-COPY tracker.json ./
-COPY settings.json ./
 
 ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./index.ts"]
