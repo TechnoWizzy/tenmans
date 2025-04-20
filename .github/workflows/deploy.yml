@@ -16,7 +16,7 @@ jobs:
       # Load Environment Variables
       - name: Load Environment Variables
         run: |
-          cp /home/kaden/tenmans/.env
+          cp /home/kaden/tenmans/.env .
 
       # Login To Docker
       - name: Login to Docker
