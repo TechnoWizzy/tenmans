@@ -119,7 +119,12 @@ export default class Queue extends Map<string, [User, Timer]> {
 
             this.clear();
             await this.update(`A new queue has started`);
+        } else {
+            await this.update(`${user.username} has joined`, Colors.DarkGreen);
         }
+
+        if (interaction.isChatInputCommand()) return;
+        await ephemeralReply(interaction, { content: "You have joined the queue" });
     }
 
     public async leave(user: User, interaction: ButtonInteraction) {
