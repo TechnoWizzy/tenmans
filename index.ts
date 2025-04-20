@@ -124,4 +124,4 @@ class ErrorEmbed extends EmbedBuilder {
     }
 }
 
-console.log(`tenmans: ${process.pid}`);
+console.log(`Tenmans: ${process.pid}`);
