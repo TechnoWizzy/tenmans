@@ -27,6 +27,13 @@ export default class Player {
         return new Player(player.id, player.username, player.stats);
     }
 
+    public static async fetchOld(id: string) {
+        const query = { id: id };
+        const player = await Database.oldPlayers.findOne(query);
+        if (!player) return null;
+        return new Player(player.id, player.username, player.stats);
+    }
+
     public static async fetchByUsername(username: string) {
         const query = { username: username };
         const player = await Database.players.findOne(query);

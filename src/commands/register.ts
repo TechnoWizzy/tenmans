@@ -34,8 +34,14 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
-    await new Player(interaction.user.id, username).save();
-    await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
+    const oldPlayer = await Player.fetchOld(interaction.user.id);
+    await new Player(interaction.user.id, username, oldPlayer?.stats).save();
+
+    if (oldPlayer) {
+        await ephemeralReply(interaction, { content: `Successfully registered as **${username}** - Your elo has been set at ${oldPlayer.stats.elo}` });
+    } else {
+        await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
+    }
 }
 
 export default class RegisterCommand extends Command {
