@@ -26,7 +26,7 @@ export default class QueueHandler {
         });
 
         QueueHandler.queue = new Queue(channel, modChannel, lastMessage)
-        await QueueHandler.queue.update("The bot has been updated - A new queue has started", Colors.White)
+        await QueueHandler.queue.update("Update Applied - A new queue has started", Colors.White)
     }
 
     public static getChannel() {
