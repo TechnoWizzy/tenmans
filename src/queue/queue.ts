@@ -181,6 +181,7 @@ export default class Queue extends Map<string, [User, Timer]> {
                 const color = this.lastMessage?.embeds[0]?.color ?? Colors.Purple;
                 const match = title?.match(/^.*?: (.*?) \[\d+\/\d+]$/);
                 const message = match ? match[1] : "Unknown Previous Title";
+                await this.deleteLastMessage();
                 setTimeout(async () => {
                     await this.update(message, color);
                 }, 1000);
