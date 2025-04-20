@@ -3,6 +3,7 @@ import {ephemeralReply} from "../utils/utils.ts";
 import Command from "./command.ts";
 import Player from "../models/player.ts";
 import Tracker from "../utils/tracker.ts";
+import Game from "../models/game.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -60,7 +61,31 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 return;
             }
 
-            await new Player(player.id, username, player.stats).save();
+            const updatedPlayer = await new Player(player.id, username, player.stats).save();
+            const games = await Game.fetchByPlayerId(player.id);
+            for (const game of games) {
+                for (let i = 0; i < game.players.length; i++ ) {
+                    const gamePlayer = game.players[i];
+                    if (gamePlayer.id == player.id) {
+                        game.players[i] = new Player(gamePlayer.id, updatedPlayer.username, gamePlayer.stats);
+                    }
+                }
+                for (let i = 0; i < game.teamRed.players.length; i++ ) {
+                    const redPlayer = game.teamRed.players[i];
+                    if (redPlayer.id == player.id) {
+                        game.teamRed.players[i] = new Player(redPlayer.id, updatedPlayer.username, redPlayer.stats);
+                    }
+                }
+                for (let i = 0; i < game.teamBlue.players.length; i++ ) {
+                    const bluePlayer = game.teamBlue.players[i];
+                    if (bluePlayer.id == player.id) {
+                        game.teamBlue.players[i] = new Player(bluePlayer.id, updatedPlayer.username, bluePlayer.stats);
+                    }
+                }
+
+                await game.save();
+            }
+
             await ephemeralReply(interaction, { content: `Successfully re-registered as **${username}**` });
             break;
         }

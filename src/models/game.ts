@@ -11,7 +11,7 @@ import {
     TextInputStyle
 } from "discord.js";
 import {createCustomId} from "../utils/utils.ts";
-
+import type {WithId} from "mongodb";
 
 export default class Game {
     public readonly id: number;
@@ -125,23 +125,25 @@ export default class Game {
 
     public static async fetchAll() {
         const games = await Database.games.find().toArray();
-        return games.map(game => {
-            const players = game.players.map(player => new Player(player.id, player.username, player.stats));
-            const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
-            const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-            return new Game(game.id, players, teamRed, teamBlue, game.cancelled);
-        });
+        return games
+            .map(game => formatGame(game))
+            .sort((a, b) => a.id - b.id);
+    }
+
+    public static async fetchByPlayerId(id: string) {
+        const query = { players: { $elemMatch: { id: id } } };
+        const games = await Database.games.find(query).toArray();
+        return games
+            .map(game => formatGame(game))
+            .sort((a, b) => a.id - b.id);
     }
 
     public async fetchAllAfter() {
         const query = { id: { $gt: this.id } };
         const games = await Database.games.find(query).toArray();
-        return games.map(game => {
-            const players = game.players.map(player => new Player(player.id, player.username, player.stats));
-            const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
-            const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-            return new Game(game.id, players, teamRed, teamBlue, game.cancelled);
-        }).sort((a, b) => a.id - b.id);
+        return games
+            .map(game => formatGame(game))
+            .sort((a, b) => a.id - b.id);
     }
 }
 
@@ -163,4 +165,11 @@ export class Team {
             .map(player => player.stats.elo)
             .reduce((a, b) => a + b) / this.players.length;
     }
+}
+
+function formatGame(game: WithId<Game>) {
+    const players = game.players.map(player => new Player(player.id, player.username, player.stats));
+    const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
+    const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
+    return new Game(game.id, players, teamRed, teamBlue, game.cancelled);
 }
