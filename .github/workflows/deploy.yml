@@ -35,5 +35,5 @@ jobs:
       # Clean up Docker Resources
       - name: Clean up Docker resources
         run: |
-          docker system prune -a
-          docker builder prune -a
+          docker system prune
+          docker builder prune
