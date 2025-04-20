@@ -14,7 +14,7 @@ services:
     ports:
       - "27100:27017"
     volumes:
-      - database:/var/lib/mongodb/data
+      - database:/data/db
 
   tenmans:
     container_name: tenmans
