@@ -184,7 +184,7 @@ export default class Queue extends Map<string, [User, Timer]> {
                 const message = match ? match[1] : "Unknown Previous Title";
                 await this.deleteLastMessage();
                 setTimeout(async () => {
-                    await this.update(message, color, undefined, time);
+                    await this.update(message, color, false, time);
                 }, 1000);
             });
     }
