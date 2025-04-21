@@ -20,7 +20,9 @@ export default class CommandHandler {
                 command.builder.addStringOption((string) => string
                     .setName("command")
                     .setDescription("view specific command info")
-                    .setChoices(CommandHandler.commands.map(cmd => ({ name: cmd.name, value: cmd.name })))
+                    .setChoices(CommandHandler.commands
+                        .filter(cmd => cmd.name != "help")
+                        .map(cmd => ({ name: cmd.name, value: cmd.name })))
                     .setRequired(false)
                 );
             }

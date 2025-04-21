@@ -28,7 +28,7 @@ async function execute(interaction: ChatInputCommandInteraction, guild: Guild) {
 
 function parseCommands(commands: Collection<string,  ApplicationCommand>, filter: string) {
     return Array.from(commands.values())
-        .filter(command => command.name.includes(filter))
+        .filter(command => command.name.includes(filter) && command.name != "help")
         .sort((a, b) => {
             if (a.name > b.name) return  1;
             if (a.name < b.name) return -1;
