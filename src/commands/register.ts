@@ -20,17 +20,17 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
+
     const username = interaction.options.getString("riot-id", true);
-    const user = await Tracker.fetchUser(username);
-
-    if (user == null) {
-        await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}** - This RiotId does not exist` });
-        return;
-    }
-
     const existingPlayer = await Player.fetchByUsername(username);
     if (existingPlayer != null) {
         await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** - Please contact an Admin for further assistance` });
+        return;
+    }
+
+    const user = await Tracker.fetchUser(username);
+    if (user == null) {
+        await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}** - This RiotId does not exist` });
         return;
     }
 
