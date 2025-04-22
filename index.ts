@@ -10,8 +10,6 @@ import QueueHandler from "./src/queue/queue_handler.ts";
 import Settings from "./src/settings/settings.ts";
 import Game from "./src/models/game.ts";
 
-console.log(getEnv("TRN_HOST"))
-
 Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
     client.on(Events.ClientReady, ready);
