@@ -31,5 +31,4 @@ services:
 
 networks:
   default:
-    name: network
     driver: bridge

@@ -9,11 +9,19 @@ export default class Database {
     public static oldPlayers: Collection<Player>;
 
     public static async connect() {
-        const connectionString = getEnv("MONGO_CONNECTION_STRING");
+        const connectionString = buildConnectionString();
         const client = await new MongoClient(connectionString).connect();
         const db = client.db("pugg");
         Database.games = db.collection<Game>("games-2025");
         Database.players = db.collection<Player>("players-2025");
         Database.oldPlayers = db.collection<Player>("old-players");
     }
+}
+
+function buildConnectionString() {
+    const username = getEnv("MONGO_USERNAME");
+    const password = getEnv("MONGO_PASSWORD");
+    const host = getEnv("MONGO_HOST");
+    const port = getEnv("MONGO_PORT");
+    return `mongodb://${username}:${password}@${host}:${port}`;
 }

@@ -8,15 +8,11 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    environment: production
     steps:
       # Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      # Load Environment Variables
-      - name: Load Environment Variables
-        run: |
-          cp /home/kaden/tenmans/.env .
 
       # Login To Docker
       - name: Login to Docker
