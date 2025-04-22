@@ -17,7 +17,7 @@ export default class QueueHandler {
             throw new Error("Mod channel is not text based");
         }
 
-        const messages = await channel.messages.fetch({ limit: 10 });
+        const messages = await channel.messages.fetch({ limit: 100,  });
         const lastMessage = messages.find(message => {
             if (message.author.id != client.user?.id) {
                 return false
