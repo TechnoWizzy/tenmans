@@ -79,6 +79,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             }
             break;
         }
+
         case "re-register": {
             const user = interaction.options.getUser("user", true);
             const username = interaction.options.getString("riot-id", true);
