@@ -51,6 +51,8 @@ export default class Tracker {
         const response = await new Response(process.stdout).text();
         const error = await new Response(process.stderr).text();
 
+        console.log(error);
+
         if (error.includes("451 Unavailable For Legal Reasons")) {
             return {} as UserResponse;
         }
