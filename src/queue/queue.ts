@@ -15,7 +15,7 @@ import Database from "../database/database.ts";
 import Player from "../models/player.ts";
 
 export default class Queue extends Map<string, [User, Timer]> {
-    public static readonly name = "Val 10mans BETA"
+    public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
     public readonly timeout = 1000 * 60 * 30;
 
