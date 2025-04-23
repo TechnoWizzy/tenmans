@@ -73,7 +73,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             )
 
             const profileURL = getEnv("TRN_URL_USER") + encodeURIComponent(username)
-            await ephemeralReply(interaction, { content: `Please visit [this URL](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
+            await ephemeralReply(interaction, { content: `Please visit this [**URL**](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
             break;
         }
 
