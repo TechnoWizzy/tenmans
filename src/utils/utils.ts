@@ -41,7 +41,7 @@ export async function ephemeralReply(interaction: Interaction, options: ReplyOpt
     }
 }
 
-export async function reply(interaction: Interaction, options: MessageCreateOptions) {
+export async function reply(interaction: Interaction, options: ReplyOptions) {
     if (!interaction.isRepliable()) {
         throw new Error("Interaction is not repliable");
     } else {
