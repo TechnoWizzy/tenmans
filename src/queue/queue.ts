@@ -159,6 +159,7 @@ export default class Queue extends Map<string, [User, Timer]> {
 
         if (!this.lastMessage) {
             this.lastMessage = await this.channel.send({ embeds: [ embed ], components: [ component ]});
+            delete this.collector;
             await this.createCollector();
             return
         }
@@ -167,7 +168,7 @@ export default class Queue extends Map<string, [User, Timer]> {
     }
 
     public async createCollector() {
-        if (!this.lastMessage) {
+        if (!this.lastMessage || this.collector) {
             return
         }
 
@@ -192,6 +193,8 @@ export default class Queue extends Map<string, [User, Timer]> {
         for (const [_, message] of messages) {
             this.collector.collect(message)
         }
+
+        await this.channel.send({ content: "Collected " + this.collector.collected.size + " messages" });
     }
 
     public async deleteLastMessage() {
