@@ -112,7 +112,8 @@ async function interactionCreate(interaction: Interaction) {
                     const userId = args[1];
                     const username = args[2];
                     const date = args[3];
-                    const then = new Date(Number(date));
+                    const then = new Date(date);
+                    console.log(then.toISOString());
                     if (Date.now() - then.getDate() > 30 * 1000) {
                         await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
                         return;
@@ -126,7 +127,7 @@ async function interactionCreate(interaction: Interaction) {
                     const userId = args[1];
                     const username = args[2];
                     const date = args[3];
-                    const then = new Date(Number(date));
+                    const then = new Date(date);
                     if (Date.now() - then.getDate() > 30 * 1000) {
                         await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
                         return;
