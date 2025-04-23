@@ -113,10 +113,7 @@ async function interactionCreate(interaction: Interaction) {
                     const username = args[2];
                     const date = args[3];
                     const then = new Date(Number(date));
-                    console.log(Date.now());
-                    console.log(then.getDate());
-                    console.log(Date.now() - then.getDate())
-                    if (Date.now() - then.getDate() > (30 * 1000)) {
+                    if (Date.now() - then.getTime() > (30 * 1000)) {
                         await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
                         return;
                     }
@@ -130,7 +127,7 @@ async function interactionCreate(interaction: Interaction) {
                     const username = args[2];
                     const date = args[3];
                     const then = new Date(Number(date));
-                    if (Date.now() - then.getDate() > 30 * 1000) {
+                    if (Date.now() - then.getTime() > (30 * 1000)) {
                         await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
                         return;
                     }
