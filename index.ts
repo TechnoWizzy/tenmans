@@ -90,7 +90,9 @@ async function interactionCreate(interaction: Interaction) {
                     await noReply(interaction);
                     try {
                         await interaction.message.delete();
-                    } catch {}
+                    } catch (e) {
+                        console.log(e);
+                    }
                     break;
                 }
 
@@ -135,10 +137,6 @@ async function interactionCreate(interaction: Interaction) {
                     }
                     await confirmReregistration(interaction, userId, username);
                     break;
-                }
-
-                default: {
-                    console.log("Unknown button pressed: " + args[0]);
                 }
             }
         }
