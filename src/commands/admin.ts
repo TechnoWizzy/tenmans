@@ -1,5 +1,11 @@
-import {type ChatInputCommandInteraction, type Guild, SlashCommandBuilder} from "discord.js";
-import {ephemeralReply} from "../utils/utils.ts";
+import {
+    ActionRowBuilder,
+    ButtonBuilder, ButtonStyle,
+    type ChatInputCommandInteraction,
+    type Guild,
+    SlashCommandBuilder
+} from "discord.js";
+import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
 import Command from "./command.ts";
 import Player from "../models/player.ts";
 import Tracker from "../utils/tracker.ts";
@@ -8,20 +14,6 @@ import Game from "../models/game.ts";
 const builder = new SlashCommandBuilder()
     .setName("admin")
     .setDescription("10-mans management commands")
-    .addSubcommand((subcommand) => subcommand
-        .setName("force-register")
-        .setDescription("force a registered player's username - DOUBLE CHECK THE RIOT ID FOR CORRECTNESS")
-        .addUserOption((option) => option
-            .setName("user")
-            .setDescription("the discord user to be registered")
-            .setRequired(true)
-        )
-        .addStringOption((option) => option
-            .setName("riot-id")
-            .setDescription("the Riot ID of the user (Name#Tag)")
-            .setRequired(true)
-        )
-    )
     .addSubcommand((subcommand) => subcommand
         .setName("re-register")
         .setDescription("change a registered player's username")
@@ -54,32 +46,6 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-        case "force-register": {
-            const user = interaction.options.getUser("user", true);
-            const username = interaction.options.getString("riot-id", true);
-            const player = await Player.fetch(user.id);
-            if (player != null) {
-                await ephemeralReply(interaction, { content: `This person is already registered as **${player.username}**` });
-                return;
-            }
-
-            const existingPlayer = await Player.fetchByUsername(username);
-            if (existingPlayer != null) {
-                await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** ` });
-                return;
-            }
-
-            const oldPlayer = await Player.fetchOld(interaction.user.id);
-            await new Player(interaction.user.id, username, oldPlayer?.stats).save();
-
-            if (oldPlayer) {
-                await ephemeralReply(interaction, { content: `Successfully registered as **${username}** - Their elo has been set at ${oldPlayer.stats.elo}` });
-            } else {
-                await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
-            }
-            break;
-        }
-
         case "re-register": {
             const user = interaction.options.getUser("user", true);
             const username = interaction.options.getString("riot-id", true);
@@ -89,44 +55,25 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 return;
             }
 
-            const trackerUser = await Tracker.fetchUser(username);
-            if (trackerUser == null) {
-                await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}**` });
-                return;
-            }
-
             const existingPlayer = await Player.fetchByUsername(username);
             if (existingPlayer != null) {
                 await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** - Please re-register them first to free this username` });
                 return;
             }
 
-            const updatedPlayer = await new Player(player.id, username, player.stats).save();
-            const games = await Game.fetchByPlayerId(player.id);
-            for (const game of games) {
-                for (let i = 0; i < game.players.length; i++ ) {
-                    const gamePlayer = game.players[i];
-                    if (gamePlayer.id == player.id) {
-                        game.players[i] = new Player(gamePlayer.id, updatedPlayer.username, gamePlayer.stats);
-                    }
-                }
-                for (let i = 0; i < game.teamRed.players.length; i++ ) {
-                    const redPlayer = game.teamRed.players[i];
-                    if (redPlayer.id == player.id) {
-                        game.teamRed.players[i] = new Player(redPlayer.id, updatedPlayer.username, redPlayer.stats);
-                    }
-                }
-                for (let i = 0; i < game.teamBlue.players.length; i++ ) {
-                    const bluePlayer = game.teamBlue.players[i];
-                    if (bluePlayer.id == player.id) {
-                        game.teamBlue.players[i] = new Player(bluePlayer.id, updatedPlayer.username, bluePlayer.stats);
-                    }
-                }
+            const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+                new ButtonBuilder()
+                    .setCustomId(createCustomId("re-register",interaction.user.id, username, Date.now()))
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("Confirm"),
+                new ButtonBuilder()
+                    .setCustomId(createCustomId("cancel"))
+                    .setStyle(ButtonStyle.Danger)
+                    .setLabel("Cancel")
+            )
 
-                await game.save();
-            }
-
-            await ephemeralReply(interaction, { content: `Successfully re-registered as **${username}**` });
+            const profileURL = getEnv("TRN_USER_URL") + encodeURIComponent(username)
+            await ephemeralReply(interaction, { content: `Please visit [this URL](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
             break;
         }
 

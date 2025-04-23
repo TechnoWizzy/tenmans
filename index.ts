@@ -9,6 +9,7 @@ import CommandHandler from "./src/commands/command_handler.ts";
 import QueueHandler from "./src/queue/queue_handler.ts";
 import Settings from "./src/settings/settings.ts";
 import Game from "./src/models/game.ts";
+import {confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
 
 Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
@@ -84,6 +85,13 @@ async function interactionCreate(interaction: Interaction) {
             const args = interaction.customId.split(',');
 
             switch (args[0]) {
+                case "cancel": {
+                    try {
+                        await interaction.message.delete();
+                    } catch {}
+                    break;
+                }
+
                 case "game": {
                     const gameId = args[1];
                     const game = await Game.fetch(Number(gameId));
@@ -96,6 +104,34 @@ async function interactionCreate(interaction: Interaction) {
                     await interaction.deferReply({ flags: 'Ephemeral' });
                     const action = args[1] as QueueAction;
                     await handleQueueAction(action, interaction);
+                    break;
+                }
+
+                case "register": {
+                    await interaction.deferReply({ flags: 'Ephemeral' });
+                    const userId = args[1];
+                    const username = args[2];
+                    const date = args[3];
+                    const then = new Date(Number(date));
+                    if (Date.now() - then.getDate() > 30 * 1000) {
+                        await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
+                        return;
+                    }
+                    await confirmRegistration(interaction, userId, username);
+                    break;
+                }
+
+                case "re-register": {
+                    await interaction.deferReply({ flags: 'Ephemeral' });
+                    const userId = args[1];
+                    const username = args[2];
+                    const date = args[3];
+                    const then = new Date(Number(date));
+                    if (Date.now() - then.getDate() > 30 * 1000) {
+                        await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
+                        return;
+                    }
+                    await confirmReregistration(interaction, userId, username);
                     break;
                 }
             }

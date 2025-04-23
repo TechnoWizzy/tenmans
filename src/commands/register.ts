@@ -1,6 +1,12 @@
-import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder} from "discord.js";
+import {
+    ActionRowBuilder,
+    ButtonBuilder, ButtonStyle,
+    ChatInputCommandInteraction,
+    type Guild,
+    SlashCommandBuilder
+} from "discord.js";
 import Command from "./command.ts";
-import {ephemeralReply} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
 import Player from "../models/player.ts";
 import Tracker from "../utils/tracker.ts";
 
@@ -27,20 +33,19 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
-    const user = await Tracker.fetchUser(username);
-    if (user == null) {
-        await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}** - Please double check your Riot Id. If this issue continues, please contact an Admin.` });
-        return;
-    }
+    const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+        new ButtonBuilder()
+            .setCustomId(createCustomId("register",interaction.user.id, username, Date.now()))
+            .setStyle(ButtonStyle.Primary)
+            .setLabel("Confirm"),
+        new ButtonBuilder()
+            .setCustomId(createCustomId("cancel"))
+            .setStyle(ButtonStyle.Danger)
+            .setLabel("Cancel")
+    )
 
-    const oldPlayer = await Player.fetchOld(interaction.user.id);
-    await new Player(interaction.user.id, username, oldPlayer?.stats).save();
-
-    if (oldPlayer) {
-        await ephemeralReply(interaction, { content: `Successfully registered as **${username}** - Your elo has been set at ${oldPlayer.stats.elo}` });
-    } else {
-        await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
-    }
+    const profileURL = getEnv("TRN_USER_URL") + encodeURIComponent(username)
+    await ephemeralReply(interaction, { content: `Please visit [this URL](${profileURL}) and verify your profile. Then, click "Confirm\n"`, components: [ component ] });
 }
 
 export default class RegisterCommand extends Command {
