@@ -86,6 +86,7 @@ async function interactionCreate(interaction: Interaction) {
 
             switch (args[0]) {
                 case "cancel": {
+                    console.log("Cancel button pressed");
                     await noReply(interaction);
                     try {
                         await interaction.message.delete();
@@ -134,6 +135,10 @@ async function interactionCreate(interaction: Interaction) {
                     }
                     await confirmReregistration(interaction, userId, username);
                     break;
+                }
+
+                default: {
+                    console.log("Unknown button pressed: " + args[0]);
                 }
             }
         }
