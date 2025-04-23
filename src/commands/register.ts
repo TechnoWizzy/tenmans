@@ -40,7 +40,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             .setLabel("Confirm"),
     )
 
-    const profileURL = getEnv("TRN_URL_USER") + encodeURIComponent(username)
+    const profileURL = getEnv("TRACKER_URL_USER") + encodeURIComponent(username)
     await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify your profile. Then, click "Confirm"`, components: [ component ] });
 }
 

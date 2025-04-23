@@ -72,6 +72,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                     return;
                 }
 
+                game.matchId = matchId;
                 await propagateGameChange(interaction, game);
             }
 

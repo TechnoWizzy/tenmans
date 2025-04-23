@@ -10,18 +10,20 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from "discord.js";
-import {createCustomId} from "../utils/utils.ts";
+import {createCustomId, getEnv} from "../utils/utils.ts";
 import type {WithId} from "mongodb";
 
 export default class Game {
     public readonly id: number;
+    public matchId?: string;
     public teamRed: Team;
     public teamBlue: Team;
     public players: Player[];
     public cancelled: boolean;
 
-    public constructor(id: number, players: Player[], teamRed?: Team, teamBlue?: Team, cancelled: boolean = false) {
+    public constructor(id: number, players: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, cancelled: boolean = false) {
         this.id = id;
+        this.matchId = matchId;
         this.teamRed = teamRed ?? new Team("Red", 0, false, []);
         this.teamBlue = teamBlue ?? new Team("Blue", 0, false, []);
         this.players = players;
@@ -43,6 +45,10 @@ export default class Game {
             builder.setTitle(`Game ${this.id} - Cancelled`);
         } else {
             builder.setTitle(`Game ${this.id}`);
+        }
+
+        if (this.matchId) {
+            builder.setURL(getEnv("TRACKER_URL_MATCH") + this.matchId);
         }
 
         if (this.teamRed.hasWon || this.teamBlue.hasWon) {
@@ -120,7 +126,7 @@ export default class Game {
         const players = game.players.map(player => new Player(player.id, player.username, player.stats));
         const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
         const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-        return new Game(game.id, players, teamRed, teamBlue, game.cancelled);
+        return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.cancelled);
     }
 
     public static async fetchAll() {
@@ -171,5 +177,5 @@ function formatGame(game: WithId<Game>) {
     const players = game.players.map(player => new Player(player.id, player.username, player.stats));
     const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, players, teamRed, teamBlue, game.cancelled);
+    return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.cancelled);
 }

@@ -21,11 +21,11 @@ export default class Tracker {
                 "wget",
                 "-qO-", "--no-check-certificate", "--quiet",
                 "--method", "GET", "--timeout=0",
-                "--header", `Host: ${getEnv("TRN_HOST")}`,
-                "--header", `Origin: ${getEnv("TRN_ORIGIN")}`,
-                "--header", `Referer: ${getEnv("TRN_REFERER")}`,
-                "--header", `User-Agent: ${getEnv("TRN_USER_AGENT")}`,
-                getEnv("TRN_URL_MATCH") + matchId,
+                "--header", `Host: ${getEnv("API_HOST")}`,
+                "--header", `Origin: ${getEnv("API_ORIGIN")}`,
+                "--header", `Referer: ${getEnv("API_REFERER")}`,
+                "--header", `User-Agent: ${getEnv("API_USER_AGENT")}`,
+                getEnv("API_URL_MATCH") + matchId,
             ]
 
             const process = Bun.spawn({
