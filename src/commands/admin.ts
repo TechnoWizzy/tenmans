@@ -55,7 +55,7 @@ const builder = new SlashCommandBuilder()
             .setDescription("the data to be input")
             .setRequired(true)
         )
-        .addStringOption((option) => option))
+    );
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const subcommand = interaction.options.getSubcommand();
