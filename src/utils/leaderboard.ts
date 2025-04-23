@@ -10,6 +10,13 @@ import {ephemeralReply, noReply, reply} from "./utils.ts";
 import Player from "../models/player.ts";
 
 export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
+    const component = new LeaderboardComponents(0, 0, true);
+    if (interaction.isButton()) {
+        await interaction.message.edit({ components: [ component ] });
+        await interaction.deferUpdate();
+    } else {
+        await interaction.deferReply();
+    }
 
     switch (action) {
         case "left": {
@@ -85,10 +92,10 @@ class LeaderboardEmbed extends EmbedBuilder {
 }
 
 class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
-    public constructor(page: number, players: number) {
+    public constructor(page: number, players: number, disabled = false) {
         super();
-        const leftButtonDisabled = page == 1;
-        const rightButtonDisabled = players != 10;
+        const leftButtonDisabled = page == 1 || disabled;
+        const rightButtonDisabled = players != 10 || disabled;
         this.setComponents(
             new ButtonBuilder()
                 .setEmoji("1162429590954844340")
@@ -104,6 +111,7 @@ class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
                 .setEmoji("🔄")
                 .setStyle(ButtonStyle.Secondary)
                 .setCustomId(`leaderboard,refresh,${page}`)
+                .setDisabled(disabled)
         )
     }
 }
