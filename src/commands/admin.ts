@@ -66,10 +66,6 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                     .setCustomId(createCustomId("re-register",interaction.user.id, username, Date.now()))
                     .setStyle(ButtonStyle.Primary)
                     .setLabel("Confirm"),
-                new ButtonBuilder()
-                    .setCustomId(createCustomId("cancel"))
-                    .setStyle(ButtonStyle.Danger)
-                    .setLabel("Cancel")
             )
 
             const profileURL = getEnv("TRN_URL_USER") + encodeURIComponent(username)

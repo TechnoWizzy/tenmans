@@ -85,17 +85,6 @@ async function interactionCreate(interaction: Interaction) {
             const args = interaction.customId.split(',');
 
             switch (args[0]) {
-                case "cancel": {
-                    console.log("Cancel button pressed");
-                    await noReply(interaction);
-                    try {
-                        await interaction.message.delete();
-                    } catch (e) {
-                        console.log(e);
-                    }
-                    break;
-                }
-
                 case "game": {
                     const gameId = args[1];
                     const game = await Game.fetch(Number(gameId));
