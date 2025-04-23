@@ -193,8 +193,6 @@ export default class Queue extends Map<string, [User, Timer]> {
         for (const [_, message] of messages) {
             await this.collector.handleCollect(message)
         }
-
-        await this.channel.send({ content: "Collected " + this.collector.collected.size + " of " + messages.size + " messages" });
     }
 
     public async deleteLastMessage() {
