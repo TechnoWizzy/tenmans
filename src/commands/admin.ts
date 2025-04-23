@@ -72,7 +72,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                     .setLabel("Cancel")
             )
 
-            const profileURL = getEnv("TRN_USER_URL") + encodeURIComponent(username)
+            const profileURL = getEnv("TRN_URL_USER") + encodeURIComponent(username)
             await ephemeralReply(interaction, { content: `Please visit [this URL](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
             break;
         }
