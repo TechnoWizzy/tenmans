@@ -63,8 +63,14 @@ export async function reply(interaction: Interaction, options: MessageCreateOpti
 
 export async function noReply(interaction: Interaction) {
     if (interaction.isRepliable()) {
-        if (interaction.replied) {
+        try {
             await interaction.deleteReply();
+        } catch {
+            if (interaction.isButton()) {
+                try {
+                    await interaction.deferUpdate()
+                } catch {}
+            }
         }
     } else {
         throw new Error("Interaction is not repliable");
