@@ -1,25 +1,34 @@
 import {ephemeralReply, getEnv, noReply, reply} from "./utils.ts";
-import {ActionRowBuilder, ButtonBuilder, type ButtonInteraction, ButtonStyle, ModalSubmitInteraction} from "discord.js";
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    type ButtonInteraction,
+    ButtonStyle,
+    type ChatInputCommandInteraction, type Interaction,
+    ModalSubmitInteraction
+} from "discord.js";
 import Game, {Team} from "../models/game.ts";
 import Player from "../models/player.ts";
 import Tracker from "./tracker.ts";
 import QueueHandler from "../queue/queue_handler.ts";
 
-export async function handleGameAction(interaction: ButtonInteraction | ModalSubmitInteraction, game: Game, action: GameAction) {
+export async function handleGameAction(interaction: Interaction, game: Game, action: GameAction) {
     switch (action) {
 
         case "set-url": {
-            if (interaction.isModalSubmit()) {
-                const url = interaction.fields.getTextInputValue("url")
-                const segments = url.split("/");
-                const matchId = segments[segments.length - 1];
-                const trackerMatch = await Tracker.fetchMatch(matchId)
-                if (trackerMatch == null) {
+            if (interaction.isButton()) {
+                await interaction.showModal(game.createModal());
+                return;
+            }
+
+            const uploadGame = async (matchId: string) => {
+                const match = await Tracker.fetchMatch(matchId);
+                if (match == null) {
                     await ephemeralReply(interaction, { content: `Failed to fetch match, please contact <@${getEnv("OWNER_ID")}>` });
                     return;
                 }
 
-                for (const segment of trackerMatch.data.segments) {
+                for (const segment of match.data.segments) {
                     if (segment.type == "team-summary") {
                         const teamId = segment.attributes.teamId;
                         const score = segment.stats.roundsWon.value;
@@ -37,7 +46,7 @@ export async function handleGameAction(interaction: ButtonInteraction | ModalSub
                     return;
                 }
 
-                for (const segment of trackerMatch.data.segments) {
+                for (const segment of match.data.segments) {
                     if (segment.type == "player-summary") {
                         const username = segment.attributes.platformUserIdentifier;
                         const player = game.players.find(player => player.username == username);
@@ -64,10 +73,27 @@ export async function handleGameAction(interaction: ButtonInteraction | ModalSub
                 }
 
                 await propagateGameChange(interaction, game);
+            }
 
-            } else {
-                await interaction.showModal(game.createModal());
-                return;
+            if (interaction.isChatInputCommand()) {
+                const attachment = interaction.options.getAttachment("game-data", true);
+                const response = await fetch(attachment.url);
+                if (!response.ok) {
+                    await ephemeralReply(interaction, { content: "Failed to retrieved attached data" });
+                    return;
+                }
+
+                const data = await response.json() as MatchResponse;
+                const matchId = data.attributes.id;
+                Tracker.setMatchData(matchId, data);
+                await uploadGame(matchId)
+            }
+
+            if (interaction.isModalSubmit()) {
+                const url = interaction.fields.getTextInputValue("url")
+                const segments = url.split("/");
+                const matchId = segments[segments.length - 1];
+                await uploadGame(matchId)
             }
 
             break;
@@ -107,7 +133,7 @@ export async function handleGameAction(interaction: ButtonInteraction | ModalSub
     }
 }
 
-export async function propagateGameChange(interaction: ButtonInteraction | ModalSubmitInteraction, game: Game) {
+export async function propagateGameChange(interaction: Interaction, game: Game) {
     const games = await game.fetchAllAfter();
     games.unshift(game);
 

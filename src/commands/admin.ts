@@ -2,7 +2,7 @@ import {
     ActionRowBuilder,
     ButtonBuilder, ButtonStyle,
     type ChatInputCommandInteraction,
-    type Guild,
+    type Guild, resolvePartialEmoji,
     SlashCommandBuilder
 } from "discord.js";
 import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
@@ -10,6 +10,7 @@ import Command from "./command.ts";
 import Player from "../models/player.ts";
 import Tracker from "../utils/tracker.ts";
 import Game from "../models/game.ts";
+import {handleGameAction} from "../utils/game.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -41,6 +42,20 @@ const builder = new SlashCommandBuilder()
         .setName("reset-all")
         .setDescription("reset everyone's elo")
     )
+    .addSubcommand((subcommand) => subcommand
+        .setName("input-game-data")
+        .setDescription("manually input game data from API")
+        .addIntegerOption((option) => option
+            .setName("game-id")
+            .setDescription("the game ID to be input")
+            .setRequired(true)
+        )
+        .addAttachmentOption((option) => option
+            .setName("game-data")
+            .setDescription("the data to be input")
+            .setRequired(true)
+        )
+        .addStringOption((option) => option))
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const subcommand = interaction.options.getSubcommand();
@@ -102,6 +117,13 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             await ephemeralReply(interaction, { content: "Success" });
 
+            break;
+        }
+
+        case "input-game-data": {
+            const gameId = interaction.options.getInteger("game-id", true);
+            const game = await Game.fetch(gameId);
+            await handleGameAction(interaction, game, "set-url");
             break;
         }
 

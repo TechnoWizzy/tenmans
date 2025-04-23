@@ -3,8 +3,18 @@ import {Mutex} from "./mutex.ts";
 
 export default class Tracker {
     private static lock = new Mutex();
+    private static cache = new Map<string, MatchResponse>();
+
+    public static setMatchData(matchId: string, data: MatchResponse) {
+        this.cache.set(matchId, data);
+    }
 
     public static async fetchMatch(matchId: string) {
+        const data = this.cache.get(matchId);
+        if (data) {
+            return data;
+        }
+
         const unlock = await this.lock.lock();
         try {
             const command = [
@@ -28,7 +38,9 @@ export default class Tracker {
             const response = await new Response(process.stdout).text();
 
             try {
-                return JSON.parse(response) as MatchResponse;
+                const data =JSON.parse(response) as MatchResponse;
+                this.cache.set(matchId, data);
+                return data;
             } catch (e) {
                 return null;
             }
