@@ -1,5 +1,5 @@
 import {Client, EmbedBuilder, Events, type Interaction, TextChannel} from "discord.js";
-import {BOT_OPTIONS, ephemeralReply, getEnv} from "./src/utils/utils.ts";
+import {BOT_OPTIONS, ephemeralReply, getEnv, noReply} from "./src/utils/utils.ts";
 import {handleGameAction} from "./src/utils/game.ts";
 import {handleQueueAction} from "./src/utils/queue.ts";
 import util from "node:util";
@@ -86,6 +86,7 @@ async function interactionCreate(interaction: Interaction) {
 
             switch (args[0]) {
                 case "cancel": {
+                    await noReply(interaction);
                     try {
                         await interaction.message.delete();
                     } catch {}
