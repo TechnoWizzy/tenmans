@@ -18,12 +18,25 @@ export default class QueueHandler {
         }
 
         const messages = await channel.messages.fetch({ limit: 25 });
-        const lastMessage = messages.find(message => {
+        let lastMessage = messages.find(message => {
             if (message.author.id != client.user?.id) {
                 return false
             }
             return message.embeds.at(0)?.title?.includes(Queue.name);
         });
+
+        for (let i = 10 ; i < messages.size; i++) {
+            const message = messages.at(i);
+            if (!message) continue;
+            if (message.author.id != client.user?.id) continue;
+            if (!message.embeds.at(0)?.title?.includes(Queue.name)) continue;
+            if (message.id == lastMessage?.id) {
+                lastMessage = undefined;
+            }
+            try {
+                await message.delete();
+            } catch {}
+        }
 
         QueueHandler.queue = new Queue(channel, modChannel, lastMessage)
         await QueueHandler.queue.update("Update Applied - A new queue has started", Colors.White, false, new Date());

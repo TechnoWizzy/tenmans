@@ -171,7 +171,7 @@ export default class Queue extends Map<string, [User, Timer]> {
             return
         }
 
-        const messages = await this.channel.messages.fetch({ after: this.lastMessage.id, limit: 25 })
+        const messages = await this.channel.messages.fetch({ after: this.lastMessage.id, limit: 10})
         this.collector = new MessageCollector(this.channel, { max: 10 })
             .on("end", async (_, reason) => {
                 if (reason == "update") {
@@ -189,11 +189,8 @@ export default class Queue extends Map<string, [User, Timer]> {
                 }, 1000);
             });
 
-        for (let i = 0; i < 10; i++) {
-            const message = messages.at(i)
-            if (message) {
-                this.collector.collect(message)
-            }
+        for (const [_, message] of messages) {
+            this.collector.collect(message)
         }
     }
 
