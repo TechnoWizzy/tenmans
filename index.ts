@@ -10,6 +10,7 @@ import QueueHandler from "./src/queue/queue_handler.ts";
 import Settings from "./src/settings/settings.ts";
 import Game from "./src/models/game.ts";
 import {confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
+import {handleLeaderboardAction} from "./src/utils/leaderboard.ts";
 
 Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
@@ -125,6 +126,13 @@ async function interactionCreate(interaction: Interaction) {
                         return;
                     }
                     await confirmReregistration(interaction, userId, username);
+                    break;
+                }
+
+                case "leaderboard": {
+                    const action = args[1] as LeaderboardAction;
+                    const page = Number.parseInt(args[2]);
+                    await handleLeaderboardAction(interaction, action, page);
                     break;
                 }
             }

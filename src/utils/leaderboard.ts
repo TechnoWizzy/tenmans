@@ -32,7 +32,6 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
         }
     }
 
-
     const itemsPerPage = 10;
     const skip = (page - 1) * itemsPerPage;
     const query = {
