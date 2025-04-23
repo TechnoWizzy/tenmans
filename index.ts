@@ -113,6 +113,7 @@ async function interactionCreate(interaction: Interaction) {
                     const username = args[2];
                     const date = args[3];
                     const then = new Date(date);
+                    console.log(then)
                     console.log(then.toISOString());
                     if (Date.now() - then.getDate() > 30 * 1000) {
                         await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
