@@ -15,7 +15,9 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
         await interaction.message.edit({ components: [ component ] });
         await interaction.deferUpdate();
     } else {
-        await interaction.deferReply();
+        if (!interaction.replied) {
+            await interaction.deferReply();
+        }
     }
 
     switch (action) {
