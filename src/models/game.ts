@@ -86,10 +86,24 @@ export default class Game {
 
     private formatPlayer(player: Player, team: Team, opponent: Team) {
         const acs = player.stats.acs;
-        const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon);
-        const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-        const emote = `<:test:${player.getEmote(eloDelta)}>`;
-        return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+        if (this.id == 0) {
+            if (team.hasWon) {
+                const eloDelta = Math.round(1.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon));
+                const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
+                const emote = `<:test:${player.getEmote(eloDelta)}>`;
+                return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+            } else {
+                const eloDelta = Math.round(0.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon));
+                const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
+                const emote = `<:test:${player.getEmote(eloDelta)}>`;
+                return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+            }
+        } else {
+            const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon);
+            const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
+            const emote = `<:test:${player.getEmote(eloDelta)}>`;
+            return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+        }
     }
 
     public createComponents() {
