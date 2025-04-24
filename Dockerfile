@@ -1,6 +1,6 @@
 FROM oven/bun:1.2.10
 
-RUN apt-get update && apt-get install -y tini && apt-get clean
+RUN apt-get update && apt-get install -y tini wget && apt-get clean
 
 WORKDIR /app
 
