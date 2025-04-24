@@ -1,7 +1,5 @@
 interface MatchResponse {
     data: MatchData
-    attributes: MatchAttributes
-    metadata: MatchMetadata
 }
 
 interface UserResponse {
@@ -10,6 +8,8 @@ interface UserResponse {
 
 interface MatchData {
     segments: MatchSegment[];
+    attributes: MatchAttributes
+    metadata: MatchMetadata
 }
 
 interface UserData {

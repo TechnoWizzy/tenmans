@@ -85,16 +85,21 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 }
 
                 const data = await response.json() as MatchResponse;
-                const matchId = data.attributes.id;
+                const matchId = data.data.attributes.id;
                 Tracker.setMatchData(matchId, data);
                 await uploadGame(matchId)
             }
 
             if (interaction.isModalSubmit()) {
                 const url = interaction.fields.getTextInputValue("url")
-                const segments = url.split("/");
-                const matchId = segments[segments.length - 1];
-                await uploadGame(matchId)
+                const regex = /https:\/\/tracker\.gg\/valorant\/match\/([0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})/i;
+                const match = url.match(regex);
+                const matchId = match?.at(1);
+                if (!matchId) {
+                    await ephemeralReply(interaction, { content: "Invalid URL" });
+                    return;
+                }
+                await uploadGame(matchId);
             }
 
             break;
