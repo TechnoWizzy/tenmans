@@ -45,6 +45,14 @@ export default class Queue extends Map<string, [User, Timer]> {
     }
 
     public async join(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
+        if (interaction.isButton()) {
+            if (interaction.message.id != this.lastMessage?.id) {
+                await ephemeralReply(interaction, { content: "This message is no longer active." });
+                await interaction.message.delete();
+                return;
+            }
+        }
+
         const player = await Player.fetch(user.id)
 
         if (!player) {
@@ -127,7 +135,15 @@ export default class Queue extends Map<string, [User, Timer]> {
         await ephemeralReply(interaction, { content: "You have joined the queue" });
     }
 
-    public async leave(user: User, interaction: ButtonInteraction) {
+    public async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
+        if (interaction.isButton()) {
+            if (interaction.message.id != this.lastMessage?.id) {
+                await ephemeralReply(interaction, { content: "This message is no longer active." });
+                await interaction.message.delete();
+                return;
+            }
+        }
+
         const tuple = this.get(user.id);
 
         if (!tuple) {
