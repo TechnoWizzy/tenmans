@@ -19,14 +19,16 @@ export default class Game {
     public teamRed: Team;
     public teamBlue: Team;
     public players: Player[];
+    public modifiers: Modifier[];
     public cancelled: boolean;
 
-    public constructor(id: number, players: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, cancelled: boolean = false) {
+    public constructor(id: number, players: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false) {
         this.id = id;
         this.matchId = matchId;
         this.teamRed = teamRed ?? new Team("Red", 0, false, []);
         this.teamBlue = teamBlue ?? new Team("Blue", 0, false, []);
         this.players = players;
+        this.modifiers = modifiers;
         this.cancelled = cancelled
     }
 
@@ -126,7 +128,7 @@ export default class Game {
         const players = game.players.map(player => new Player(player.id, player.username, player.stats));
         const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
         const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-        return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.cancelled);
+        return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
     }
 
     public static async fetchAll() {
@@ -173,9 +175,17 @@ export class Team {
     }
 }
 
+export class Modifier {
+    eloMultiplier: number;
+
+    public constructor(eloMultiplier: number) {
+        this.eloMultiplier = eloMultiplier;
+    }
+}
+
 function formatGame(game: WithId<Game>) {
     const players = game.players.map(player => new Player(player.id, player.username, player.stats));
     const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.cancelled);
+    return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
 }

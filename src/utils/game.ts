@@ -195,9 +195,9 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamRed.hasWon);
             const modifiedPlayer = new Player(player.id, player.username, player.stats);
             if (game.id == 0 && teamRed.hasWon) {
-                modifiedPlayer.stats.elo += eloDelta * 1.5;
+                modifiedPlayer.stats.elo += Math.round(eloDelta * 1.5);
             } else if (game.id == 0) {
-                modifiedPlayer.stats.elo += eloDelta * 0.5;
+                modifiedPlayer.stats.elo += Math.round(eloDelta * 0.5);
             } else {
                 modifiedPlayer.stats.elo += eloDelta;
             }
@@ -219,9 +219,9 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon);
             const modifiedPlayer = new Player(player.id, player.username, player.stats);
             if (game.id == 0 && teamBlue.hasWon) {
-                modifiedPlayer.stats.elo += eloDelta * 1.5;
+                modifiedPlayer.stats.elo += Math.round(eloDelta * 1.5);
             } else if (game.id == 0) {
-                modifiedPlayer.stats.elo += eloDelta * 0.5;
+                modifiedPlayer.stats.elo += Math.round(eloDelta * 0.5);
             } else {
                 modifiedPlayer.stats.elo += eloDelta;
             }
