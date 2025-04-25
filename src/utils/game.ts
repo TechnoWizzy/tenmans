@@ -49,7 +49,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 for (const segment of match.data.segments) {
                     if (segment.type == "player-summary") {
                         const username = segment.attributes.platformUserIdentifier;
-                        const player = game.players.find(player => player.username == username);
+                        const player = game.players.find(player => player.username.toLowerCase() == username.toLowerCase());
 
                         if (player == null) {
                             await ephemeralReply(interaction, { content: `Unregistered player in match: ${username}` });
