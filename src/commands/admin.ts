@@ -78,7 +78,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
                 new ButtonBuilder()
-                    .setCustomId(createCustomId("re-register",interaction.user.id, username, Date.now()))
+                    .setCustomId(createCustomId("re-register",user.id, username, Date.now()))
                     .setStyle(ButtonStyle.Primary)
                     .setLabel("Confirm"),
             )
