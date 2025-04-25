@@ -10,6 +10,15 @@ import {ephemeralReply, noReply, reply} from "./utils.ts";
 import Player from "../models/player.ts";
 
 export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
+    if (interaction.isButton()) {
+        const component = new LeaderboardComponents(page, 10, true);
+        await interaction.message.edit({
+            content: interaction.message.content,
+            components: [ component ],
+            embeds: interaction.message.embeds
+        });
+    }
+
     switch (action) {
         case "left": {
             page -= 1;
