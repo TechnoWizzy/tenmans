@@ -67,6 +67,16 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                     }
                 }
 
+                if (game.teamRed.players.length != 5) {
+                    await ephemeralReply(interaction, { content: `Failed to load all players for Team Red, please contact <@${getEnv("OWNER_ID")}>` });
+                    return;
+                }
+
+                if (game.teamBlue.players.length != 5) {
+                    await ephemeralReply(interaction, { content: `Failed to load all players for Team Blue, please contact <@${getEnv("OWNER_ID")}>` });
+                    return;
+                }
+
                 if (game.players.length != 10) {
                     await ephemeralReply(interaction, { content: `Failed to load all 10 players, please contact <@${getEnv("OWNER_ID")}>` });
                     return;
