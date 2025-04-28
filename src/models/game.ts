@@ -179,7 +179,7 @@ export class Team {
         this.name = name;
         this.score = score;
         this.hasWon = hasWon;
-        this.players = players;
+        this.players = players.map(player => new Player(player.id, player.username, player.stats));
     }
 
     public getAverageElo() {
