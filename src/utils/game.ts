@@ -83,6 +83,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 }
 
                 game.matchId = matchId;
+                game.cancelled = false;
                 await propagateGameChange(interaction, game);
             }
 
@@ -249,6 +250,7 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             await player.save();
         }
 
+        console.log("Saving game ", game.id);
         await game.save();
         const embed = game.createEmbed();
         const components = game.createComponents();
