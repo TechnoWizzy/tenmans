@@ -53,7 +53,7 @@ export async function reply(interaction: Interaction, options: ReplyOptions) {
         } else {
             if (interaction.isChatInputCommand()) {
                 const content = `<@${interaction.user.id}> </${interaction.commandName}:${interaction.commandId}>\n` + (options.content ?? "");
-                await channel?.send({ ...options, content: content + (options.content ?? "") });
+                await channel?.send({ ...options, content: content });
             } else {
                 await channel?.send(options);
             }
