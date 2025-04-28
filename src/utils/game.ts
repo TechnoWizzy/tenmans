@@ -91,7 +91,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 const attachment = interaction.options.getAttachment("game-data", true);
                 const response = await fetch(attachment.url);
                 if (!response.ok) {
-                    await ephemeralReply(interaction, { content: "Failed to retrieved attached data" });
+                    await ephemeralReply(interaction, {content: "Failed to retrieved attached data"});
                     return;
                 }
 
@@ -99,9 +99,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 const matchId = data.data.attributes.id;
                 Tracker.setMatchData(matchId, data);
                 await uploadGame(matchId)
-            }
-
-            if (interaction.isModalSubmit()) {
+            } else if (interaction.isModalSubmit()) {
                 const url = interaction.fields.getTextInputValue("url")
                 const regex = /https:\/\/tracker\.gg\/valorant\/match\/([0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})/i;
                 const match = url.match(regex);
