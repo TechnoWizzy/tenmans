@@ -62,7 +62,7 @@ export default class Game {
                 .map(player => this.formatPlayer(player, this.teamBlue, this.teamRed))
                 .join('\n');
 
-            builder.setDescription(`Team Red: **${this.teamRed.score}**\n${teamRedText}\n\nTeam Blue: **${this.teamBlue.score}**\n${teamBlueText}`)
+            builder.setDescription(`🔴 Team Red : **${this.teamRed.score}**\n${teamRedText}\n\n🔵 Team Blue: **${this.teamBlue.score}**\n${teamBlueText}`)
 
             if (this.teamRed.hasWon) {
                 builder.setColor(Colors.Red)
