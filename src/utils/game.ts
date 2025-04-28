@@ -183,8 +183,11 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
         for (let i = 0; i < teamRed.players.length; i++) {
             const player = teamRed.players[i];
             const modifiedPlayer = modifiedPlayers.get(player.id);
-            if (modifiedPlayer) {
-                teamRed.players[i] = modifiedPlayer;
+            if (modifiedPlayer) { // Copy everything but ACS
+                player.stats.elo = modifiedPlayer.stats.elo;
+                player.stats.wins = modifiedPlayer.stats.wins;
+                player.stats.losses = modifiedPlayer.stats.losses;
+                player.stats.games = modifiedPlayer.stats.games;
             }
         }
 
@@ -192,7 +195,10 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const player = teamBlue.players[i];
             const modifiedPlayer = modifiedPlayers.get(player.id);
             if (modifiedPlayer) {
-                teamBlue.players[i] = modifiedPlayer;
+                player.stats.elo = modifiedPlayer.stats.elo;
+                player.stats.wins = modifiedPlayer.stats.wins;
+                player.stats.losses = modifiedPlayer.stats.losses;
+                player.stats.games = modifiedPlayer.stats.games;
             }
         }
 
