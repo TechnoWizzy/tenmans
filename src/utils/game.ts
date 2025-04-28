@@ -255,14 +255,15 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
         const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!"
         await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
         await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
-        await reply(interaction, { content: `${games.length} game ${games.length == 1 ? "update was" : "updates were"} applied successfully.` });
+    }
 
-        if (interaction.isButton() || interaction.isModalSubmit()) {
-            if (interaction.message?.deletable) {
-                try {
-                    await interaction.message?.delete()
-                } catch (_) { }
-            }
+    await reply(interaction, { content: `${games.length} game ${games.length == 1 ? "update was" : "updates were"} applied successfully.` });
+
+    if (interaction.isButton() || interaction.isModalSubmit()) {
+        if (interaction.message?.deletable) {
+            try {
+                await interaction.message?.delete()
+            } catch (_) { }
         }
     }
 }
