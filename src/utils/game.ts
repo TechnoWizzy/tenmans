@@ -257,7 +257,8 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
         await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
     }
 
-    await reply(interaction, { content: `${games.length} game ${games.length == 1 ? "update was" : "updates were"} applied successfully.` });
+    const pluralityText = games.length == 1 ? "game update was" : "game updates were";
+    await reply(interaction, { content: `${games.length} ${pluralityText} applied successfully.` });
 
     if (interaction.isButton() || interaction.isModalSubmit()) {
         if (interaction.message?.deletable) {
