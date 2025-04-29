@@ -177,7 +177,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             const date = formatDate(player.stats.bannedUntil);
             await player.save();
             await QueueHandler.leave(user, interaction, true);
-            await reply(interaction, { content: `<@${user.id}> has been banned ${date}` });
+            await reply(interaction, { content: `<@${user.id}> has been banned. They will be unbanned ${date}` });
             break;
         }
 
