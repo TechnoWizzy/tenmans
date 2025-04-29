@@ -43,6 +43,7 @@ class ChannelSettings {
 
 class StatusSettings {
     public name: string
+    public url?: string
     public type: ActivityType
 
     public constructor(settings: StatusSettings) {
@@ -50,6 +51,7 @@ class StatusSettings {
         if (settings.type == null) throw new Error("null type status");
 
         this.name = settings.name;
+        this.url = settings.url;
         this.type = settings.type;
     }
 }

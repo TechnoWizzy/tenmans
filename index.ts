@@ -20,12 +20,13 @@ Database.connect().then(() => {
 });
 
 async function ready(client: Client) {
+    const settings = await Settings.fetchSettings();
     try {
         await CommandHandler.registerCommands(client);
         await QueueHandler.loadQueue(client);
+        client.user?.setActivity(settings.status)
         console.log("TenMans is ready at " + client.readyAt?.toISOString());
     } catch (e: unknown) {
-        const settings = await Settings.fetchSettings();
         const channel = await client.channels.fetch(settings.channels.log) as TextChannel;
         const embed = new ErrorEmbed(e as Error, "Ready Error");
         await channel.send({ embeds: [ embed ] });
