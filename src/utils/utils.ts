@@ -112,5 +112,6 @@ export function calculateDate(duration: string) {
 }
 
 export function formatDate(date: Date) {
-    return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
+    const seconds = Math.floor(date.getTime() / 1000)
+    return `<t:${seconds}:R>`;
 }
