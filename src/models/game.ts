@@ -139,10 +139,7 @@ export default class Game {
         const query = { id: id };
         const game = await Database.games.findOne(query);
         if (!game) throw new Error(`Game Not Found: ${id}`);
-        const players = game.players.map(player => new Player(player.id, player.username, player.stats));
-        const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
-        const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-        return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
+        return formatGame(game);
     }
 
     public static async fetchAll() {

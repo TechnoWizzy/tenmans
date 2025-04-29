@@ -43,7 +43,7 @@ export default class QueueHandler {
         await QueueHandler.queue.join(user, interaction);
     }
 
-    public static async leave(user: User, interaction: ButtonInteraction) {
-        await QueueHandler.queue.leave(user, interaction);
+    public static async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction, ban: boolean = false) {
+        await QueueHandler.queue.leave(user, interaction, ban);
     }
 }

@@ -80,3 +80,37 @@ export async function noReply(interaction: Interaction) {
 export function createCustomId(...args: any[]) {
     return args.join(",");
 }
+
+export function calculateDate(duration: string) {
+    const now = new Date();
+    switch (duration) {
+        case "hour": {
+            now.setHours(now.getHours() + 1);
+            break;
+        }
+        case "day": {
+            now.setDate(now.getDate() + 1);
+            break;
+        }
+        case "month": {
+            now.setMonth(now.getMonth() + 1);
+            break;
+        }
+        case "year": {
+            now.setFullYear(now.getFullYear() + 1);
+            break;
+        }
+        case "forever": {
+            now.setFullYear(9999);
+            break;
+        }
+        default: {
+
+        }
+    }
+    return now;
+}
+
+export function formatDate(date: Date) {
+    return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
+}

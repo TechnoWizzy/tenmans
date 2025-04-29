@@ -9,7 +9,7 @@ import {
     type User,
     type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
-import {createCustomId, ephemeralReply} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply, formatDate} from "../utils/utils.ts";
 import Game from "../models/game.ts";
 import Database from "../database/database.ts";
 import Player from "../models/player.ts";
@@ -65,6 +65,12 @@ export default class Queue extends Map<string, [User, Timer]> {
         if (this.has(user.id)) {
             await ephemeralReply(interaction, { content: "You are already in the queue!" });
             return;
+        }
+
+        if (player.stats.bannedUntil.getTime() > Date.now()) {
+            const date = formatDate(player.stats.bannedUntil);
+            await ephemeralReply(interaction, { content: `You are banned from TenMans ${date}` });
+            return
         }
 
         const games = await Game.fetchAll();
@@ -135,7 +141,7 @@ export default class Queue extends Map<string, [User, Timer]> {
         await ephemeralReply(interaction, { content: "You have joined the queue" });
     }
 
-    public async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
+    public async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction, ban: boolean = false) {
         if (interaction.isButton()) {
             if (interaction.message.id != this.lastMessage?.id) {
                 await ephemeralReply(interaction, { content: "This message is no longer active." });
@@ -155,8 +161,13 @@ export default class Queue extends Map<string, [User, Timer]> {
         global.clearTimeout(timeout);
 
         this.delete(user.id);
-        await this.update(`${user.username} has left`, Colors.DarkOrange);
-        await ephemeralReply(interaction, { content: "You have left the queue" });
+
+        if (ban) {
+            await this.update(`${user.username} has been banned`, Colors.DarkButNotBlack);
+        } else {
+            await this.update(`${user.username} has left`, Colors.DarkOrange);
+            await ephemeralReply(interaction, { content: "You have left the queue" });
+        }
     }
 
     public async update(title: string, color?: ColorResolvable, reset: boolean = false, time?: Date) {

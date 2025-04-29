@@ -1,14 +1,14 @@
 import Database from "../database/database.ts";
 
 export default class Player {
-    public readonly id: string
+    public readonly id: string;
     public readonly username: string;
     public readonly stats: PlayerStats;
 
     public constructor(id: string, username: string, stats: PlayerStats = new PlayerStats()) {
         this.id = id;
         this.username = username;
-        this.stats = new PlayerStats(stats.games, stats.wins, stats.losses, stats.elo, stats.acs);
+        this.stats = new PlayerStats(stats.games, stats.wins, stats.losses, stats.elo, stats.acs, stats.bannedUntil);
     }
 
     public async save() {
@@ -100,13 +100,15 @@ class PlayerStats {
     public losses: number;
     public elo: number;
     public acs: number;
+    public bannedUntil: Date;
 
-    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0) {
+    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, bannedUntil: Date = new Date(0)) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
         this.elo = elo;
         this.acs = acs;
+        this.bannedUntil = bannedUntil;
     }
 }
 

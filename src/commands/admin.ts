@@ -1,16 +1,17 @@
 import {
     ActionRowBuilder,
-    ButtonBuilder, ButtonStyle,
+    ButtonBuilder,
+    ButtonStyle,
     type ChatInputCommandInteraction,
-    type Guild, resolvePartialEmoji,
+    type Guild,
     SlashCommandBuilder
 } from "discord.js";
-import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
+import {calculateDate, createCustomId, ephemeralReply, formatDate, getEnv} from "../utils/utils.ts";
 import Command from "./command.ts";
 import Player from "../models/player.ts";
-import Tracker from "../utils/tracker.ts";
 import Game from "../models/game.ts";
 import {handleGameAction} from "../utils/game.ts";
+import QueueHandler from "../queue/queue_handler.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -55,7 +56,38 @@ const builder = new SlashCommandBuilder()
             .setDescription("the data to be input")
             .setRequired(true)
         )
-    );
+    )
+    .addSubcommand((subcommand) => subcommand
+        .setName("ban")
+        .setDescription("ban a user from tenmans")
+        .addUserOption((option) => option
+            .setName("user")
+            .setDescription("the discord user to be banned")
+            .setRequired(true)
+        )
+        .addStringOption((option) => option
+            .setName("duration")
+            .setDescription("the duration of the ban")
+            .setChoices([
+                {name: '1 Hour', value: 'hour'},
+                {name: '1 Day', value: 'day'},
+                {name: '1 Week', value: 'week'},
+                {name: '1 Month', value: 'month'},
+                {name: '1 Year', value: 'year'},
+                {name: 'Forever', value: 'forever'}
+            ])
+            .setRequired(false)
+        )
+    )
+    .addSubcommand((subcommand) => subcommand
+        .setName("unban")
+        .setDescription("unban a user from tenmans")
+        .addUserOption((option) => option
+            .setName("user")
+            .setDescription("the discord user to be unbanned")
+            .setRequired(true)
+        )
+    )
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const subcommand = interaction.options.getSubcommand();
@@ -124,6 +156,47 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             const gameId = interaction.options.getInteger("game-id", true);
             const game = await Game.fetch(gameId);
             await handleGameAction(interaction, game, "set-url");
+            break;
+        }
+
+        case "ban": {
+            const user = interaction.options.getUser("user", true);
+            const duration = interaction.options.getString("duration", false) ?? "forever";
+            const player = await Player.fetch(user.id);
+            if (!player) {
+                await ephemeralReply(interaction, { content: `Player is not currently registered` });
+                return;
+            }
+
+            if (player.stats.bannedUntil.getTime() > Date.now()) {
+                await ephemeralReply(interaction, { content: `This user is already banned` });
+                return;
+            }
+
+            player.stats.bannedUntil = calculateDate(duration);
+            const date = new Date(player.stats.bannedUntil);
+            await player.save();
+            await QueueHandler.leave(user, interaction, true);
+            await ephemeralReply(interaction, { content: `Player ${player.username} has been banned ${date}` });
+            break;
+        }
+
+        case "unban": {
+            const user = interaction.options.getUser("user", true);
+            const player = await Player.fetch(user.id);
+            if (!player) {
+                await ephemeralReply(interaction, { content: `Player is not currently registered` });
+                return;
+            }
+
+            if (player.stats.bannedUntil.getTime() < Date.now()) {
+                await ephemeralReply(interaction, { content: `This user is not currently banned` });
+                return;
+            }
+
+            player.stats.bannedUntil = new Date(0);
+            await player.save();
+            await ephemeralReply(interaction, { content: `Player ${player.username} has been unbanned` });
             break;
         }
 
