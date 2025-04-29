@@ -177,7 +177,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             const date = new Date(player.stats.bannedUntil);
             await player.save();
             await QueueHandler.leave(user, interaction, true);
-            await reply(interaction, { content: `<@${user.id} has been banned ${date}` });
+            await reply(interaction, { content: `<@${user.id}> has been banned ${date}` });
             break;
         }
 
@@ -196,7 +196,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             player.stats.bannedUntil = new Date(0);
             await player.save();
-            await reply(interaction, { content: `<@${user.id} has been unbanned` });
+            await reply(interaction, { content: `<@${user.id}> has been unbanned` });
             break;
         }
 

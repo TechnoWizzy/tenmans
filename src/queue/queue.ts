@@ -69,7 +69,7 @@ export default class Queue extends Map<string, [User, Timer]> {
 
         if (player.stats.bannedUntil.getTime() > Date.now()) {
             const date = formatDate(player.stats.bannedUntil);
-            await ephemeralReply(interaction, { content: `You are banned from TenMans ${date}` });
+            await ephemeralReply(interaction, { content: `You will be unbanned from TenMans ${date}` });
             return
         }
 
