@@ -6,7 +6,7 @@ import {
     type Guild,
     SlashCommandBuilder
 } from "discord.js";
-import {calculateDate, createCustomId, ephemeralReply, formatDate, getEnv} from "../utils/utils.ts";
+import {calculateDate, createCustomId, ephemeralReply, formatDate, getEnv, reply} from "../utils/utils.ts";
 import Command from "./command.ts";
 import Player from "../models/player.ts";
 import Game from "../models/game.ts";
@@ -177,7 +177,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             const date = new Date(player.stats.bannedUntil);
             await player.save();
             await QueueHandler.leave(user, interaction, true);
-            await ephemeralReply(interaction, { content: `Player ${player.username} has been banned ${date}` });
+            await reply(interaction, { content: `<@${user.id} has been banned ${date}` });
             break;
         }
 
@@ -196,7 +196,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             player.stats.bannedUntil = new Date(0);
             await player.save();
-            await ephemeralReply(interaction, { content: `Player ${player.username} has been unbanned` });
+            await reply(interaction, { content: `<@${user.id} has been unbanned` });
             break;
         }
 
