@@ -9,6 +9,7 @@ import {Game, Team} from "../models/game.ts";
 import {Player} from "../models/player.ts";
 import {Tracker} from "./tracker.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
+import {leaderboardCache} from "./leaderboard.ts";
 
 export async function handleGameAction(interaction: Interaction, game: Game, action: GameAction) {
     switch (action) {
@@ -271,4 +272,6 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             } catch (_) { }
         }
     }
+
+    leaderboardCache.clear();
 }

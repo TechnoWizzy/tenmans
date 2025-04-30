@@ -206,6 +206,83 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
 }
 
+/**
+ * Interface for all administrative subcommands.
+ * Requires the Officer role to be used.
+ *e
+ * Subcommands:
+ * - **re-register**:
+ *   - Name: "re-register".
+ *   - Description: "change a registered player's username".
+ *   - Options:
+ *     - User option:
+ *       - Name: "user".
+ *       - Description: "the discord user to be reregistered".
+ *       - Required: true.
+ *     - String option:
+ *       - Name: "riot-id".
+ *       - Description: "the new Riot ID of the user (Name#Tag)".
+ *       - Required: true.
+ *
+ * - **reset-player**:
+ *   - Name: "reset-player".
+ *   - Description: "reset a single player".
+ *   - Options:
+ *     - User option:
+ *       - Name: "target".
+ *       - Description: "the player to be reset".
+ *       - Required: true.
+ *
+ * - **reset-all**:
+ *   - Name: "reset-all".
+ *   - Description: "reset everyone's elo".
+ *   - No options.
+ *
+ * - **input-game-data**:
+ *   - Name: "input-game-data".
+ *   - Description: "manually input game data from API".
+ *   - Options:
+ *     - Integer option:
+ *       - Name: "game-id".
+ *       - Description: "the game ID to be input".
+ *       - Required: true.
+ *     - Attachment option:
+ *       - Name: "game-data".
+ *       - Description: "the data to be input".
+ *       - Required: true.
+ *
+ * - **ban**:
+ *   - Name: "ban".
+ *   - Description: "ban a user from tenmans".
+ *   - Options:
+ *     - User option:
+ *       - Name: "user".
+ *       - Description: "the discord user to be banned".
+ *       - Required: true.
+ *     - String option:
+ *       - Name: "duration".
+ *       - Description: "the duration of the ban".
+ *       - Choices:
+ *         - "1 Hour" (value: "hour").
+ *         - "1 Day" (value: "day").
+ *         - "1 Week" (value: "week").
+ *         - "1 Month" (value: "month").
+ *         - "1 Year" (value: "year").
+ *         - "Forever" (value: "forever").
+ *       - Required: false.
+ *
+ * - **unban**:
+ *   - Name: "unban".
+ *   - Description: "unban a user from tenmans".
+ *   - Options:
+ *     - User option:
+ *       - Name: "user".
+ *       - Description: "the discord user to be unbanned".
+ *       - Required: true.
+ * @class
+ * @extends Command
+ *
+ */
 export class AdminCommand extends Command {
     constructor() {
         super(true, builder, execute);

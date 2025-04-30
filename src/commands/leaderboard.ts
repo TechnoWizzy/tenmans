@@ -1,6 +1,7 @@
 import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder} from "discord.js";
 import {Command} from "./command.ts";
 import {handleLeaderboardAction} from "../utils/leaderboard.ts";
+import type {Player} from "../models/player.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("leaderboard")

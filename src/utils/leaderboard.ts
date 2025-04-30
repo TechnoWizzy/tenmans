@@ -9,16 +9,9 @@ import {ephemeralReply, noReply, reply} from "./utils.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 
-export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
-    if (interaction.isButton()) {
-        const component = new LeaderboardComponents(page, 10, true);
-        await interaction.message.edit({
-            content: interaction.message.content,
-            components: [ component ],
-            embeds: interaction.message.embeds
-        });
-    }
+export const leaderboardCache = new Map<number, Player[]>;
 
+export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
     switch (action) {
         case "left": {
             page -= 1;
@@ -49,13 +42,16 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
     };
 
     try {
-        // Fetch players sorted by elo in descending order
-        const players = await Database.players.find(query).sort({ "stats.elo": -1 })
-            .skip(skip)
-            .limit(itemsPerPage)
-            .toArray()
+        if (!leaderboardCache.has(page)) {
+            const players = await Database.players.find(query).sort({ "stats.elo": -1 })
+                .skip(skip)
+                .limit(itemsPerPage)
+                .toArray()
+            leaderboardCache.set(page, players);
+        }
 
-        if (players.length === 0) {
+        const players = leaderboardCache.get(page);
+        if (!players || players.length == 0) {
             await ephemeralReply(interaction, { content: "No players found for this page." });
             return;
         }
