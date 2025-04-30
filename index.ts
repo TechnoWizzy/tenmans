@@ -6,11 +6,16 @@ import {handleGameAction} from "./src/utils/game.ts";
 import {handleQueueAction} from "./src/utils/queue.ts";
 import util from "node:util";
 import process from "process";
+import Express from "express";
 import {Database} from "./src/database/database.ts";
 import {CommandHandler} from "./src/commands/command_handler.ts";
 import {QueueHandler} from "./src/queue/queue_handler.ts";
 import {Settings} from "./src/settings/settings.ts";
 import {Game} from "./src/models/game.ts";
+
+Express()
+    .use('/', Express.static('docs'))
+    .listen(3000)
 
 Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
