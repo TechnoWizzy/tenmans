@@ -7,11 +7,11 @@ import {
     SlashCommandBuilder
 } from "discord.js";
 import {calculateDate, createCustomId, ephemeralReply, formatDate, getEnv, reply} from "../utils/utils.ts";
-import Command from "./command.ts";
-import Player from "../models/player.ts";
-import Game from "../models/game.ts";
 import {handleGameAction} from "../utils/game.ts";
-import QueueHandler from "../queue/queue_handler.ts";
+import {QueueHandler} from "../queue/queue_handler.ts";
+import {Command} from "./command.ts";
+import {Player} from "../models/player.ts";
+import {Game} from "../models/game.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -206,7 +206,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
 }
 
-export default class AdminCommand extends Command {
+export class AdminCommand extends Command {
     constructor() {
         super(true, builder, execute);
     }

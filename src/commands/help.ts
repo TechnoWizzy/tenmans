@@ -6,9 +6,8 @@ import {
     EmbedBuilder, type Guild,
     SlashCommandBuilder
 } from "discord.js";
-import Command from "./command.ts";
 import {ephemeralReply} from "../utils/utils.ts";
-import CommandHandler from "./command_handler.ts";
+import {Command} from "./command.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("help")
@@ -68,7 +67,7 @@ function toTitleCase(title: string) {
     });
 }
 
-export default class HelpCommand extends Command {
+export class HelpCommand extends Command {
     constructor() {
         super(false, builder, execute);
     }

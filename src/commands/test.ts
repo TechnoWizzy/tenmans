@@ -1,8 +1,8 @@
 import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder, TextChannel} from "discord.js";
 import {ephemeralReply, reply} from "../utils/utils.ts";
-import Command from "./command.ts";
-import Player from "../models/player.ts";
-import QueueHandler from "../queue/queue_handler.ts";
+import {Command} from "./command.ts";
+import {Player} from "../models/player.ts";
+import {QueueHandler} from "../queue/queue_handler.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("test")
@@ -80,7 +80,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
 }
 
-export default class TestCommand extends Command {
+export class TestCommand extends Command {
     constructor() {
         super(true, builder, execute);
     }

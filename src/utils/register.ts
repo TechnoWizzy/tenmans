@@ -1,7 +1,7 @@
 import type {ButtonInteraction} from "discord.js";
 import {ephemeralReply, getEnv} from "./utils.ts";
-import Player from "../models/player";
-import Game from "../models/game.ts";
+import {Player} from "../models/player";
+import {Game} from "../models/game.ts";
 
 export async function confirmRegistration(interaction: ButtonInteraction, userId: string, username: string) {
     const oldPlayer = await Player.fetchOld(userId);

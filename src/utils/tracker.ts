@@ -1,7 +1,7 @@
 import {getEnv} from "./utils.ts";
 import {Mutex} from "./mutex.ts";
 
-export default class Tracker {
+export class Tracker {
     private static lock = new Mutex();
     private static cache = new Map<string, MatchResponse>();
 

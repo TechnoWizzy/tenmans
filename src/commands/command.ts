@@ -1,8 +1,8 @@
 import {type ChatInputCommandInteraction, Guild, type SlashCommandBuilder} from "discord.js";
 
-type CommandExecutor = (interaction: ChatInputCommandInteraction, guild: Guild) => Promise<void>;
+export type CommandExecutor = (interaction: ChatInputCommandInteraction, guild: Guild) => Promise<void>;
 
-export default class Command {
+export class Command {
     public name:        string;
     public restricted:  boolean;
     public builder:     SlashCommandBuilder;

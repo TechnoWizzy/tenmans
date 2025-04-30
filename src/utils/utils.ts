@@ -26,7 +26,7 @@ export function getEnv(key: string) {
     return value;
 }
 
-type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[] }
+export type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[] }
 
 export async function ephemeralReply(interaction: Interaction, options: ReplyOptions) {
     if (interaction.isRepliable()) {

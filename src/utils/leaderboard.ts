@@ -5,9 +5,9 @@ import {
     ChatInputCommandInteraction,
     EmbedBuilder
 } from "discord.js";
-import Database from "../database/database.ts";
 import {ephemeralReply, noReply, reply} from "./utils.ts";
-import Player from "../models/player.ts";
+import {Database} from "../database/database.ts";
+import {Player} from "../models/player.ts";
 
 export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
     if (interaction.isButton()) {

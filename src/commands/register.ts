@@ -5,10 +5,9 @@ import {
     type Guild,
     SlashCommandBuilder
 } from "discord.js";
-import Command from "./command.ts";
 import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
-import Player from "../models/player.ts";
-import Tracker from "../utils/tracker.ts";
+import {Command} from "./command.ts";
+import {Player} from "../models/player.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("register")
@@ -44,7 +43,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify your profile. Then, click "Confirm"`, components: [ component ] });
 }
 
-export default class RegisterCommand extends Command {
+export class RegisterCommand extends Command {
     constructor() {
         super(false, builder, execute);
     }

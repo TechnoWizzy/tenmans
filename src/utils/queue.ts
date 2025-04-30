@@ -1,5 +1,5 @@
 import type {ButtonInteraction} from "discord.js";
-import QueueHandler from "../queue/queue_handler.ts";
+import {QueueHandler} from "../queue/queue_handler.ts";
 
 export async function handleQueueAction(action: QueueAction, interaction: ButtonInteraction) {
     switch (action) {

@@ -1,11 +1,11 @@
 import type {Client} from "discord.js";
-import RegisterCommand from "./register.ts";
-import LeaderboardCommand from "./leaderboard.ts";
-import AdminCommand from "./admin.ts";
-import TestCommand from "./test.ts";
-import HelpCommand from "./help.ts";
+import {RegisterCommand} from "./register.ts";
+import {LeaderboardCommand} from "./leaderboard.ts";
+import {AdminCommand} from "./admin.ts";
+import {TestCommand} from "./test.ts";
+import {HelpCommand} from "./help.ts";
 
-export default class CommandHandler {
+export class CommandHandler {
     private static readonly commands = [
         new AdminCommand(),
         new RegisterCommand(),

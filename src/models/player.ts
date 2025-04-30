@@ -1,17 +1,35 @@
-import Database from "../database/database.ts";
+import {Database} from "../database/database.ts";
 
-export default class Player {
+/**
+ * Represents a tenmans player
+ */
+export class Player {
     public readonly id: string;
     public readonly username: string;
     public readonly stats: PlayerStats;
 
+    /**
+     * Creates a new instance of the player class. This constructor should be called on all Players
+     * retrieved from Mongo, as those objects are not instances of the Player class - rather the Player type.
+     * Player types are unable to call class methods.
+     *
+     * @param {string} id - The unique identifier for the player. This is the same as their Discord ID
+     * @param {string} username - The username of the player. This is their full RiotID
+     * @param {PlayerStats} [stats=new PlayerStats()] - The player's statistics. Defaults to a new `PlayerStats` instance.
+     */
     public constructor(id: string, username: string, stats: PlayerStats = new PlayerStats()) {
         this.id = id;
         this.username = username;
         this.stats = new PlayerStats(stats.games, stats.wins, stats.losses, stats.elo, stats.acs, stats.bannedUntil);
     }
 
-    public async save() {
+    /**
+     * Saves the current instance of the player to the database. If the player does not exist, it creates a new record.
+     * Throws an error if the save operation is unsuccessful.
+     *
+     * @return {Promise<this>} Returns the saved instance of the player.
+     */
+    public async save(): Promise<Player> {
         const query = { id: this.id };
         const update = { $set: this };
         const options = { upsert: true };
@@ -20,33 +38,66 @@ export default class Player {
         return this;
     }
 
-    public static async fetch(id: string) {
+    /**
+     * Fetches a player record from the database using the provided ID.
+     *
+     * @param {string} id - The unique identifier of the player to be fetched.
+     * @return {Promise<Player|null>} Returns a Player object if a record is found, otherwise null.
+     */
+    public static async fetch(id: string): Promise<Player | null> {
         const query = { id: id };
         const player = await Database.players.findOne(query);
         if (!player) return null;
         return new Player(player.id, player.username, player.stats);
     }
 
-    public static async fetchOld(id: string) {
+    /**
+     * Fetches an old player record from the database using the provided ID.
+     *
+     * @param {string} id The unique identifier of the player to be fetched.
+     * @return {Promise<Player|null>} Returns a Player instance if found, otherwise returns null.
+     */
+    public static async fetchOld(id: string): Promise<Player | null> {
         const query = { id: id };
         const player = await Database.oldPlayers.findOne(query);
         if (!player) return null;
         return new Player(player.id, player.username, player.stats);
     }
 
-    public static async fetchByUsername(username: string) {
+    /**
+     * Fetches a player by their username from the database.
+     *
+     * @param {string} username - The username of the player to be fetched.
+     * @return {Promise<Player|null>} A promise that resolves to a Player instance if a player is found, or null if
+     * no player exists with the given username.
+     */
+    public static async fetchByUsername(username: string): Promise<Player | null> {
         const query = { username: username };
         const player = await Database.players.findOne(query);
         if (!player) return null;
         return new Player(player.id, player.username, player.stats);
     }
 
-    public static async fetchAll() {
+    /**
+     * Fetches all players from the database and maps them to Player instances.
+     *
+     * @return {Promise<Player[]>} A promise that resolves to an array of Player instances.
+     */
+    public static async fetchAll(): Promise<Player[]> {
         const players = await Database.players.find().toArray();
         return players.map(player => new Player(player.id, player.username, player.stats));
     }
 
-    public getEloChange(teamElo: number, opponentElo: number, opponentScore: number, isWinner: boolean) {
+    /**
+     * Calculates the Elo rating change based on the team's performance, opponent's Elo, and match outcome.
+     *
+     * @param {number} teamElo - The Elo rating of the team.
+     * @param {number} opponentElo - The Elo rating of the opponent.
+     * @param {number} opponentScore - The score of the opponent team in the match.
+     * @param {boolean} isWinner - Indicates whether the team won the match.
+     * @return {number} The calculated Elo rating change for the team.
+     */
+    public getEloChange(teamElo: number, opponentElo: number, opponentScore: number, isWinner: boolean): number {
         const c = 1 + (10 - Math.min(opponentScore, 12)) / 50;
         if (isWinner) {
             const a = 25 * (this.stats.acs / 200) * (1 - (teamElo - opponentElo) / teamElo);
@@ -64,37 +115,46 @@ export default class Player {
         }
     }
 
+    /**
+     * Determines the emojiID corresponding to the player's elo, optionally adjusted by an additional delta value.
+     *
+     * @param delta An optional numerical adjustment to the player's elo. Defaults to 0.
+     * @return The corresponding emojiID based on the adjusted elo.
+     */
     public getEmote(delta: number = 0) {
         const elo = this.stats.elo + delta;
-        if (elo >= 1100) return Emote.Radiant
-        if (elo >= 1000) return Emote.ImmortalIII;
-        if (elo >= 900) return Emote.ImmortalII;
-        if (elo >= 800) return Emote.ImmortalI;
-        if (elo >= 770) return Emote.AscendantIII;
-        if (elo >= 730) return Emote.AscendantII;
-        if (elo >= 700) return Emote.AscendantI;
-        if (elo >= 670) return Emote.DiamondIII;
-        if (elo >= 630) return Emote.DiamondII;
-        if (elo >= 600) return Emote.DiamondI;
-        if (elo >= 570) return Emote.PlatinumIII;
-        if (elo >= 530) return Emote.PlatinumII;
-        if (elo >= 500) return Emote.PlatinumI;
-        if (elo >= 470) return Emote.GoldIII;
-        if (elo >= 430) return Emote.GoldII;
-        if (elo >= 400) return Emote.GoldI;
-        if (elo >= 370) return Emote.SilverIII;
-        if (elo >= 330) return Emote.SilverII;
-        if (elo >= 300) return Emote.SilverI;
-        if (elo >= 270) return Emote.BronzeIII;
-        if (elo >= 230) return Emote.BronzeII;
-        if (elo >= 200) return Emote.BronzeI;
-        if (elo >= 150) return Emote.IronIII;
-        if (elo >= 100) return Emote.IronII;
-        return Emote.IronI;
+        if (elo >= 1100) return RankEmote.Radiant
+        if (elo >= 1000) return RankEmote.ImmortalIII;
+        if (elo >= 900) return RankEmote.ImmortalII;
+        if (elo >= 800) return RankEmote.ImmortalI;
+        if (elo >= 770) return RankEmote.AscendantIII;
+        if (elo >= 730) return RankEmote.AscendantII;
+        if (elo >= 700) return RankEmote.AscendantI;
+        if (elo >= 670) return RankEmote.DiamondIII;
+        if (elo >= 630) return RankEmote.DiamondII;
+        if (elo >= 600) return RankEmote.DiamondI;
+        if (elo >= 570) return RankEmote.PlatinumIII;
+        if (elo >= 530) return RankEmote.PlatinumII;
+        if (elo >= 500) return RankEmote.PlatinumI;
+        if (elo >= 470) return RankEmote.GoldIII;
+        if (elo >= 430) return RankEmote.GoldII;
+        if (elo >= 400) return RankEmote.GoldI;
+        if (elo >= 370) return RankEmote.SilverIII;
+        if (elo >= 330) return RankEmote.SilverII;
+        if (elo >= 300) return RankEmote.SilverI;
+        if (elo >= 270) return RankEmote.BronzeIII;
+        if (elo >= 230) return RankEmote.BronzeII;
+        if (elo >= 200) return RankEmote.BronzeI;
+        if (elo >= 150) return RankEmote.IronIII;
+        if (elo >= 100) return RankEmote.IronII;
+        return RankEmote.IronI;
     }
 }
 
-class PlayerStats {
+/**
+ * Represents the statistical data of a player, including their performance and status.
+ */
+export class PlayerStats {
     public games: number;
     public wins: number;
     public losses: number;
@@ -102,6 +162,16 @@ class PlayerStats {
     public acs: number;
     public bannedUntil: Date;
 
+    /**
+     * Initializes a new instance of the class with the provided values.
+     *
+     * @param {number} games - The number of games played. Defaults to 0.
+     * @param {number} wins - The number of games won. Defaults to 0.
+     * @param {number} losses - The number of games lost. Defaults to 0.
+     * @param {number} elo - The Elo rating of the player. Defaults to 500.
+     * @param {number} acs - The average combat score of the player. Defaults to 0.
+     * @param {Date} bannedUntil - The date until the player is banned. Defaults to the Unix epoch start date.
+     */
     public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, bannedUntil: Date = new Date(0)) {
         this.games = games;
         this.wins = wins
@@ -112,7 +182,11 @@ class PlayerStats {
     }
 }
 
-enum Emote {
+/**
+ * Enum representing different rank emotes with their corresponding emoji ID values.
+ * This can be used to map rank names to specific emotes for display purposes.
+ */
+export enum RankEmote {
     Radiant = "1171284215090921603",
     ImmortalIII = "1171284097197420594",
     ImmortalII = "1171284066369290340",

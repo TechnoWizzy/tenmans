@@ -2,15 +2,13 @@ import {ephemeralReply, getEnv, noReply, reply} from "./utils.ts";
 import {
     ActionRowBuilder,
     ButtonBuilder,
-    type ButtonInteraction,
     ButtonStyle,
-    type ChatInputCommandInteraction, type Interaction,
-    ModalSubmitInteraction
+    type Interaction,
 } from "discord.js";
-import Game, {Team} from "../models/game.ts";
-import Player from "../models/player.ts";
-import Tracker from "./tracker.ts";
-import QueueHandler from "../queue/queue_handler.ts";
+import {Game, Team} from "../models/game.ts";
+import {Player} from "../models/player.ts";
+import {Tracker} from "./tracker.ts";
+import {QueueHandler} from "../queue/queue_handler.ts";
 
 export async function handleGameAction(interaction: Interaction, game: Game, action: GameAction) {
     switch (action) {
@@ -24,7 +22,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
             const uploadGame = async (matchId: string) => {
                 const match = await Tracker.fetchMatch(matchId);
                 if (match == null) {
-                    await ephemeralReply(interaction, { content: `Failed to fetch match, please contact <@${getEnv("OWNER_ID")}>` });
+                    await ephemeralReply(interaction, { content: `Failed to fetch match, please download match data from this [link](${getEnv("API_URL_MATCH") + matchId}) and upload via command>` });
                     return;
                 }
 
@@ -34,9 +32,9 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                         const score = segment.stats.roundsWon.value;
                         const hasWon = segment.metadata.hasWon;
                         if (teamId == "Red") {
-                            game.teamRed = new Team("Red", score, hasWon, [])
+                            game.teamRed = new Team("Red", score, hasWon)
                         } else {
-                            game.teamBlue = new Team("Blue", score, hasWon, [])
+                            game.teamBlue = new Team("Blue", score, hasWon)
                         }
                     }
                 }

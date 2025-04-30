@@ -4,11 +4,11 @@ import {handleGameAction} from "./src/utils/game.ts";
 import {handleQueueAction} from "./src/utils/queue.ts";
 import util from "node:util";
 import process from "process";
-import Database from "./src/database/database.ts";
-import CommandHandler from "./src/commands/command_handler.ts";
-import QueueHandler from "./src/queue/queue_handler.ts";
-import Settings from "./src/settings/settings.ts";
-import Game from "./src/models/game.ts";
+import {Database} from "./src/database/database.ts";
+import {CommandHandler} from "./src/commands/command_handler.ts";
+import {QueueHandler} from "./src/queue/queue_handler.ts";
+import {Settings} from "./src/settings/settings.ts";
+import {Game} from "./src/models/game.ts";
 import {confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
 import {handleLeaderboardAction} from "./src/utils/leaderboard.ts";
 

@@ -10,11 +10,21 @@ import {
     type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
 import {createCustomId, ephemeralReply, formatDate} from "../utils/utils.ts";
-import Game from "../models/game.ts";
-import Database from "../database/database.ts";
-import Player from "../models/player.ts";
+import {Game} from "../models/game.ts";
+import {Database} from "../database/database.ts";
+import {Player} from "../models/player.ts";
 
-export default class Queue extends Map<string, [User, Timer]> {
+/**
+ * The `Queue` class extends the JavaScript `Map` object and represents a custom queue system
+ * for managing game participants. This class is the heart of the tenmans bot. Features include user timeout
+ * handling, personalized interactions, maximum participant limits, and integration with game systems.
+ *
+ * Fields:
+ * - `name`: Represents the name of the queue system (static value).
+ * - `maxSize`: The maximum number of participants the queue can hold.
+ * - `timeout`: The timeout duration (in milliseconds) after which a user will be automatically removed from the queue.
+ */
+export class Queue extends Map<string, [User, Timer]> {
     public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
     public readonly timeout = 1000 * 60 * 30;
@@ -24,6 +34,13 @@ export default class Queue extends Map<string, [User, Timer]> {
     private lastMessage?: Message;
     private collector?: MessageCollector;
 
+    /**
+     * Constructs a new instance of the Queue.
+     *
+     * @param {SendableChannels} channel - The main channel for sending messages.
+     * @param {SendableChannels} modChannel - The moderation channel for administrative purposes.
+     * @param {Message} [lastMessage] - The last message sent, if available.
+     */
     public constructor(channel: SendableChannels, modChannel: SendableChannels, lastMessage?: Message) {
         super();
         this.channel = channel;
@@ -31,20 +48,46 @@ export default class Queue extends Map<string, [User, Timer]> {
         this.lastMessage = lastMessage;
     }
 
-    public get users() {
+    /**
+     * Retrieves an array of Discord user objects from the stored tuple values.
+     *
+     * @return {Array<User>} An array containing the first element of each tuple, representing user objects.
+     */
+    public get users(): User[] {
         const tuples = Array.from(this.values())
         return (tuples.map(tuple => tuple[0]));
     }
 
-    public getChannel() {
+    /**
+     * Retrieves the queue channel.
+     *
+     * @return {SendableChannels} The text channel associated with the Queue.
+     */
+    public getChannel(): SendableChannels {
         return this.channel;
     }
 
-    public getModChannel() {
+    /**
+     * Retrieves the moderator queue channel.
+     *
+     * @return {SendableChannels} The text channel associated with Queue moderation.
+     */
+    public getModChannel(): SendableChannels {
         return this.modChannel;
     }
 
-    public async join(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
+    /**
+     * Allows a user to join a queue through a specified interaction. Validates the user's eligibility
+     * and handles various conditions such as registration, ongoing bans, and active games to determine
+     * if the user can successfully join the queue.
+     *
+     * @param {User} user - The user attempting to join the queue.
+     * @param {ButtonInteraction | ChatInputCommandInteraction} interaction - The interaction through which the user is
+     * joining.
+     * @return {Promise<void>} Resolves when the user has successfully joined the queue or if another condition prevents
+     * them from joining.
+     */
+    public async join(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction): Promise<void> {
         if (interaction.isButton()) {
             if (interaction.message.id != this.lastMessage?.id) {
                 await ephemeralReply(interaction, { content: "This message is no longer active." });
@@ -141,7 +184,15 @@ export default class Queue extends Map<string, [User, Timer]> {
         await ephemeralReply(interaction, { content: "You have joined the queue" });
     }
 
-    public async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction, ban: boolean = false) {
+    /**
+     * Handles a user leaving the queue, optionally banning the user.
+     *
+     * @param {User} user - The user leaving the queue.
+     * @param {ButtonInteraction | ChatInputCommandInteraction} interaction - The interaction that triggered this action.
+     * @param {boolean} [ban=false] - Whether the user is leaving the queue because they were banned, defaults to false
+     * @return {Promise<void>} Resolves when the leave operation is complete.
+     */
+    public async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction, ban: boolean = false): Promise<void> {
         if (interaction.isButton()) {
             if (interaction.message.id != this.lastMessage?.id) {
                 await ephemeralReply(interaction, { content: "This message is no longer active." });
@@ -170,7 +221,16 @@ export default class Queue extends Map<string, [User, Timer]> {
         }
     }
 
-    public async update(title: string, color?: ColorResolvable, reset: boolean = false, time?: Date) {
+    /**
+     * Updates the queue message or sends a new one based on the provided parameters.
+     *
+     * @param {string} title - The title to set on the embed.
+     * @param {ColorResolvable} [color] - The color to set on the embed. It is optional.
+     * @param {boolean} [reset=false] - If true, resets the interaction by sending a new message. Defaults to false.
+     * @param {Date} [time] - Optional timestamp to include in the embed.
+     * @return {Promise<void>} A promise that resolves when the operation is complete.
+     */
+    public async update(title: string, color?: ColorResolvable, reset: boolean = false, time?: Date): Promise<void> {
         const embed = this.createEmbed(title, color, time);
         const component = this.createComponents();
 
@@ -194,7 +254,17 @@ export default class Queue extends Map<string, [User, Timer]> {
         await this.lastMessage.edit({ embeds: [ embed ], components: [ component ] });
     }
 
-    public async createCollector() {
+    /**
+     * Creates a MessageCollector instance to handle messages for a specific channel.
+     * The collector fetches recent messages from the channel and listens for new ones up to a specified limit.
+     * It performs specific cleanup and updates when the collection ends unless the reason for ending is "update". The
+     * MessageCollector allows the queue to automatically resend its status message when a certain number of new
+     * messages have been sent by other users.
+     *
+     * @return {Promise<void>} A promise that resolves when the collector setup and message collection handling are
+     * complete.
+     */
+    public async createCollector(): Promise<void> {
         if (!this.lastMessage || this.collector) {
             return
         }
@@ -222,7 +292,16 @@ export default class Queue extends Map<string, [User, Timer]> {
         }
     }
 
-    public async deleteLastMessage() {
+    /**
+     * Deletes the last status message if it exists.
+     *
+     * This method checks if a last message is present and attempts to delete it.
+     * If the deletion is successful or no last message is found, it removes the reference to the last message.
+     * In case of an error during deletion, it is silently caught and no action is taken.
+     *
+     * @return {Promise<void>} A promise that resolves when the last message is deleted or non-existent.
+     */
+    public async deleteLastMessage(): Promise<void> {
         if (!this.lastMessage) {
             return;
         }
@@ -234,7 +313,16 @@ export default class Queue extends Map<string, [User, Timer]> {
         delete this.lastMessage;
     }
 
-    private createEmbed(title: string, color: ColorResolvable = "#424549", time: Date = new Date()) {
+    /**
+     * Creates and returns an EmbedBuilder with the specified title, color, and timestamp.
+     * The embed will include a user list if there are any users in the queue.
+     *
+     * @param {string} title - The title to be displayed in the embed.
+     * @param {ColorResolvable} [color="#424549"] - The color of the embed. Defaults to "#424549".
+     * @param {Date} [time=new Date()] - The timestamp to be set for the embed. Defaults to the current date and time.
+     * @return {EmbedBuilder} The constructed EmbedBuilder object containing the provided data.
+     */
+    private createEmbed(title: string, color: ColorResolvable = "#424549", time: Date = new Date()): EmbedBuilder {
         const builder = new EmbedBuilder();
         const users = this.users;
         if (users.length > 0) {
@@ -251,7 +339,13 @@ export default class Queue extends Map<string, [User, Timer]> {
         return builder
     }
 
-    private createComponents() {
+    /**
+     * Creates and returns a set of components for user interaction, specifically buttons for "Join" and "Leave" actions.
+     *
+     * @return {ActionRowBuilder<ButtonBuilder>} An ActionRowBuilder instance containing button components for "Join"
+     * and "Leave" actions.
+     */
+    private createComponents(): ActionRowBuilder<ButtonBuilder> {
         return new ActionRowBuilder<ButtonBuilder>().setComponents(
             new ButtonBuilder().setLabel("Join").setCustomId(createCustomId("queue", "join")).setStyle(ButtonStyle.Success),
             new ButtonBuilder().setLabel("Leave").setCustomId(createCustomId("queue", "leave")).setStyle(ButtonStyle.Danger),

@@ -1,5 +1,5 @@
 import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder} from "discord.js";
-import Command from "./command.ts";
+import {Command} from "./command.ts";
 import {handleLeaderboardAction} from "../utils/leaderboard.ts";
 
 const builder = new SlashCommandBuilder()
@@ -17,7 +17,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     await handleLeaderboardAction(interaction, "refresh", page);
 }
 
-export default class LeaderboardCommand extends Command {
+export class LeaderboardCommand extends Command {
     constructor() {
         super(false, builder, execute);
     }

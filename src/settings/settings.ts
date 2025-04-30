@@ -1,11 +1,27 @@
 import type {ActivityType} from "discord.js";
 
-export default class Settings {
+/**
+ * The Settings class represents the configuration settings associated with a guild.
+ * It includes the guild's unique identifier, role, status, and channel configurations.
+ */
+export class Settings {
     public guildId: string;
     public roles: RoleSettings;
     public status: StatusSettings;
     public channels: ChannelSettings;
 
+    /**
+     * Constructs a new instance of the class with the provided settings from an instance of the Settings type,
+     * which is given when loading the settings in from a file.
+     *
+     * @param {Settings} settings - The configuration settings used to initialize the instance.
+     * - `guildId`: The unique identifier for the guild. Must not be null.
+     * - `roles`: The role configuration settings. Must not be null.
+     * - `status`: The status configuration settings. Must not be null.
+     * - `channels`: The channel configuration settings. Must not be null.
+     *
+     * @throws {Error} If any of the required settings (`guildId`, `roles`, `status`, `channels`) are null.
+     */
     public constructor (settings: Settings) {
         if (settings.guildId == null) throw new Error("null guildId");
         if (settings.roles == null) throw new Error("null rolesSettings");
@@ -18,14 +34,21 @@ export default class Settings {
         this.channels = new ChannelSettings(settings.channels);
     }
 
-    public static async fetchSettings() {
+    /**
+     * Asynchronously fetches settings by reading the settings.json file and parses its content.
+     * Returns an instance of the Settings object created from the file's JSON content.
+     *
+     * @return {Promise<Settings>} A promise that resolves to a Settings object containing the parsed JSON data from the
+     * settings file.
+     */
+    public static async fetchSettings(): Promise<Settings> {
         const file = Bun.file("./settings.json");
         const json = await file.json()
         return new Settings(json);
     }
 }
 
-class ChannelSettings {
+export class ChannelSettings {
     public log: string
     public admin: string
     public general: string
@@ -41,7 +64,7 @@ class ChannelSettings {
     }
 }
 
-class StatusSettings {
+export class StatusSettings {
     public name: string
     public url?: string
     public type: ActivityType
@@ -56,7 +79,7 @@ class StatusSettings {
     }
 }
 
-class RoleSettings {
+export class RoleSettings {
     public admins: string[]
 
     constructor(settings: RoleSettings) {
