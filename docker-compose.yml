@@ -22,6 +22,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "27101:3000"
     env_file:
       - .env
     volumes:

@@ -1,5 +1,7 @@
 import {Client, EmbedBuilder, Events, type Interaction, TextChannel} from "discord.js";
 import {BOT_OPTIONS, ephemeralReply, getEnv} from "./src/utils/utils.ts";
+import {confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
+import {handleLeaderboardAction} from "./src/utils/leaderboard.ts";
 import {handleGameAction} from "./src/utils/game.ts";
 import {handleQueueAction} from "./src/utils/queue.ts";
 import util from "node:util";
@@ -9,8 +11,6 @@ import {CommandHandler} from "./src/commands/command_handler.ts";
 import {QueueHandler} from "./src/queue/queue_handler.ts";
 import {Settings} from "./src/settings/settings.ts";
 import {Game} from "./src/models/game.ts";
-import {confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
-import {handleLeaderboardAction} from "./src/utils/leaderboard.ts";
 
 Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
