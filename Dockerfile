@@ -6,11 +6,10 @@ WORKDIR /app
 
 COPY package.json tsconfig.json typedoc.json bun.lockb .env ./
 RUN bun install --frozen-lockfile
+RUN bun run docs
 
 COPY *.ts ./
 COPY ./src ./src
 COPY ./settings.json ./
 
-RUN bun run docs
-RUN bunx serve docs &
 ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./index.ts"]
