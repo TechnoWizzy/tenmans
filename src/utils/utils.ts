@@ -4,7 +4,12 @@ import {
     type MessageMentionTypes,
     type Interaction,
     type InteractionEditReplyOptions,
-    type MessageCreateOptions, type EmbedBuilder, type ActionRowBuilder, type ComponentBuilder, type AnyComponentBuilder
+    type MessageCreateOptions,
+    type EmbedBuilder,
+    type ActionRowBuilder,
+    type ComponentBuilder,
+    type AnyComponentBuilder,
+    type MessageMentionOptions
 } from "discord.js";
 
 export const BOT_OPTIONS = {
@@ -26,7 +31,7 @@ export function getEnv(key: string) {
     return value;
 }
 
-export type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[] }
+export type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[], allowedMentions?: MessageMentionOptions }
 
 export async function ephemeralReply(interaction: Interaction, options: ReplyOptions) {
     if (interaction.isRepliable()) {

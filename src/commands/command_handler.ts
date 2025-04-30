@@ -4,14 +4,16 @@ import {LeaderboardCommand} from "./leaderboard.ts";
 import {AdminCommand} from "./admin.ts";
 import {TestCommand} from "./test.ts";
 import {HelpCommand} from "./help.ts";
+import {PingCommand} from "./ping.ts";
 
 export class CommandHandler {
     private static readonly commands = [
+        new PingCommand(),
         new AdminCommand(),
         new RegisterCommand(),
         new LeaderboardCommand(),
         new TestCommand(),
-        new HelpCommand()
+        new HelpCommand(),
     ]
 
     public static async registerCommands(client: Client) {
