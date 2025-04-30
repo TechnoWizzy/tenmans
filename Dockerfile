@@ -12,5 +12,5 @@ COPY ./src ./src
 COPY ./settings.json ./
 
 RUN bun run docs
-RUN bunx serve docs
+RUN bunx serve docs &
 ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./index.ts"]
