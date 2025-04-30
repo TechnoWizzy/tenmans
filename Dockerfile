@@ -6,7 +6,6 @@ WORKDIR /app
 
 COPY package.json bun.lockb .env ./
 RUN bun install --frozen-lockfile
-RUN bun run docs
 
 COPY *.ts ./
 COPY ./src ./src

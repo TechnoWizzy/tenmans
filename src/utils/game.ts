@@ -22,7 +22,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
             const uploadGame = async (matchId: string) => {
                 const match = await Tracker.fetchMatch(matchId);
                 if (match == null) {
-                    await ephemeralReply(interaction, { content: `Failed to fetch match, please download match data from this [link](${getEnv("API_URL_MATCH") + matchId}) and upload via command>` });
+                    await ephemeralReply(interaction, { content: `Failed to fetch match, please download match data from this [link](${getEnv("API_URL_MATCH") + matchId}) and upload via command` });
                     return;
                 }
 
