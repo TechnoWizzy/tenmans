@@ -131,7 +131,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 player.stats.wins = 0;
                 player.stats.losses = 0;
                 await player.save();
-                await ephemeralReply(interaction, { content: `${player.username} has been completely reset`})
+                await reply(interaction, { content: `${player.username} has been completely reset`})
             }
             break;
         }
@@ -147,7 +147,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 await player.save();
             }
 
-            await ephemeralReply(interaction, { content: "Success" });
+            await reply(interaction, { content: "Elo and game data for all players has been completely reset" });
 
             break;
         }
