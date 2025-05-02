@@ -9,7 +9,7 @@ import {ephemeralReply, noReply, reply} from "./utils.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 
-export const leaderboardCache = new Map<number, Player[]>;
+export const leaderboardCache = new Map<number, [EmbedBuilder, ActionRowBuilder<ButtonBuilder>]>;
 
 export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
     switch (action) {
@@ -47,18 +47,18 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
                 .skip(skip)
                 .limit(itemsPerPage)
                 .toArray()
-            leaderboardCache.set(page, players);
+
+            if (players.length == 0) {
+                await ephemeralReply(interaction, { content: "No players found for this page." });
+                return;
+            }
+
+            const embed = new LeaderboardEmbed(players.map(player => new Player(player.id, player.username, player.stats)), page, skip);
+            const components = new LeaderboardComponents(page, players.length);
+            leaderboardCache.set(page, [ embed, components ]);
         }
 
-        const players = leaderboardCache.get(page);
-        if (!players || players.length == 0) {
-            await ephemeralReply(interaction, { content: "No players found for this page." });
-            return;
-        }
-
-        const embed = new LeaderboardEmbed(players.map(player => new Player(player.id, player.username, player.stats)), page, skip);
-        const components = new LeaderboardComponents(page, players.length);
-
+        const [embed, components] = leaderboardCache.get(page)!;
         if (interaction.isChatInputCommand()) {
             await reply(interaction, { embeds: [ embed ], components: [ components ] });
         } else {
