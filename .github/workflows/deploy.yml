@@ -10,31 +10,24 @@ jobs:
     runs-on: self-hosted
     environment: production
     steps:
-      # Checkout the repository
+      # Checkout latest commit
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Load Environment Variables
+      # Load environment variables
       - name: Load Environment Variables
         run: |
           touch .env
           echo "${{ secrets.ENV }}" >> .env
 
-      # Login To Docker
-      - name: Login to Docker
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
-      # Build and Push Docker Image
+      # Build and run containers
       - name: Build and Run Docker Image
         run: |
           make build
           make stop
           make run
 
-      # Clean up Docker Resources
+      # Clean up dangling resources
       - name: Clean up Docker resources
         run: |
           docker system prune
