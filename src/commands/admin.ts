@@ -215,8 +215,9 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             const now = Date.now();
             const date = calculateDate(duration);
+            const expire = formatDate(date);
             await member.timeout(date.getTime() - now, "Timed out for tomfoolery");
-            await reply(interaction, { content: `<@${user.id}> has been timed out. This will expire ${date}` });
+            await reply(interaction, { content: `<@${user.id}> has been timed out. This will expire ${expire}` });
             break;
         }
 
