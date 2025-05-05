@@ -80,6 +80,28 @@ const builder = new SlashCommandBuilder()
         )
     )
     .addSubcommand((subcommand) => subcommand
+        .setName("timeout")
+        .setDescription("timeout a user on discord")
+        .addUserOption((option) => option
+            .setName("user")
+            .setDescription("the discord user to be timed out")
+            .setRequired(true)
+        )
+        .addStringOption((option) => option
+            .setName("duration")
+            .setDescription("the duration of the timeout")
+            .setChoices([
+                {name: '1 Hour', value: 'hour'},
+                {name: '1 Day', value: 'day'},
+                {name: '1 Week', value: 'week'},
+                {name: '1 Month', value: 'month'},
+                {name: '1 Year', value: 'year'},
+                {name: 'Forever', value: 'forever'}
+            ])
+            .setRequired(false)
+        )
+    )
+    .addSubcommand((subcommand) => subcommand
         .setName("unban")
         .setDescription("unban a user from tenmans")
         .addUserOption((option) => option
@@ -178,6 +200,23 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             await player.save();
             await QueueHandler.leave(user, interaction, true);
             await reply(interaction, { content: `<@${user.id}> has been banned. They will be unbanned ${date}` });
+            break;
+        }
+
+        case "timeout": {
+            const user = interaction.options.getUser("user", true);
+            const duration = interaction.options.getString("duration", false) ?? "forever";
+            const member = await interaction.guild?.members.fetch(user.id);
+
+            if (!member) {
+                await ephemeralReply(interaction, { content: `User is not currently in the server` });
+                return;
+            }
+
+            const now = Date.now();
+            const date = calculateDate(duration);
+            await member.timeout(date.getTime() - now, "Timed out for tomfoolery");
+            await reply(interaction, { content: `<@${user.id}> has been timed out. This will expire ${date}` });
             break;
         }
 
