@@ -33,6 +33,7 @@ async function ready(client: Client) {
         await QueueHandler.loadQueue(client);
         client.user?.setActivity(settings.status)
         console.log("TenMans is ready at " + client.readyAt?.toISOString());
+        console.log(`Current Term: ${TermManager.currentTerm.Name}`);
     } catch (e: unknown) {
         const channel = await client.channels.fetch(settings.channels.log) as TextChannel;
         const embed = new ErrorEmbed(e as Error, "Ready Error");
@@ -170,4 +171,3 @@ class ErrorEmbed extends EmbedBuilder {
 }
 
 console.log(`Tenmans: ${process.pid}`);
-console.log(`Current Term: ${TermManager.currentTerm.Name}`);
