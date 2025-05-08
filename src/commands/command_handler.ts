@@ -32,9 +32,11 @@ export class CommandHandler {
                 command.builder.addStringOption((string) => string
                     .setName("term")
                     .setDescription("Which term to use")
-                    .setChoices(TermManager.getAllTerms().map(term => {
-                        return { name: term.Name, value: term.Id }
-                    }))
+                    .setChoices(TermManager.getAllTerms()
+                        .slice(-25)
+                        .map(term => {
+                            return { name: term.Name, value: term.Id }
+                        }))
                     .setRequired(false)
                 )
             }

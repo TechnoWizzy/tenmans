@@ -20,8 +20,8 @@ export class TermManager {
         const terms = data.value
             .filter(term => term.StartDate != null)
             .sort((a, b) => {
-            return new Date(a.StartDate).getTime() - new Date(b.StartDate).getTime();
-        })
+                return new Date(a.StartDate).getTime() - new Date(b.StartDate).getTime();
+            });
 
         for (let i = terms.length - 1; i >= 0; i--) {
             const term = terms[i];
