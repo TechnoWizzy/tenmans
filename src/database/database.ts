@@ -1,7 +1,7 @@
 import { Collection, MongoClient } from "mongodb";
 import {getEnv} from "../utils/utils.ts";
-import type {Game} from "../models/game.ts";
-import type {Player} from "../models/player.ts";
+import {Game} from "../models/game.ts";
+import {Player} from "../models/player.ts";
 
 /**
  * The `Database` class is responsible for managing connections and collections to a MongoDB database.

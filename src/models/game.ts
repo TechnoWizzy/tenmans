@@ -279,7 +279,16 @@ export class Team {
         this.termId = termId ?? TermManager.currentTerm.Id;
         this.score = score;
         this.hasWon = hasWon;
-        this.players = players.map(player => new Player(player.id, player.username, player.stats));
+        this.players = players.map(player => {
+            const stats = player.stats;
+            try {
+                console.log(stats.length)
+            } catch {
+                // @ts-ignore
+                return new Player(player.id, player.username, [player.stats])
+            }
+            return new Player(player.id, player.username, player.stats)
+        });
     }
 
     /**
@@ -318,12 +327,17 @@ export class Modifier {
  * @return {Game} A new instance of the Game class with formatted player and team data.
  */
 function formatGame(game: WithId<Game>): Game {
-    const oldTerm = "35d622bc-75a8-44d9-aea9-6271e49c37ed";
     const players = game.players.map(player => {
-        console.log(player)
+        const stats = player.stats;
+        try {
+            console.log(stats.length)
+        } catch {
+            // @ts-ignore
+            return new Player(player.id, player.username, [player.stats])
+        }
         return new Player(player.id, player.username, player.stats)
     });
-    const teamRed = new Team(game.teamRed.name, game.teamRed.termId ?? oldTerm, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
-    const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId ?? oldTerm, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, game.termId ?? oldTerm, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
+    const teamRed = new Team(game.teamRed.name, game.teamRed.termId, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
+    const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
+    return new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
 }
