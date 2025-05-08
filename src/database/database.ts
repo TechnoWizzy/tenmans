@@ -24,17 +24,6 @@ export class Database {
         const db = client.db("pugg");
         Database.games = db.collection<Game>("games-2025");
         Database.players = db.collection<Player>("players-2025");
-
-        const games = await Game.fetchAll();
-        const players = await Player.fetchAll();
-
-        for (const game of games) {
-            game.termId = "35d622bc-75a8-44d9-aea9-6271e49c37ed"
-            await game.save();
-            const term = TermManager.getTerm(game.termId)
-            console.log(`Saved game to ${term.Name}`)
-        }
-        console.log("Updated Games")
     }
 }
 
