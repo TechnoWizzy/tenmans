@@ -76,6 +76,7 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
             await interaction.message.edit({ embeds: [ embed ], components: [ components ] });
         }
     } catch (error) {
+        console.log(error);
         await ephemeralReply(interaction, { content: "An error occurred while fetching the leaderboard." });
     }
 }
