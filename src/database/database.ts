@@ -2,6 +2,7 @@ import { Collection, MongoClient } from "mongodb";
 import {getEnv} from "../utils/utils.ts";
 import {Game} from "../models/game.ts";
 import {Player} from "../models/player.ts";
+import {TermManager} from "../utils/term.ts";
 
 /**
  * The `Database` class is responsible for managing connections and collections to a MongoDB database.
@@ -23,6 +24,21 @@ export class Database {
         const db = client.db("pugg");
         Database.games = db.collection<Game>("games-2025");
         Database.players = db.collection<Player>("players-2025");
+
+        const games = await Game.fetchAll();
+        const players = await Player.fetchAll();
+
+        for (const game of games) {
+            await game.save();
+            const term = TermManager.getTerm(game.termId)
+            console.log(`Saved game to ${term.Name}`)
+        }
+        console.log("Updated Games")
+
+        for (const player of players) {
+            await player.save();
+        }
+        console.log("Updated Players")
     }
 }
 
