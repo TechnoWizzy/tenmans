@@ -141,7 +141,7 @@ async function interactionCreate(interaction: Interaction) {
                 case "leaderboard": {
                     const action = args[1] as LeaderboardAction;
                     const page = Number.parseInt(args[2]);
-                    await handleLeaderboardAction(interaction, action, page);
+                    await handleLeaderboardAction(interaction, action, page, args[3] ?? "35d622bc-75a8-44d9-aea9-6271e49c37ed");
                     break;
                 }
             }

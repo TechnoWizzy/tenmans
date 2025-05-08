@@ -10,6 +10,10 @@ export class TermManager {
         return term;
     }
 
+    public static getAllTerms() {
+        return this.terms;
+    }
+
     public static async loadTerms() {
         const response = await fetch(`${getEnv("PURDUE_IO_URL")}/Terms`);
         const data: TermData = await response.json();

@@ -14,7 +14,8 @@ const builder = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const page = interaction.options.getInteger("page") ?? 1;
-    await handleLeaderboardAction(interaction, "refresh", page);
+    const term = interaction.options.getString("term") ?? "35d622bc-75a8-44d9-aea9-6271e49c37ed";
+    await handleLeaderboardAction(interaction, "refresh", page, term);
 }
 
 export class LeaderboardCommand extends Command {

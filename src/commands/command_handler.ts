@@ -5,6 +5,7 @@ import {AdminCommand} from "./admin.ts";
 import {TestCommand} from "./test.ts";
 import {HelpCommand} from "./help.ts";
 import {PingCommand} from "./ping.ts";
+import {TermManager} from "../utils/term.ts";
 
 export class CommandHandler {
     private static readonly commands = [
@@ -27,6 +28,15 @@ export class CommandHandler {
                         .map(cmd => ({ name: cmd.name, value: cmd.name })))
                     .setRequired(false)
                 );
+            } else if (command.name == "leaderboard") {
+                command.builder.addStringOption((string) => string
+                    .setName("term")
+                    .setDescription("Which term to use")
+                    .setRequired(false)
+                    .setChoices(TermManager.getAllTerms().map(term => {
+                        return { name: term.Name, value: term.Id }
+                    }))
+                )
             }
             return command.builder.toJSON();
         }));

@@ -10,9 +10,9 @@ import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 import {TermManager} from "./term.ts";
 
-export const leaderboardCache = new Map<number, [EmbedBuilder, ActionRowBuilder<ButtonBuilder>]>;
+export const leaderboardCache = new Map<[number, string], [EmbedBuilder, ActionRowBuilder<ButtonBuilder>]>;
 
-export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number) {
+export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number, termId: string) {
     switch (action) {
         case "left": {
             page -= 1;
@@ -46,7 +46,7 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
     };
 
     try {
-        if (!leaderboardCache.has(page)) {
+        if (!leaderboardCache.has([page, termId])) {
             const players = await Database.players.find(query).sort({ "stats.elo": -1 })
                 .skip(skip)
                 .limit(itemsPerPage)
@@ -58,11 +58,11 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
             }
 
             const embed = new LeaderboardEmbed(players.map(player => new Player(player.id, player.username, player.stats)), page, skip);
-            const components = new LeaderboardComponents(page, players.length);
-            leaderboardCache.set(page, [ embed, components ]);
+            const components = new LeaderboardComponents(page, players.length, termId);
+            leaderboardCache.set([page, termId], [ embed, components ]);
         }
 
-        const [embed, components] = leaderboardCache.get(page)!;
+        const [embed, components] = leaderboardCache.get([page, termId])!;
         if (interaction.isChatInputCommand()) {
             await reply(interaction, { embeds: [ embed ], components: [ components ] });
         } else {
@@ -96,26 +96,21 @@ class LeaderboardEmbed extends EmbedBuilder {
 }
 
 class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
-    public constructor(page: number, players: number, disabled = false) {
+    public constructor(page: number, players: number, termId: string) {
         super();
-        const leftButtonDisabled = page == 1 || disabled;
-        const rightButtonDisabled = players != 10 || disabled;
+        const leftButtonDisabled = page == 1;
+        const rightButtonDisabled = players != 10;
         this.setComponents(
             new ButtonBuilder()
                 .setEmoji("1162429590954844340")
                 .setStyle(ButtonStyle.Secondary)
-                .setCustomId(`leaderboard,left,${page}`)
+                .setCustomId(`leaderboard,left,${page},${termId}`)
                 .setDisabled(leftButtonDisabled),
             new ButtonBuilder()
                 .setEmoji("1162430047899099136")
                 .setStyle(ButtonStyle.Secondary)
-                .setCustomId(`leaderboard,right,${page}`)
+                .setCustomId(`leaderboard,right,${page},${termId}`)
                 .setDisabled(rightButtonDisabled),
-            new ButtonBuilder()
-                .setEmoji("🔄")
-                .setStyle(ButtonStyle.Secondary)
-                .setCustomId(`leaderboard,refresh,${page}`)
-                .setDisabled(disabled)
         )
     }
 }
