@@ -1,3 +1,16 @@
+interface TermData {
+    "@odata.context": string
+    value: Term[]
+}
+
+interface Term {
+    Id: string
+    Code: string
+    Name: string
+    StartDate: string
+    EndDate: string
+}
+
 interface MatchResponse {
     data: MatchData
 }

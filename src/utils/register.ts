@@ -4,14 +4,8 @@ import {Player} from "../models/player";
 import {Game} from "../models/game.ts";
 
 export async function confirmRegistration(interaction: ButtonInteraction, userId: string, username: string) {
-    const oldPlayer = await Player.fetchOld(userId);
-    await new Player(userId, username, oldPlayer?.stats).save();
-
-    if (oldPlayer) {
-        await ephemeralReply(interaction, { content: `Successfully registered as **${username}** - Your elo has been set at ${oldPlayer.stats.elo}` });
-    } else {
-        await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
-    }
+    await new Player(userId, username).save();
+    await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
 }
 
 export async function confirmReregistration(interaction: ButtonInteraction, userId: string, username: string) {

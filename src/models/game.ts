@@ -12,6 +12,7 @@ import {
 } from "discord.js";
 import {createCustomId, getEnv} from "../utils/utils.ts";
 import type {WithId} from "mongodb";
+import {TermManager} from "../utils/term.ts";
 
 /**
  * Represents a game with teams, players, and other relevant details such as match ID,
@@ -19,6 +20,7 @@ import type {WithId} from "mongodb";
  */
 export class Game {
     public readonly id: number;
+    public readonly termId: string;
     public matchId?: string;
     public teamRed: Team;
     public teamBlue: Team;
@@ -30,6 +32,7 @@ export class Game {
      * Constructs a new instance of a Game.
      *
      * @param {number} id - The unique identifier for the match.
+     * @param {string} termId - The ID of the term during which the game was created
      * @param {Player[]} players - The list of players participating in the match.
      * @param {Team} [teamRed] - The red team participating in the match. Defaults to a new red team instance if not provided.
      * @param {Team} [teamBlue] - The blue team participating in the match. Defaults to a new blue team instance if not provided.
@@ -37,12 +40,13 @@ export class Game {
      * @param {Modifier[]} [modifiers=[]] - A list of match modifiers, which defaults to an empty array if not provided.
      * @param {boolean} [cancelled=false] - Indicates if the match is canceled. Defaults to false.
      */
-    public constructor(id: number, players: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false) {
+    public constructor(id: number, termId?: string, players?: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false) {
         this.id = id;
+        this.termId = termId ?? TermManager.currentTerm.Id
         this.matchId = matchId;
-        this.teamRed = teamRed ?? new Team("Red");
-        this.teamBlue = teamBlue ?? new Team("Blue");
-        this.players = players;
+        this.teamRed = teamRed ?? new Team("Red", this.termId);
+        this.teamBlue = teamBlue ?? new Team("Blue", this.termId);
+        this.players = players ?? [];
         this.modifiers = modifiers;
         this.cancelled = cancelled
     }
@@ -72,10 +76,11 @@ export class Game {
      */
     public createEmbed(): EmbedBuilder {
         const builder = new EmbedBuilder();
+        const term = TermManager.getTerm(this.termId);
         if (this.cancelled) {
-            builder.setTitle(`Game ${this.id} - Cancelled`);
+            builder.setTitle(`Game ${this.id} ${term.Name} - Cancelled`);
         } else {
-            builder.setTitle(`Game ${this.id}`);
+            builder.setTitle(`Game ${this.id} ${term.Name}`);
         }
 
         if (this.matchId) {
@@ -101,8 +106,9 @@ export class Game {
         } else {
             const playerText = this.players
                 .map(player => {
-                    const emote = `<:test:${player.getEmote()}>`;
-                    return `${emote}: **${player.username}** - ${player.stats.elo} elo`;
+                    const stats = player.getStats(this.termId);
+                    const emote = `<:test:${player.getEmote(this.termId)}>`;
+                    return `${emote}: **${player.username}** - ${stats.elo} elo`;
                 })
                 .join('\n');
 
@@ -124,24 +130,26 @@ export class Game {
      * with an associated rank Emoji.
      */
     private formatPlayer(player: Player, team: Team, opponent: Team): string {
-        const acs = player.stats.acs;
+        const stats = player.getStats(this.termId);
+        const acs = stats.acs;
+        const elo = stats.elo
         if (this.id == 0) {
             if (team.hasWon) {
-                const eloDelta = Math.round(1.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon));
+                const eloDelta = Math.round(1.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId));
                 const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-                const emote = `<:test:${player.getEmote(eloDelta)}>`;
-                return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+                const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
+                return `${emote}: **${player.username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
             } else {
-                const eloDelta = Math.round(0.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon));
+                const eloDelta = Math.round(0.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId));
                 const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-                const emote = `<:test:${player.getEmote(eloDelta)}>`;
-                return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+                const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
+                return `${emote}: **${player.username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
             }
         } else {
-            const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon);
+            const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId);
             const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-            const emote = `<:test:${player.getEmote(eloDelta)}>`;
-            return `${emote}: **${player.username}** - ${player.stats.elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+            const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
+            return `${emote}: **${player.username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
         }
     }
 
@@ -251,6 +259,7 @@ export class Game {
  */
 export class Team {
     public name: TeamName;
+    public readonly termId: string;
     public score: number;
     public hasWon: boolean;
     public players: Player[];
@@ -259,12 +268,14 @@ export class Team {
      * Constructs a new instance of a Team, initializing its properties with the provided arguments.
      *
      * @param {TeamName} name - The name of the Team
+     * @param {string} termId - The ID of the term during which this was created
      * @param {number} score - The number of rounds won by the team, default 0
      * @param {boolean} hasWon - A flag indicating whether the Team won the game, default false
      * @param {Player[]} players - An array of Player objects on this team, default empty array
      */
-    public constructor(name: TeamName, score: number = 0, hasWon: boolean = false, players: Player[] = []) {
+    public constructor(name: TeamName, termId?: string, score: number = 0, hasWon: boolean = false, players: Player[] = []) {
         this.name = name;
+        this.termId = termId ?? TermManager.currentTerm.Id;
         this.score = score;
         this.hasWon = hasWon;
         this.players = players.map(player => new Player(player.id, player.username, player.stats));
@@ -277,7 +288,7 @@ export class Team {
      */
     public getAverageElo(): number {
         return this.players
-            .map(player => player.stats.elo)
+            .map(player => player.getStats(this.termId).elo)
             .reduce((a, b) => a + b) / this.players.length;
     }
 }
@@ -306,8 +317,9 @@ export class Modifier {
  * @return {Game} A new instance of the Game class with formatted player and team data.
  */
 function formatGame(game: WithId<Game>): Game {
+    const oldTerm = "35d622bc-75a8-44d9-aea9-6271e49c37ed";
     const players = game.players.map(player => new Player(player.id, player.username, player.stats));
-    const teamRed = new Team(game.teamRed.name, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
-    const teamBlue = new Team(game.teamBlue.name, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
+    const teamRed = new Team(game.teamRed.name, game.teamRed.termId ?? oldTerm, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
+    const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId ?? oldTerm, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
+    return new Game(game.id, game.termId ?? oldTerm, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
 }

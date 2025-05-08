@@ -12,6 +12,7 @@ import {CommandHandler} from "./src/commands/command_handler.ts";
 import {QueueHandler} from "./src/queue/queue_handler.ts";
 import {Settings} from "./src/settings/settings.ts";
 import {Game} from "./src/models/game.ts";
+import {TermManager} from "./src/utils/term.ts";
 
 Express()
     .use('/', Express.static('docs'))
@@ -27,6 +28,7 @@ Database.connect().then(() => {
 async function ready(client: Client) {
     const settings = await Settings.fetchSettings();
     try {
+        await TermManager.loadTerms();
         await CommandHandler.registerCommands(client);
         await QueueHandler.loadQueue(client);
         client.user?.setActivity(settings.status)

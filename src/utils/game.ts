@@ -33,9 +33,9 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                         const score = segment.stats.roundsWon.value;
                         const hasWon = segment.metadata.hasWon;
                         if (teamId == "Red") {
-                            game.teamRed = new Team("Red", score, hasWon)
+                            game.teamRed = new Team("Red", game.termId, score, hasWon)
                         } else {
-                            game.teamBlue = new Team("Blue", score, hasWon)
+                            game.teamBlue = new Team("Blue", game.termId, score, hasWon)
                         }
                     }
                 }
@@ -55,7 +55,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                             return;
                         }
 
-                        player.stats.acs = Math.round(segment.stats.scorePerRound.value);
+                        player.getStats(game.termId).acs = Math.round(segment.stats.scorePerRound.value);
 
                         const teamId = segment.metadata.teamId;
                         if (teamId == "Red") {
@@ -181,12 +181,15 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
 
         for (let i = 0; i < teamRed.players.length; i++) {
             const player = teamRed.players[i];
+
             const modifiedPlayer = modifiedPlayers.get(player.id);
             if (modifiedPlayer) { // Copy everything but ACS
-                player.stats.elo = modifiedPlayer.stats.elo;
-                player.stats.wins = modifiedPlayer.stats.wins;
-                player.stats.losses = modifiedPlayer.stats.losses;
-                player.stats.games = modifiedPlayer.stats.games;
+                const stats = player.getStats(game.termId);
+                const modifiedStats = modifiedPlayer.getStats(game.termId);
+                stats.elo = modifiedStats.elo;
+                stats.wins = modifiedStats.wins;
+                stats.losses = modifiedStats.losses;
+                stats.games = modifiedStats.games;
             }
         }
 
@@ -194,10 +197,12 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const player = teamBlue.players[i];
             const modifiedPlayer = modifiedPlayers.get(player.id);
             if (modifiedPlayer) {
-                player.stats.elo = modifiedPlayer.stats.elo;
-                player.stats.wins = modifiedPlayer.stats.wins;
-                player.stats.losses = modifiedPlayer.stats.losses;
-                player.stats.games = modifiedPlayer.stats.games;
+                const stats = player.getStats(game.termId);
+                const modifiedStats = modifiedPlayer.getStats(game.termId);
+                stats.elo = modifiedStats.elo;
+                stats.wins = modifiedStats.wins;
+                stats.losses = modifiedStats.losses;
+                stats.games = modifiedStats.games;
             }
         }
 
@@ -206,20 +211,21 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const teamElo = teamRed.getAverageElo();
             const opponentElo = teamBlue.getAverageElo();
             const opponentScore = teamBlue.score;
-            const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamRed.hasWon);
+            const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamRed.hasWon, game.termId);
             const modifiedPlayer = new Player(player.id, player.username, player.stats);
+            const modifiedStats = modifiedPlayer.getStats(game.termId);
             if (game.id == 0 && teamRed.hasWon) {
-                modifiedPlayer.stats.elo += Math.round(eloDelta * 1.5);
+                modifiedStats.elo += Math.round(eloDelta * 1.5);
             } else if (game.id == 0) {
-                modifiedPlayer.stats.elo += Math.round(eloDelta * 0.5);
+                modifiedStats.elo += Math.round(eloDelta * 0.5);
             } else {
-                modifiedPlayer.stats.elo += eloDelta;
+                modifiedStats.elo += eloDelta;
             }
-            modifiedPlayer.stats.games += 1;
+            modifiedStats.games += 1;
             if (teamRed.hasWon) {
-                modifiedPlayer.stats.wins += 1;
+                modifiedStats.wins += 1;
             } else {
-                modifiedPlayer.stats.losses += 1;
+                modifiedStats.losses += 1;
             }
             game.players.push(player);
             modifiedPlayers.set(player.id, modifiedPlayer);
@@ -230,20 +236,21 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const teamElo = teamBlue.getAverageElo();
             const opponentElo = teamRed.getAverageElo();
             const opponentScore = teamRed.score;
-            const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon);
+            const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon, game.termId);
             const modifiedPlayer = new Player(player.id, player.username, player.stats);
+            const modifiedStats = modifiedPlayer.getStats(game.termId);
             if (game.id == 0 && teamBlue.hasWon) {
-                modifiedPlayer.stats.elo += Math.round(eloDelta * 1.5);
+                modifiedStats.elo += Math.round(eloDelta * 1.5);
             } else if (game.id == 0) {
-                modifiedPlayer.stats.elo += Math.round(eloDelta * 0.5);
+                modifiedStats.elo += Math.round(eloDelta * 0.5);
             } else {
-                modifiedPlayer.stats.elo += eloDelta;
+                modifiedStats.elo += eloDelta;
             }
-            modifiedPlayer.stats.games += 1;
+            modifiedStats.games += 1;
             if (teamBlue.hasWon) {
-                modifiedPlayer.stats.wins += 1;
+                modifiedStats.wins += 1;
             } else {
-                modifiedPlayer.stats.losses += 1;
+                modifiedStats.losses += 1;
             }
             game.players.push(player);
             modifiedPlayers.set(player.id, modifiedPlayer);

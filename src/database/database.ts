@@ -10,7 +10,6 @@ import type {Player} from "../models/player.ts";
 export class Database {
     public static games: Collection<Game>;
     public static players: Collection<Player>;
-    public static oldPlayers: Collection<Player>;
 
     /**
      * Establishes a connection to the database using the MongoDB client.
@@ -24,7 +23,6 @@ export class Database {
         const db = client.db("pugg");
         Database.games = db.collection<Game>("games-2025");
         Database.players = db.collection<Player>("players-2025");
-        Database.oldPlayers = db.collection<Player>("old-players");
     }
 }
 

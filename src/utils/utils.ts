@@ -120,3 +120,4 @@ export function formatDate(date: Date) {
     const seconds = Math.floor(date.getTime() / 1000)
     return `<t:${seconds}:R>`;
 }
+

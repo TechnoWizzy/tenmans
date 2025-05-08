@@ -9,10 +9,11 @@ import {
     type User,
     type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
-import {createCustomId, ephemeralReply, formatDate} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply} from "../utils/utils.ts";
 import {Game} from "../models/game.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
+import {TermManager} from "../utils/term.ts";
 
 /**
  * The `Queue` class extends the JavaScript `Map` object and represents a custom queue system
@@ -110,11 +111,13 @@ export class Queue extends Map<string, [User, Timer]> {
             return;
         }
 
+        /*
         if (player.stats.bannedUntil.getTime() > Date.now()) {
             const date = formatDate(player.stats.bannedUntil);
             await ephemeralReply(interaction, { content: `You will be unbanned from TenMans ${date}` });
             return
         }
+         */
 
         const games = await Game.fetchAll();
         for (const game of games) {
@@ -164,12 +167,12 @@ export class Queue extends Map<string, [User, Timer]> {
                 if (!player) {
                     throw new Error(`Player Not Found: ${user.id}`);
                 }
-                player.stats.acs = 0;
+                player.getStats(TermManager.currentTerm.Id).acs = 0;
                 return player;
             }));
 
             const gameId = await Database.games.countDocuments();
-            const game = await new Game(gameId, players).save();
+            const game = await new Game(gameId, TermManager.currentTerm.Id, players).save();
             const embed = game.createEmbed();
             const components = game.createComponents();
             await this.modChannel.send({ content: `Game ${gameId} has started.`, embeds: [ embed ], components: [ components ] });
@@ -334,6 +337,8 @@ export class Queue extends Map<string, [User, Timer]> {
             builder.setTitle(`${Queue.name}: ${title}`);
         }
 
+        const term = TermManager.currentTerm;
+        builder.setAuthor({ name: term.Name });
         builder.setColor(color);
         builder.setTimestamp(time);
         return builder

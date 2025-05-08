@@ -1,4 +1,5 @@
 import {Database} from "../database/database.ts";
+import {TermManager} from "../utils/term.ts";
 
 /**
  * Represents a tenmans player
@@ -6,7 +7,7 @@ import {Database} from "../database/database.ts";
 export class Player {
     public readonly id: string;
     public readonly username: string;
-    public readonly stats: PlayerStats;
+    public readonly stats: PlayerStats[];
 
     /**
      * Creates a new instance of the player class. This constructor should be called on all Players
@@ -17,10 +18,16 @@ export class Player {
      * @param {string} username - The username of the player. This is their full RiotID
      * @param {PlayerStats} [stats=new PlayerStats()] - The player's statistics. Defaults to a new `PlayerStats` instance.
      */
-    public constructor(id: string, username: string, stats: PlayerStats = new PlayerStats()) {
+    public constructor(id: string, username: string, stats: PlayerStats[] = []) {
         this.id = id;
         this.username = username;
-        this.stats = new PlayerStats(stats.games, stats.wins, stats.losses, stats.elo, stats.acs, stats.bannedUntil);
+        this.stats = stats.map(stat => {
+            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.termId ?? "35d622bc-75a8-44d9-aea9-6271e49c37ed");
+        })
+    }
+
+    public getStats(termId: string) {
+        return this.stats.find(stat => stat.termId == termId) ?? new PlayerStats()
     }
 
     /**
@@ -47,19 +54,6 @@ export class Player {
     public static async fetch(id: string): Promise<Player | null> {
         const query = { id: id };
         const player = await Database.players.findOne(query);
-        if (!player) return null;
-        return new Player(player.id, player.username, player.stats);
-    }
-
-    /**
-     * Fetches an old player record from the database using the provided ID.
-     *
-     * @param {string} id The unique identifier of the player to be fetched.
-     * @return {Promise<Player|null>} Returns a Player instance if found, otherwise returns null.
-     */
-    public static async fetchOld(id: string): Promise<Player | null> {
-        const query = { id: id };
-        const player = await Database.oldPlayers.findOne(query);
         if (!player) return null;
         return new Player(player.id, player.username, player.stats);
     }
@@ -95,20 +89,22 @@ export class Player {
      * @param {number} opponentElo - The Elo rating of the opponent.
      * @param {number} opponentScore - The score of the opponent team in the match.
      * @param {boolean} isWinner - Indicates whether the team won the match.
+     * @param {string} termId - The ID of the term during which this calculation should be considered
      * @return {number} The calculated Elo rating change for the team.
      */
-    public getEloChange(teamElo: number, opponentElo: number, opponentScore: number, isWinner: boolean): number {
+    public getEloChange(teamElo: number, opponentElo: number, opponentScore: number, isWinner: boolean, termId: string): number {
         const c = 1 + (10 - Math.min(opponentScore, 12)) / 50;
+        const stats = this.getStats(termId);
         if (isWinner) {
-            const a = 25 * (this.stats.acs / 200) * (1 - (teamElo - opponentElo) / teamElo);
-            const b = 1 + (opponentElo - this.stats.elo) / opponentElo;
+            const a = 25 * (stats.acs / 200) * (1 - (teamElo - opponentElo) / teamElo);
+            const b = 1 + (opponentElo - stats.elo) / opponentElo;
             return Math.round(a * b * c);
         } else {
-            const a = 25 * (150 / this.stats.acs) * (1 - (opponentElo - teamElo) / teamElo);
-            const b = 1 - (opponentElo - this.stats.elo) / opponentElo;
+            const a = 25 * (150 / stats.acs) * (1 - (opponentElo - teamElo) / teamElo);
+            const b = 1 - (opponentElo - stats.elo) / opponentElo;
             const loss = Math.round(-1 * a * b * c);
-            if (this.stats.elo + loss < 0) {
-                return -this.stats.elo;
+            if (stats.elo + loss < 0) {
+                return -stats.elo;
             } else {
                 return loss;
             }
@@ -118,11 +114,12 @@ export class Player {
     /**
      * Determines the emojiID corresponding to the player's elo, optionally adjusted by an additional delta value.
      *
+     * @param termId The termId to specify which term stats should be considered
      * @param delta An optional numerical adjustment to the player's elo. Defaults to 0.
      * @return The corresponding emojiID based on the adjusted elo.
      */
-    public getEmote(delta: number = 0) {
-        const elo = this.stats.elo + delta;
+    public getEmote(termId: string, delta: number = 0) {
+        const elo = this.getStats(termId).elo + delta;
         if (elo >= 1100) return RankEmote.Radiant
         if (elo >= 1000) return RankEmote.ImmortalIII;
         if (elo >= 900) return RankEmote.ImmortalII;
@@ -160,7 +157,7 @@ export class PlayerStats {
     public losses: number;
     public elo: number;
     public acs: number;
-    public bannedUntil: Date;
+    public termId: string;
 
     /**
      * Initializes a new instance of the class with the provided values.
@@ -170,15 +167,15 @@ export class PlayerStats {
      * @param {number} losses - The number of games lost. Defaults to 0.
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
-     * @param {Date} bannedUntil - The date until the player is banned. Defaults to the Unix epoch start date.
+     * @param {string} termId - The Id of the current school term
      */
-    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, bannedUntil: Date = new Date(0)) {
+    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
         this.elo = elo;
         this.acs = acs;
-        this.bannedUntil = bannedUntil;
+        this.termId = termId ?? TermManager.currentTerm.Id;
     }
 }
 

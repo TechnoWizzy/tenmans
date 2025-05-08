@@ -8,10 +8,10 @@ import {
 } from "discord.js";
 import {calculateDate, createCustomId, ephemeralReply, formatDate, getEnv, reply} from "../utils/utils.ts";
 import {handleGameAction} from "../utils/game.ts";
-import {QueueHandler} from "../queue/queue_handler.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {Game} from "../models/game.ts";
+import {TermManager} from "../utils/term.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -38,10 +38,6 @@ const builder = new SlashCommandBuilder()
             .setDescription("the player to be reset")
             .setRequired(true)
         )
-    )
-    .addSubcommand((subcommand) => subcommand
-        .setName("reset-all")
-        .setDescription("reset everyone's elo")
     )
     .addSubcommand((subcommand) => subcommand
         .setName("input-game-data")
@@ -148,29 +144,14 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             if (!player) {
                 await ephemeralReply(interaction, { content: "This user does not have any playerdata" });
             } else {
-                player.stats.elo = 500;
-                player.stats.games = 0;
-                player.stats.wins = 0;
-                player.stats.losses = 0;
+                const stats = player.getStats(TermManager.currentTerm.Id);
+                stats.elo = 500;
+                stats.games = 0;
+                stats.wins = 0;
+                stats.losses = 0;
                 await player.save();
                 await reply(interaction, { content: `${player.username} has been completely reset`})
             }
-            break;
-        }
-
-        case "reset-all": {
-            const players = await Player.fetchAll();
-
-            for (const player of players) {
-                player.stats.elo = 500;
-                player.stats.games = 0;
-                player.stats.wins = 0;
-                player.stats.losses = 0;
-                await player.save();
-            }
-
-            await reply(interaction, { content: "Elo and game data for all players has been completely reset" });
-
             break;
         }
 
@@ -182,6 +163,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         }
 
         case "ban": {
+            /*
             const user = interaction.options.getUser("user", true);
             const duration = interaction.options.getString("duration", false) ?? "forever";
             const player = await Player.fetch(user.id);
@@ -200,6 +182,8 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             await player.save();
             await QueueHandler.leave(user, interaction, true);
             await reply(interaction, { content: `<@${user.id}> has been banned. They will be unbanned ${date}` });
+             */
+            await ephemeralReply(interaction, { content: "Bans are currently disabled" });
             break;
         }
 
@@ -222,6 +206,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         }
 
         case "unban": {
+            /*
             const user = interaction.options.getUser("user", true);
             const player = await Player.fetch(user.id);
             if (!player) {
@@ -237,6 +222,8 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             player.stats.bannedUntil = new Date(0);
             await player.save();
             await reply(interaction, { content: `<@${user.id}> has been unbanned` });
+             */
+            await ephemeralReply(interaction, { content: "Bans are currently disabled" });
             break;
         }
 
