@@ -281,13 +281,12 @@ export class Team {
         this.hasWon = hasWon;
         this.players = players.map(player => {
             const stats = player.stats;
-            try {
-                console.log(stats.length)
-            } catch {
+            if (stats.length == undefined) {
                 // @ts-ignore
                 return new Player(player.id, player.username, [player.stats])
+            } else {
+                return new Player(player.id, player.username, player.stats)
             }
-            return new Player(player.id, player.username, player.stats)
         });
     }
 
@@ -329,13 +328,12 @@ export class Modifier {
 function formatGame(game: WithId<Game>): Game {
     const players = game.players.map(player => {
         const stats = player.stats;
-        try {
-            console.log(stats.length)
-        } catch {
+        if (stats.length == undefined) {
             // @ts-ignore
             return new Player(player.id, player.username, [player.stats])
+        } else {
+            return new Player(player.id, player.username, player.stats)
         }
-        return new Player(player.id, player.username, player.stats)
     });
     const teamRed = new Team(game.teamRed.name, game.teamRed.termId, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
