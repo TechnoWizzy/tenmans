@@ -29,16 +29,12 @@ export class Database {
         const players = await Player.fetchAll();
 
         for (const game of games) {
+            game.termId = "35d622bc-75a8-44d9-aea9-6271e49c37ed"
             await game.save();
             const term = TermManager.getTerm(game.termId)
             console.log(`Saved game to ${term.Name}`)
         }
         console.log("Updated Games")
-
-        for (const player of players) {
-            await player.save();
-        }
-        console.log("Updated Players")
     }
 }
 

@@ -22,7 +22,7 @@ export class Player {
         this.id = id;
         this.username = username;
         this.stats = stats.map(stat => {
-            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.termId ?? "35d622bc-75a8-44d9-aea9-6271e49c37ed");
+            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.termId);
         })
     }
 

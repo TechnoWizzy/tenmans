@@ -20,7 +20,7 @@ import {TermManager} from "../utils/term.ts";
  */
 export class Game {
     public readonly id: number;
-    public readonly termId: string;
+    public termId: string;
     public matchId?: string;
     public teamRed: Team;
     public teamBlue: Team;
