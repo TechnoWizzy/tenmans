@@ -18,6 +18,8 @@ Express()
     .use('/', Express.static('docs'))
     .listen(3000)
 
+await TermManager.loadTerms();
+
 Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
     client.on(Events.ClientReady, ready);
@@ -28,7 +30,7 @@ Database.connect().then(() => {
 async function ready(client: Client) {
     const settings = await Settings.fetchSettings();
     try {
-        await TermManager.loadTerms();
+
         await CommandHandler.registerCommands(client);
         await QueueHandler.loadQueue(client);
         client.user?.setActivity(settings.status)
