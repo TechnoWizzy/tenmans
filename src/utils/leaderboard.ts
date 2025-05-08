@@ -37,8 +37,11 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
     const itemsPerPage = 10;
     const skip = (page - 1) * itemsPerPage;
     const query = {
-        "stats.games": {
-            "$gt": 0
+        stats: {
+            $elemMatch: {
+                termId: TermManager.currentTerm.Id,
+                games: { $gt: 0 }
+            }
         }
     };
 
@@ -75,7 +78,8 @@ class LeaderboardEmbed extends EmbedBuilder {
     public constructor(players: Player[], page: number, skip: number) {
         super();
         const term = TermManager.currentTerm;
-        this.setTitle(`Leaderboard Page ${page}: ${term.Name}`);
+        this.setAuthor({ name: term.Name })
+        this.setTitle(`Leaderboard Page ${page}`);
         this.setDescription(`${players
                 .map(player => {
                     const stats = player.getStats(term.Id);

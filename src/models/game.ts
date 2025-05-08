@@ -77,10 +77,11 @@ export class Game {
     public createEmbed(): EmbedBuilder {
         const builder = new EmbedBuilder();
         const term = TermManager.getTerm(this.termId);
+        builder.setAuthor({ name: term.Name })
         if (this.cancelled) {
-            builder.setTitle(`Game ${this.id} ${term.Name} - Cancelled`);
+            builder.setTitle(`Game ${this.id} - Cancelled`);
         } else {
-            builder.setTitle(`Game ${this.id} ${term.Name}`);
+            builder.setTitle(`Game ${this.id}`);
         }
 
         if (this.matchId) {
