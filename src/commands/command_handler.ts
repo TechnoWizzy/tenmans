@@ -32,10 +32,10 @@ export class CommandHandler {
                 command.builder.addStringOption((string) => string
                     .setName("term")
                     .setDescription("Which term to use")
-                    .setRequired(false)
                     .setChoices(TermManager.getAllTerms().map(term => {
                         return { name: term.Name, value: term.Id }
                     }))
+                    .setRequired(false)
                 )
             }
             return command.builder.toJSON();
