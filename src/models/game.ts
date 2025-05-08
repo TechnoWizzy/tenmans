@@ -319,7 +319,10 @@ export class Modifier {
  */
 function formatGame(game: WithId<Game>): Game {
     const oldTerm = "35d622bc-75a8-44d9-aea9-6271e49c37ed";
-    const players = game.players.map(player => new Player(player.id, player.username, player.stats));
+    const players = game.players.map(player => {
+        console.log(player)
+        return new Player(player.id, player.username, player.stats)
+    });
     const teamRed = new Team(game.teamRed.name, game.teamRed.termId ?? oldTerm, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId ?? oldTerm, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
     return new Game(game.id, game.termId ?? oldTerm, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
