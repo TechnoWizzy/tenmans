@@ -10,7 +10,7 @@ import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 import {TermManager} from "./term.ts";
 
-export const leaderboardCache = new Map<[number, string], [EmbedBuilder, ActionRowBuilder<ButtonBuilder>]>;
+export const leaderboardCache = new Map<string, [EmbedBuilder, ActionRowBuilder<ButtonBuilder>]>;
 
 export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number, termId: string) {
     switch (action) {
@@ -48,7 +48,7 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
     };
 
     try {
-        if (!leaderboardCache.has([page, termId])) {
+        if (!leaderboardCache.has(createKey(page, termId))) {
             const players = await Database.players
                 .find(query)
                 .sort({
@@ -65,10 +65,10 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
 
             const embed = new LeaderboardEmbed(players.map(player => new Player(player.id, player.username, player.stats)), page, skip);
             const components = new LeaderboardComponents(page, players.length, termId);
-            leaderboardCache.set([page, termId], [ embed, components ]);
+            leaderboardCache.set(createKey(page, termId), [ embed, components ]);
         }
 
-        const [embed, components] = leaderboardCache.get([page, termId])!;
+        const [embed, components] = leaderboardCache.get(createKey(page, termId))!;
         if (interaction.isChatInputCommand()) {
             await reply(interaction, { embeds: [ embed ], components: [ components ] });
         } else {
@@ -120,4 +120,8 @@ class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
                 .setDisabled(rightButtonDisabled),
         )
     }
+}
+
+function createKey(page: number, termId: string) {
+    return [page, termId].join(',');
 }
