@@ -118,6 +118,10 @@ class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
                 .setStyle(ButtonStyle.Secondary)
                 .setCustomId(`leaderboard,right,${page},${termId}`)
                 .setDisabled(rightButtonDisabled),
+            new ButtonBuilder()
+                .setEmoji("🔄")
+                .setStyle(ButtonStyle.Secondary)
+                .setCustomId(`leaderboard,refresh,${page},${termId}`)
         )
     }
 }
