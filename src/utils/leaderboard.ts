@@ -39,15 +39,21 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
     const query = {
         stats: {
             $elemMatch: {
-                termId: TermManager.currentTerm.Id,
-                games: { $gt: 0 }
+                termId: termId,
+                games:  {
+                    $gt: 0
+                }
             }
         }
     };
 
     try {
         if (!leaderboardCache.has([page, termId])) {
-            const players = await Database.players.find(query).sort({ "stats.elo": -1 })
+            const players = await Database.players
+                .find(query)
+                .sort({
+                    "stats.elo": -1
+                })
                 .skip(skip)
                 .limit(itemsPerPage)
                 .toArray()
