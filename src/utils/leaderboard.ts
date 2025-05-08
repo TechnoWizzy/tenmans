@@ -63,7 +63,8 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
                 return;
             }
 
-            const embed = new LeaderboardEmbed(players.map(player => new Player(player.id, player.username, player.stats)), page, skip);
+            const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
+            const embed = new LeaderboardEmbed(classifiedPlayers, page, skip, termId);
             const components = new LeaderboardComponents(page, players.length, termId);
             leaderboardCache.set(createKey(page, termId), [ embed, components ]);
         }
@@ -82,9 +83,9 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
 }
 
 class LeaderboardEmbed extends EmbedBuilder {
-    public constructor(players: Player[], page: number, skip: number) {
+    public constructor(players: Player[], page: number, skip: number, termId: string) {
         super();
-        const term = TermManager.currentTerm;
+        const term = TermManager.getTerm(termId)
         this.setAuthor({ name: term.Name })
         this.setTitle(`Leaderboard Page ${page}`);
         this.setDescription(`${players
