@@ -30,7 +30,7 @@ async function ready(client: Client) {
     try {
         await TermManager.loadTerms();
         await CommandHandler.registerCommands(client);
-        await QueueHandler.loadQueue(client);
+        await QueueHandler.loadQueue(client, getCommitMessage());
         client.user?.setActivity(settings.status)
         console.log("TenMans is ready at " + client.readyAt?.toISOString());
         console.log(`Current Term: ${TermManager.currentTerm.Name}`);
@@ -167,6 +167,14 @@ class ErrorEmbed extends EmbedBuilder {
         this.setTitle(title);
         this.setDescription(util.inspect(err));
         this.setFooter({ text: "Error Log" });
+    }
+}
+
+function getCommitMessage() {
+    try {
+        return getEnv("COMMIT_MESSAGE");
+    } catch {
+        return "Update Applied - A new queue has started"
     }
 }
 

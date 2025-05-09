@@ -13,4 +13,7 @@ COPY ./settings.json ./
 
 RUN bun run docs
 
+ARG COMMIT_MSG
+ENV COMMIT_MESSAGE=$COMMIT_MSG
+
 ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./index.ts"]

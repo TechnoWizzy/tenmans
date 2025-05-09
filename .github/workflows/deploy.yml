@@ -23,7 +23,7 @@ jobs:
       # Build and run containers
       - name: Build and Run Docker Image
         run: |
-          make build
+          make build COMMIT_MSG="${{ github.event.head_commit.message }}"
           make stop
           make run
 

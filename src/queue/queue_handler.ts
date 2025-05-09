@@ -24,7 +24,7 @@ export class QueueHandler {
      * @return {Promise<void>} Resolves after the queue is successfully initialized and updated.
      * @throws {Error} If the general or mod channel is not text-based or cannot be fetched.
      */
-    public static async loadQueue(client: Client): Promise<void> {
+    public static async loadQueue(client: Client, message: string): Promise<void> {
         const settings = await Settings.fetchSettings();
         const channel = await client.channels.fetch(settings.channels.general);
         const modChannel = await client.channels.fetch(settings.channels.admin);
@@ -45,7 +45,7 @@ export class QueueHandler {
         });
 
         QueueHandler.queue = new Queue(channel, modChannel, lastMessage)
-        await QueueHandler.queue.update("Update Applied - A new queue has started", Colors.White, false, new Date());
+        await QueueHandler.queue.update(message, Colors.White, false, new Date());
         await QueueHandler.queue.createCollector();
 
     }
