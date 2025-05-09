@@ -698,4 +698,4 @@ interface PlayerRoundKillsSegment {
 
 type LeaderboardAction = "left" | "right" | "refresh"
 type GameAction = "cancel" | "cancel-confirm" | "set-url"
-type QueueAction = "join" | "leave"
+type QueueAction = "join" | "leave" | "refresh"

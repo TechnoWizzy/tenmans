@@ -10,5 +10,9 @@ export async function handleQueueAction(action: QueueAction, interaction: Button
         case "leave": {
             await QueueHandler.leave(interaction.user, interaction);
         } break;
+
+        case "refresh": {
+            await QueueHandler.refresh(interaction);
+        }
     }
 }

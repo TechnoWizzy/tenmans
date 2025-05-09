@@ -112,6 +112,11 @@ async function interactionCreate(interaction: Interaction) {
                 case "queue": {
                     await interaction.deferReply({ flags: 'Ephemeral' });
                     const action = args[1] as QueueAction;
+                    if (action == "refresh" && !isAdmin) {
+                        await ephemeralReply(interaction, { content: "You don't have permission to use this button." });
+                        return;
+                    }
+
                     await handleQueueAction(action, interaction);
                     break;
                 }

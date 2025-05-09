@@ -9,7 +9,7 @@ import {
     type User,
     type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
-import {createCustomId, ephemeralReply} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply, noReply} from "../utils/utils.ts";
 import {Game} from "../models/game.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
@@ -224,6 +224,11 @@ export class Queue extends Map<string, [User, Timer]> {
         }
     }
 
+    public async refresh(interaction: ButtonInteraction): Promise<void> {
+        this.collector?.stop("refresh");
+        await noReply(interaction);
+    }
+
     /**
      * Updates the queue message or sends a new one based on the provided parameters.
      *
@@ -354,6 +359,7 @@ export class Queue extends Map<string, [User, Timer]> {
         return new ActionRowBuilder<ButtonBuilder>().setComponents(
             new ButtonBuilder().setLabel("Join").setCustomId(createCustomId("queue", "join")).setStyle(ButtonStyle.Success),
             new ButtonBuilder().setLabel("Leave").setCustomId(createCustomId("queue", "leave")).setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setEmoji("🔄").setCustomId(createCustomId("queue", "refresh")).setStyle(ButtonStyle.Secondary),
         )
     }
 }

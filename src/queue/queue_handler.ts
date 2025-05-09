@@ -92,4 +92,8 @@ export class QueueHandler {
     public static async leave(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction, ban: boolean = false): Promise<void> {
         await QueueHandler.queue.leave(user, interaction, ban);
     }
+
+    public static async refresh(interaction: ButtonInteraction): Promise<void> {
+        await this.queue.refresh(interaction);
+    }
 }
