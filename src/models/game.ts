@@ -247,7 +247,12 @@ export class Game {
      * @return {Promise<Array>} A promise that resolves to an array of formatted and sorted game records.
      */
     public async fetchAllAfter(): Promise<Game[]> {
-        const query = { id: { $gt: this.id } };
+        const query = {
+            id: {
+                $gt: this.id
+            },
+            termId: this.termId
+        };
         const games = await Database.games.find(query).toArray();
         return games
             .map(game => formatGame(game))

@@ -280,5 +280,10 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
         }
     }
 
-    leaderboardCache.clear();
+    // Delete leaderboard pages for this term
+    leaderboardCache.keys().forEach(key => {
+        if (key.includes(game.termId)) {
+            leaderboardCache.delete(key);
+        }
+    });
 }
