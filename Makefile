@@ -4,7 +4,7 @@ CONFIG = docker-compose.yml
 all: build run
 
 build:
-	docker compose build --build-arg
+	docker compose -f $(CONFIG) build
 
 run:
 	docker compose -f $(CONFIG) up -d --build
