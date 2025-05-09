@@ -22,7 +22,13 @@ Database.connect().then(() => {
     const client = new Client(BOT_OPTIONS)
     client.on(Events.ClientReady, ready);
     client.on(Events.InteractionCreate, interactionCreate);
-    client.login(getEnv("DISCORD_TOKEN")).catch(console.log);
+    client.login(getEnv("DISCORD_TOKEN")).catch((e) => {
+        console.log("Unhandled Startup Exception", e);
+        setTimeout(() => {
+            // Wait 2 seconds to prevent Discord from getting upset at requests
+            process.exit(1);
+        }, 2000);
+    });
 });
 
 async function ready(client: Client) {
@@ -155,7 +161,7 @@ async function interactionCreate(interaction: Interaction) {
             const error = e as Error;
             await ephemeralReply(interaction, { content: "Sorry, there was an error performing this operation. " + error.name });
         } catch {
-            console.error(e);
+            console.log(e);
         }
     }
 }

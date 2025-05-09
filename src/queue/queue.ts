@@ -149,7 +149,7 @@ export class Queue extends Map<string, [User, Timer]> {
             await this.update(`${user.username} has been timed out.`);
             await this.channel.send({ content: `<@${user.id}> You have been timed out of the queue` }).then(message => {
                 setTimeout(() => {
-                    message.delete().catch(console.error);
+                    message.delete().catch(console.log);
                 }, 15 * 60 * 1000);
             });
         }, this.timeout);
