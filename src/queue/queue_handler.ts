@@ -21,6 +21,7 @@ export class QueueHandler {
      * should only be called once when the application first loads.
      *
      * @param {Client} client - The Discord client instance used to fetch channels and other data - the Discord Bot Client
+     * @param {String} message - The message to load the queue with
      * @return {Promise<void>} Resolves after the queue is successfully initialized and updated.
      * @throws {Error} If the general or mod channel is not text-based or cannot be fetched.
      */

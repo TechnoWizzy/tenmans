@@ -1,6 +1,7 @@
 import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder} from "discord.js";
 import {Command} from "./command.ts";
 import {handleLeaderboardAction} from "../utils/leaderboard.ts";
+import {TermManager} from "../utils/term.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("leaderboard")
@@ -14,7 +15,7 @@ const builder = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const page = interaction.options.getInteger("page") ?? 1;
-    const term = interaction.options.getString("term") ?? "35d622bc-75a8-44d9-aea9-6271e49c37ed";
+    const term = interaction.options.getString("term") ?? TermManager.currentTerm.Id;
     await handleLeaderboardAction(interaction, "refresh", page, term);
 }
 

@@ -18,18 +18,22 @@ Express()
     .use('/', Express.static('docs'))
     .listen(3000)
 
-Database.connect().then(() => {
-    const client = new Client(BOT_OPTIONS)
-    client.on(Events.ClientReady, ready);
-    client.on(Events.InteractionCreate, interactionCreate);
-    client.login(getEnv("DISCORD_TOKEN")).catch((e) => {
-        console.log("Unhandled Startup Exception", e);
-        setTimeout(() => {
-            // Wait 2 seconds to prevent Discord from getting upset at requests
-            process.exit(1);
-        }, 2000);
+Database
+    .connect()
+    .then(() => {
+        const client = new Client(BOT_OPTIONS)
+        client.on(Events.ClientReady, ready);
+        client.on(Events.InteractionCreate, interactionCreate);
+        client
+            .login(getEnv("DISCORD_TOKEN"))
+            .catch((e) => {
+                console.log("Unhandled Startup Exception", e);
+                setTimeout(() => {
+                    // Wait 2 seconds to prevent Discord from getting upset at requests
+                    process.exit(1);
+                }, 2000);
+            });
     });
-});
 
 async function ready(client: Client) {
     const settings = await Settings.fetchSettings();

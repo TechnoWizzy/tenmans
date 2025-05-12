@@ -27,7 +27,12 @@ export class Player {
     }
 
     public getStats(termId: string) {
-        return this.stats.find(stat => stat.termId == termId) ?? new PlayerStats()
+        let termStats = this.stats.find(stat => stat.termId == termId);
+        if (!termStats) {
+            termStats = new PlayerStats();
+            this.stats.push(termStats);
+        }
+        return termStats;
     }
 
     /**
