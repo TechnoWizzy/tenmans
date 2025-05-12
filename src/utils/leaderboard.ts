@@ -36,27 +36,56 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
 
     const itemsPerPage = 10;
     const skip = (page - 1) * itemsPerPage;
-    const query = {
-        stats: {
-            $elemMatch: {
-                termId: termId,
-                games:  {
-                    $gt: 0
-                }
-            }
+    const pipeline = [
+        { // Find players with games this term
+            $match: {
+                stats: {
+                    $elemMatch: {
+                        termId: termId,
+                        games: {
+                            $gt: 0,
+                        },
+                    },
+                },
+            },
+        },
+        { // Create an index on which to sort players -- their elo this term
+            $addFields: {
+                sortStats: {
+                    $arrayElemAt: [
+                        {
+                            $filter: {
+                                input: "$stats",
+                                as: "stat",
+                                cond: {
+                                    $and: [
+                                        { $eq: ["$$stat.termId", termId] },
+                                        { $gt: ["$$stat.games", 0] },
+                                    ],
+                                },
+                            },
+                        },
+                        0,
+                    ],
+                },
+            },
+        },
+        { // Perform sort
+            $sort: {
+                "sortStats.elo": -1,
+            },
+        },
+        {
+            $skip: skip,
+        },
+        {
+            $limit: itemsPerPage,
         }
-    };
+    ];
 
     try {
         if (!leaderboardCache.has(createKey(page, termId))) {
-            const players = await Database.players
-                .find(query)
-                .sort({
-                    "stats.elo": -1
-                })
-                .skip(skip)
-                .limit(itemsPerPage)
-                .toArray()
+            const players = await Database.players.aggregate(pipeline).toArray();
 
             if (players.length == 0) {
                 await ephemeralReply(interaction, { content: "No players found for this page." });
