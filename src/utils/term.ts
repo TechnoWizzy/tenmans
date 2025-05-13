@@ -39,18 +39,12 @@ export class TermManager {
                         });
                     } else {
                         await channel.send({
-                            content: `The ${term.Name} semester has begun. Here are the final standings for ${this.currentTerm.Name}!`,
+                            content: `<@&822549851530461185> The ${term.Name} semester has begun. Here are the final standings for ${this.currentTerm.Name}!`,
                             embeds: [ embed ]
                         });
                     }
                 }
-                this.currentTerm = {
-                    "Id": "35d622bc-75a8-44d9-aea9-6271e49c37ed",
-                    "Code": "202520",
-                    "Name": "Spring 2025",
-                    "StartDate": "2025-01-06",
-                    "EndDate": "2025-05-30"
-                };
+                this.currentTerm = term;
                 break;
             }
         }
@@ -70,8 +64,7 @@ export class TermManager {
         const interval = 60 * minute;
         const minutes = now.getMinutes() * minute;
         const seconds = now.getSeconds() * second;
-        //const delay = interval - minutes - seconds;
-        const delay = 15 * second;
+        const delay = interval - minutes - seconds;
 
         setTimeout(async () => {
             await TermManager.loadTerms();

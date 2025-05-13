@@ -81,10 +81,13 @@ export class StatusSettings {
 
 export class RoleSettings {
     public admins: string[]
+    public tenmans: string
 
     constructor(settings: RoleSettings) {
         if (settings.admins == null) throw new Error("null admin roles");
+        if (settings.tenmans == null) throw new Error("null tenmans roles");
 
-        this.admins = settings.admins
+        this.admins = settings.admins;
+        this.tenmans = settings.tenmans;
     }
 }
