@@ -212,6 +212,13 @@ export class Game {
         return formatGame(game);
     }
 
+    public static async fetchByMatchId(matchId: string): Promise<Game> {
+        const query = { matchId: matchId };
+        const game = await Database.games.findOne(query);
+        if (!game) throw new Error(`Game Not Found: ${matchId}`);
+        return formatGame(game);
+    }
+
     /**
      * Fetches all games from the database, formats them, and sorts them by their ID in ascending order.
      *

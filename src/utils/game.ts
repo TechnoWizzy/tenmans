@@ -21,6 +21,12 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
             }
 
             const uploadGame = async (matchId: string) => {
+                try {
+                    await Game.fetchByMatchId(matchId);
+                    await ephemeralReply(interaction, { content: `Error: Game with this Tracker Link already exists.` });
+                    return;
+                } catch {  }
+
                 const match = await Tracker.fetchMatch(matchId);
                 if (match == null) {
                     await ephemeralReply(interaction, { content: `Failed to fetch match, please download match data from this [link](${getEnv("API_URL_MATCH") + matchId}) and upload via command` });
