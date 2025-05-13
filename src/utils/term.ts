@@ -3,13 +3,7 @@ import {QueueHandler} from "../queue/queue_handler.ts";
 import {generateLeaderboard} from "./leaderboard.ts";
 
 export class TermManager {
-    public static currentTerm: Term = {
-        "Id": "35d622bc-75a8-44d9-aea9-6271e49c37ed",
-        "Code": "202520",
-        "Name": "Spring 2025",
-        "StartDate": "2025-01-06",
-        "EndDate": "2025-05-30"
-    };
+    public static currentTerm: Term;
     private static terms: Term[];
 
     public static getTerm(id: string) {
@@ -50,7 +44,13 @@ export class TermManager {
                         });
                     }
                 }
-                this.currentTerm = term;
+                this.currentTerm = {
+                    "Id": "35d622bc-75a8-44d9-aea9-6271e49c37ed",
+                    "Code": "202520",
+                    "Name": "Spring 2025",
+                    "StartDate": "2025-01-06",
+                    "EndDate": "2025-05-30"
+                };
                 break;
             }
         }
@@ -70,7 +70,8 @@ export class TermManager {
         const interval = 60 * minute;
         const minutes = now.getMinutes() * minute;
         const seconds = now.getSeconds() * second;
-        const delay = interval - minutes - seconds;
+        //const delay = interval - minutes - seconds;
+        const delay = 15 * second;
 
         setTimeout(async () => {
             await TermManager.loadTerms();
