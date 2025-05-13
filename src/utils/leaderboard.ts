@@ -36,6 +36,22 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
 
     const itemsPerPage = 10;
     const skip = (page - 1) * itemsPerPage;
+    const [embed, components] = await generateLeaderboard(page, skip, itemsPerPage, termId);
+
+    if (!embed || !components) {
+        await ephemeralReply(interaction, { content: "No players found for this page." });
+        return;
+    }
+
+    if (interaction.isChatInputCommand()) {
+        await reply(interaction, { embeds: [ embed ], components: [ components ] });
+    } else {
+        await noReply(interaction);
+        await interaction.message.edit({ embeds: [ embed ], components: [ components ] });
+    }
+}
+
+export async function generateLeaderboard(page: number, skip: number, itemsPerPage: number, termId: string) {
     const pipeline = [
         { // Find players with games this term
             $match: {
@@ -83,35 +99,23 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
         }
     ];
 
-    try {
-        if (!leaderboardCache.has(createKey(page, termId))) {
-            const players = await Database.players.aggregate(pipeline).toArray();
+    if (!leaderboardCache.has(createKey(page, termId))) {
+        const players = await Database.players.aggregate(pipeline).toArray();
 
-            if (players.length == 0) {
-                await ephemeralReply(interaction, { content: "No players found for this page." });
-                return;
-            }
-
-            const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
-            const embed = new LeaderboardEmbed(classifiedPlayers, page, skip, termId);
-            const components = new LeaderboardComponents(page, players.length, termId);
-            leaderboardCache.set(createKey(page, termId), [ embed, components ]);
+        if (players.length == 0) {
+            return [null, null];
         }
 
-        const [embed, components] = leaderboardCache.get(createKey(page, termId))!;
-        if (interaction.isChatInputCommand()) {
-            await reply(interaction, { embeds: [ embed ], components: [ components ] });
-        } else {
-            await noReply(interaction);
-            await interaction.message.edit({ embeds: [ embed ], components: [ components ] });
-        }
-    } catch (error) {
-        console.log(error);
-        await ephemeralReply(interaction, { content: "An error occurred while fetching the leaderboard." });
+        const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
+        const embed = new LeaderboardEmbed(classifiedPlayers, page, skip, termId);
+        const components = new LeaderboardComponents(page, players.length, termId);
+        leaderboardCache.set(createKey(page, termId), [ embed, components ]);
     }
+
+    return leaderboardCache.get(createKey(page, termId))!;
 }
 
-class LeaderboardEmbed extends EmbedBuilder {
+export class LeaderboardEmbed extends EmbedBuilder {
     public constructor(players: Player[], page: number, skip: number, termId: string) {
         super();
         const term = TermManager.getTerm(termId)
