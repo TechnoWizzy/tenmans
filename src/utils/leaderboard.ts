@@ -126,10 +126,10 @@ export class LeaderboardEmbed extends EmbedBuilder {
                     const stats = player.getStats(term.Id);
                     const emote = `<:test:${player.getEmote(term.Id)}>`;
                     const index = players.indexOf(player);
-                    const wins = `**${stats.wins}**W`
-                    const losses = `**${stats.losses}**L`
-                    const elo = `${Math.round(stats.elo)}**RR`;
-                    return `**#${skip + index + 1} ${emote} ${player.username}** - ${elo} - ${wins} - ${losses}`;
+                    const wins = `${stats.wins}W`
+                    const losses = `${stats.losses}L`
+                    const elo = `**${Math.round(stats.elo)}RR**`;
+                    return `**#${skip + index + 1} ${emote} ${player.username}** - ${elo} - ${wins}/${losses}`;
                 })
                 .join('\n')
             }`
