@@ -128,7 +128,7 @@ export class LeaderboardEmbed extends EmbedBuilder {
                     const index = players.indexOf(player);
                     const wins = `${stats.wins}W`
                     const losses = `${stats.losses}L`
-                    const elo = `**${Math.round(stats.elo)}**RR`;
+                    const elo = `**${Math.round(stats.elo)}** elo`;
                     return `**#${skip + index + 1} ${emote} ${player.username}** - ${elo} - ${wins}/${losses}`;
                 })
                 .join('\n')
