@@ -181,6 +181,7 @@ class ErrorEmbed extends EmbedBuilder {
         this.setColor("#424549")
         this.setTitle(title);
         this.setDescription(util.inspect(err));
+        this.setTimestamp(new Date());
         this.setFooter({ text: "Error Log" });
     }
 }
