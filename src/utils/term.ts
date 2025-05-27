@@ -16,7 +16,7 @@ export class TermManager {
         return this.terms;
     }
 
-    public static async loadTerms() {
+    public static async loadTerms(cycle: boolean = true) {
         const url = getEnv("PURDUE_IO_URL");
         const response = await fetch(`${url}/Terms`);
 
@@ -65,7 +65,10 @@ export class TermManager {
         }
 
         this.terms = terms;
-        this.scheduleTermUpdate();
+
+        if (cycle) {
+            this.scheduleTermUpdate();
+        }
     }
 
     private static scheduleTermUpdate() {
@@ -77,18 +80,10 @@ export class TermManager {
         const seconds = now.getSeconds() * second;
         const delay = interval - minutes - seconds;
 
-        const attempt = async (func: Function) => {
-            try {
-                await func();
-            } catch (e) {
-                return e;
-            }
-        }
-
         setTimeout(async () => {
-            await attempt(TermManager.loadTerms);
+            await TermManager.loadTerms(false);
             setInterval(async () => {
-                await attempt(TermManager.loadTerms);
+                await TermManager.loadTerms(false);
             }, interval);
         }, delay)
     }
