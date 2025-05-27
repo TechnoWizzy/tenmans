@@ -17,7 +17,18 @@ export class TermManager {
     }
 
     public static async loadTerms() {
-        const response = await fetch(`${getEnv("PURDUE_IO_URL")}/Terms`);
+        const url = getEnv("PURDUE_IO_URL");
+        const response = await fetch(`${url}/Terms`);
+
+        for (let fails = 0; fails < 3; fails++) {
+            if (response) break;
+            await new Promise(r => setTimeout(r, 5000));
+        }
+
+        if (!response) {
+            throw new Error("Unable to reach PurdueIO");
+        }
+
         const data: TermData = await response.json();
         const terms = data.value
             .filter(term => term.StartDate != null)
@@ -66,10 +77,18 @@ export class TermManager {
         const seconds = now.getSeconds() * second;
         const delay = interval - minutes - seconds;
 
+        const attempt = async (func: Function) => {
+            try {
+                await func();
+            } catch (e) {
+                return e;
+            }
+        }
+
         setTimeout(async () => {
-            await TermManager.loadTerms();
+            await attempt(TermManager.loadTerms);
             setInterval(async () => {
-                await TermManager.loadTerms();
+                await attempt(TermManager.loadTerms);
             }, interval);
         }, delay)
     }

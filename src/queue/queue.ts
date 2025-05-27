@@ -281,7 +281,7 @@ export class Queue extends Map<string, [User, Timer]> {
         this.collector = new MessageCollector(this.channel, { max: 10 })
             .on("end", async (_, reason) => {
                 if (reason == "update") {
-                    return
+                    return;
                 }
 
                 const title = this.lastMessage?.embeds[0]?.title;
