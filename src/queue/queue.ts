@@ -97,13 +97,21 @@ export class Queue extends Map<string, [User, Timer]> {
             }
         }
 
-        const player = await Player.fetch(user.id)
+        const player = await Player.fetch(user.id);
 
         if (!player) {
             const commands = await interaction.client.application.commands.fetch();
             const command = commands.find(command => command.name == "register");
             await ephemeralReply(interaction, { content: `Please register using </register:${command?.id}> to join the queue.` });
             return;
+        }
+
+        const stats = player?.getStats(TermManager.currentTerm.Id);
+        if (stats.timeout.getTime() > Date.now()) {
+            const timeout = Math.floor(stats?.timeout.getTime() / 1000);
+            const time = `<t:${timeout}:R>`
+            const message = `A game you participated in has been recently cancelled. You may rejoin the queue ${time}`;
+            await ephemeralReply(interaction, { content: message });
         }
 
         if (this.has(user.id)) {

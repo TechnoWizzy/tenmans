@@ -22,7 +22,7 @@ export class Player {
         this.id = id;
         this.username = username;
         this.stats = stats.map(stat => {
-            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.termId);
+            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.timeout, stat.termId);
         })
     }
 
@@ -162,6 +162,7 @@ export class PlayerStats {
     public losses: number;
     public elo: number;
     public acs: number;
+    public timeout: Date;
     public termId: string;
 
     /**
@@ -172,14 +173,15 @@ export class PlayerStats {
      * @param {number} losses - The number of games lost. Defaults to 0.
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
-     * @param {string} termId - The Id of the current school term
+     * @param {string} termId - The ID of the current school term
      */
-    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, termId?: string) {
+    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, timeout?: Date, termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
         this.elo = elo;
         this.acs = acs;
+        this.timeout = timeout ?? new Date(0);
         this.termId = termId ?? TermManager.currentTerm.Id;
     }
 }

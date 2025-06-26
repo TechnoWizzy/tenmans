@@ -67,24 +67,16 @@ export class TermManager {
         this.terms = terms;
 
         if (cycle) {
-            this.scheduleTermUpdate();
+            const now = new Date();
+            const second = 1000;
+            const minute = 60 * second;
+            const interval = 60 * minute;
+            const minutes = now.getMinutes() * minute;
+            const seconds = now.getSeconds() * second;
+            const delay = interval - minutes - seconds;
+            setTimeout(async () => {
+                await TermManager.loadTerms();
+            }, delay)
         }
-    }
-
-    private static scheduleTermUpdate() {
-        const now = new Date();
-        const second = 1000;
-        const minute = 60 * second;
-        const interval = 60 * minute;
-        const minutes = now.getMinutes() * minute;
-        const seconds = now.getSeconds() * second;
-        const delay = interval - minutes - seconds;
-
-        setTimeout(async () => {
-            await TermManager.loadTerms(false);
-            setInterval(async () => {
-                await TermManager.loadTerms(false);
-            }, interval);
-        }, delay)
     }
 }

@@ -10,6 +10,7 @@ import {Player} from "../models/player.ts";
 import {Tracker} from "./tracker.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
 import {leaderboardCache} from "./leaderboard.ts";
+import {TermManager} from "./term.ts";
 
 export async function handleGameAction(interaction: Interaction, game: Game, action: GameAction) {
     switch (action) {
@@ -145,6 +146,13 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 const component = game.createComponents();
                 const message = await interaction.message.fetchReference();
                 await message.edit({ embeds: [ embed ], components: [ component ] });
+            }
+
+            for (const player of game.players) {
+                const stats = player.getStats(TermManager.currentTerm.Id);
+                const timeout = 60 * 1000; // 1 minute
+                stats.timeout = new Date(Date.now() + timeout);
+                await player.save();
             }
 
             await propagateGameChange(interaction, game);
