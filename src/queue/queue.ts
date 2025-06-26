@@ -112,6 +112,7 @@ export class Queue extends Map<string, [User, Timer]> {
             const time = `<t:${timeout}:R>`
             const message = `A game you participated in has been recently cancelled. You may rejoin the queue ${time}`;
             await ephemeralReply(interaction, { content: message });
+            return;
         }
 
         if (this.has(user.id)) {
