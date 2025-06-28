@@ -3,6 +3,7 @@ import {ephemeralReply, reply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
+import {TermManager} from "../utils/term.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("test")
@@ -70,6 +71,19 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 const user = await interaction.client.users.fetch(players[i].id);
                 await QueueHandler.join(user, interaction);
             }
+            break;
+        }
+
+        case 5: {
+            const player = await Player.fetch(interaction.user.id);
+            if (!player) {
+                await ephemeralReply(interaction, { content: "Register" });
+                return;
+            }
+            const stats = player.getStats(TermManager.currentTerm.Id);
+            const timeout = 60 * 1000; // 1 minute
+            stats.timeout = new Date(Date.now() + timeout);
+            await player.save();
             break;
         }
 
