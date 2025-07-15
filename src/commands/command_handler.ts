@@ -5,8 +5,8 @@ import {AdminCommand} from "./admin.ts";
 import {TestCommand} from "./test.ts";
 import {HelpCommand} from "./help.ts";
 import {PingCommand} from "./ping.ts";
-import {TermManager} from "../utils/term.ts";
 import {WhoisCommand} from "./whois.ts";
+import {TermManager} from "../utils/term.ts";
 
 export class CommandHandler {
     private static readonly commands = [
@@ -16,7 +16,7 @@ export class CommandHandler {
         new LeaderboardCommand(),
         new TestCommand(),
         new HelpCommand(),
-        new WhoisCommand()
+        new WhoisCommand(),
     ]
 
     public static async registerCommands(client: Client) {

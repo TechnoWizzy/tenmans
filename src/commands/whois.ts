@@ -7,6 +7,8 @@ const builder = new SlashCommandBuilder()
     .setName("whois")
     .setDescription("Look up a riot Id")
     .addStringOption((string) => string
+        .setName("riot-id")
+        .setDescription("the new Riot ID of the user (Name#Tag)")
         .setRequired(true)
         .setMinLength(3)
         .setMaxLength(24)
