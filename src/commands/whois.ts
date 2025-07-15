@@ -6,7 +6,7 @@ import {Player} from "../models/player.ts";
 const builder = new SlashCommandBuilder()
     .setName("whois")
     .setDescription("Look up a riot Id")
-    .addStringOption(string => (string)
+    .addStringOption((string) => string
         .setRequired(true)
         .setMinLength(3)
         .setMaxLength(24)
