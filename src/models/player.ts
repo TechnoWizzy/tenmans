@@ -71,7 +71,7 @@ export class Player {
      * no player exists with the given username.
      */
     public static async fetchByUsername(username: string): Promise<Player | null> {
-        const query = { username: username };
+        const query = { username: new RegExp(`^${username}$`, 'i') };
         const player = await Database.players.findOne(query);
         if (!player) return null;
         return new Player(player.id, player.username, player.stats);
