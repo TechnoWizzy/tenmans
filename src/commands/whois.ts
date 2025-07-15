@@ -15,7 +15,7 @@ const builder = new SlashCommandBuilder()
     )
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
-    const riotId = interaction.options.getString("riotId", true);
+    const riotId = interaction.options.getString("riot-id", true);
     const player = await Player.fetchByUsername(riotId);
 
     if (!player) {
