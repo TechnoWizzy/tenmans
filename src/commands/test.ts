@@ -1,5 +1,5 @@
 import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder, TextChannel} from "discord.js";
-import {ephemeralReply, reply} from "../utils/utils.ts";
+import {ephemeralReply, noReply, reply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
@@ -84,6 +84,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             const timeout = 60 * 1000; // 1 minute
             stats.timeout = new Date(Date.now() + timeout);
             await player.save();
+            await noReply(interaction);
             break;
         }
 
