@@ -108,6 +108,7 @@ export async function generateLeaderboard(page: number, skip: number, itemsPerPa
 
         const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
         const embed = new LeaderboardEmbed(classifiedPlayers, page, skip, termId);
+        console.log(embed.data.description);
         const components = new LeaderboardComponents(page, players.length, termId);
         leaderboardCache.set(createKey(page, termId), [ embed, components ]);
     }
@@ -130,7 +131,7 @@ export class LeaderboardEmbed extends EmbedBuilder {
                     const losses = `${stats.losses}L`
                     const elo = `**${Math.round(stats.elo)}** elo`;
                     const username = removeFormatChars(player.username)
-                    return `**#${skip + index + 1} ${emote} ${username}** - ${elo} - ${wins}/${losses}`;
+                    return `**${skip + index + 1} ${emote} ${username}** - ${elo} - ${wins}/${losses}`;
                 })
                 .join('\n')
             }`
