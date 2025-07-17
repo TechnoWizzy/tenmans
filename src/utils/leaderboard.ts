@@ -129,7 +129,8 @@ export class LeaderboardEmbed extends EmbedBuilder {
                     const wins = `${stats.wins}W`
                     const losses = `${stats.losses}L`
                     const elo = `**${Math.round(stats.elo)}** elo`;
-                    return `**#${skip + index + 1} ${emote} ${player.username}** - ${elo} - ${wins}/${losses}`;
+                    const username = removeFormatChars(player.username)
+                    return `**#${skip + index + 1} ${emote} ${username}** - ${elo} - ${wins}/${losses}`;
                 })
                 .join('\n')
             }`
@@ -163,4 +164,16 @@ class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
 
 function createKey(page: number, termId: string) {
     return [page, termId].join(',');
+}
+
+function removeFormatChars(value: string) {
+    return value
+        .replace('_', '\_')
+        .replace('*', '\*')
+        .replace('~', '\~')
+        .replace('`', '\`')
+        .replace('|', '\|')
+        .replace('#', '\#')
+        .replace('-', '\-')
+        .replace('.', '\.')
 }
