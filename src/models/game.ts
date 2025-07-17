@@ -10,7 +10,7 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from "discord.js";
-import {createCustomId, getEnv} from "../utils/utils.ts";
+import {createCustomId, getEnv, removeFormatChars} from "../utils/utils.ts";
 import type {WithId} from "mongodb";
 import {TermManager} from "../utils/term.ts";
 
@@ -131,6 +131,7 @@ export class Game {
      * with an associated rank Emoji.
      */
     private formatPlayer(player: Player, team: Team, opponent: Team): string {
+        const username = removeFormatChars(player.username);
         const stats = player.getStats(this.termId);
         const acs = stats.acs;
         const elo = stats.elo
@@ -139,18 +140,18 @@ export class Game {
                 const eloDelta = Math.round(1.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId));
                 const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
                 const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
-                return `${emote}: **${player.username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+                return `${emote}: **${username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
             } else {
                 const eloDelta = Math.round(0.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId));
                 const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
                 const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
-                return `${emote}: **${player.username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+                return `${emote}: **${username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
             }
         } else {
             const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId);
             const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
             const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
-            return `${emote}: **${player.username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
+            return `${emote}: **${username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
         }
     }
 

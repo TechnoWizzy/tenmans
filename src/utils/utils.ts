@@ -121,3 +121,15 @@ export function formatDate(date: Date) {
     return `<t:${seconds}:R>`;
 }
 
+export function removeFormatChars(value: string) {
+    return value
+        .replace('_', '\_')
+        .replace('*', '\*')
+        .replace('~', '\~')
+        .replace('`', '\`')
+        .replace('|', '\|')
+        .replace('#', '\#')
+        .replace('-', '\-')
+        .replace('.', '\.')
+}
+

@@ -9,7 +9,7 @@ import {
     type User,
     type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
-import {createCustomId, ephemeralReply, noReply} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply, noReply, removeFormatChars} from "../utils/utils.ts";
 import {Game} from "../models/game.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
@@ -155,7 +155,7 @@ export class Queue extends Map<string, [User, Timer]> {
             }
 
             this.delete(user.id);
-            await this.update(`${user.username} has been timed out.`);
+            await this.update(`${removeFormatChars(user.username)} has been timed out.`);
             await this.channel.send({ content: `<@${user.id}> You have been timed out of the queue` }).then(message => {
                 setTimeout(() => {
                     message.delete().catch(console.log);
@@ -166,7 +166,7 @@ export class Queue extends Map<string, [User, Timer]> {
         this.set(user.id, [ user, timeout ]);
 
         if (this.size == this.maxSize) {
-            await this.update(`${user.username} has joined - THE QUEUE HAS POPPED!`, Colors.Gold, true);
+            await this.update(`${removeFormatChars(user.username)} has joined - THE QUEUE HAS POPPED!`, Colors.Gold, true);
             for (const [_, timeout] of this.values()) {
                 global.clearTimeout(timeout);
             }
@@ -189,7 +189,7 @@ export class Queue extends Map<string, [User, Timer]> {
             this.clear();
             await this.update(`A new queue has started`);
         } else {
-            await this.update(`${user.username} has joined`, Colors.DarkGreen);
+            await this.update(`${removeFormatChars(user.username)} has joined`, Colors.DarkGreen);
         }
 
         if (interaction.isChatInputCommand()) return;
@@ -226,9 +226,9 @@ export class Queue extends Map<string, [User, Timer]> {
         this.delete(user.id);
 
         if (ban) {
-            await this.update(`${user.username} has been banned`, Colors.DarkButNotBlack);
+            await this.update(`${removeFormatChars(user.username)} has been banned`, Colors.DarkButNotBlack);
         } else {
-            await this.update(`${user.username} has left`, Colors.DarkOrange);
+            await this.update(`${removeFormatChars(user.username)} has left`, Colors.DarkOrange);
             await ephemeralReply(interaction, { content: "You have left the queue" });
         }
     }
@@ -343,7 +343,7 @@ export class Queue extends Map<string, [User, Timer]> {
         const builder = new EmbedBuilder();
         const users = this.users;
         if (users.length > 0) {
-            builder.setDescription(users.map((user, index) => `**${index + 1}.** ${user.username}`).join('\n'));
+            builder.setDescription(users.map((user, index) => `**${index + 1}.** ${removeFormatChars(user.username)}`).join('\n'));
         }
         if (this.maxSize > 1) {
             builder.setTitle(`${Queue.name}: ${title}`.concat(` [${users.length}/${this.maxSize}]`));

@@ -1,5 +1,8 @@
 import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
+import {removeFormatChars} from "../utils/utils.ts";
+import {ReflectionKind} from "typedoc";
+import pluralString = ReflectionKind.pluralString;
 
 /**
  * Represents a tenmans player
@@ -20,7 +23,7 @@ export class Player {
      */
     public constructor(id: string, username: string, stats: PlayerStats[] = []) {
         this.id = id;
-        this.username = username;
+        this.username = removeFormatChars(username);
         this.stats = stats.map(stat => {
             return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.timeout, stat.termId);
         })

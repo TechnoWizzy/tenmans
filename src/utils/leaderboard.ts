@@ -5,7 +5,7 @@ import {
     ChatInputCommandInteraction,
     EmbedBuilder
 } from "discord.js";
-import {ephemeralReply, noReply, reply} from "./utils.ts";
+import {ephemeralReply, noReply, removeFormatChars, reply} from "./utils.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 import {TermManager} from "./term.ts";
@@ -108,7 +108,6 @@ export async function generateLeaderboard(page: number, skip: number, itemsPerPa
 
         const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
         const embed = new LeaderboardEmbed(classifiedPlayers, page, skip, termId);
-        console.log(embed.data.description);
         const components = new LeaderboardComponents(page, players.length, termId);
         leaderboardCache.set(createKey(page, termId), [ embed, components ]);
     }
@@ -130,8 +129,7 @@ export class LeaderboardEmbed extends EmbedBuilder {
                     const wins = `${stats.wins}W`
                     const losses = `${stats.losses}L`
                     const elo = `**${Math.round(stats.elo)}** elo`;
-                    const username = removeFormatChars(player.username)
-                    return `**${skip + index + 1} ${emote} ${username}** - ${elo} - ${wins}/${losses}`;
+                    return `**${skip + index + 1} ${emote} ${player.username}** - ${elo} - ${wins}/${losses}`;
                 })
                 .join('\n')
             }`
@@ -165,16 +163,4 @@ class LeaderboardComponents extends ActionRowBuilder<ButtonBuilder> {
 
 function createKey(page: number, termId: string) {
     return [page, termId].join(',');
-}
-
-function removeFormatChars(value: string) {
-    return value
-        .replace('_', '\_')
-        .replace('*', '\*')
-        .replace('~', '\~')
-        .replace('`', '\`')
-        .replace('|', '\|')
-        .replace('#', '\#')
-        .replace('-', '\-')
-        .replace('.', '\.')
 }
