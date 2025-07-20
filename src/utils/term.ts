@@ -32,9 +32,20 @@ export class TermManager {
         const data: TermData = await response.json();
         const terms = data.value
             .filter(term => term.StartDate != null)
+            .filter(term => !term.Name.toLowerCase().includes("winter"))
             .sort((a, b) => {
                 return new Date(a.StartDate).getTime() - new Date(b.StartDate).getTime();
             });
+
+        for (let i = terms.length - 1; i >= 1; i--) {
+            const termA = terms[i];
+            const termB = terms[i-1];
+
+            if (termA.Name.toLowerCase().includes("fall")) {
+                console.log(`Changed ${termA.Name} start date from ${termA.StartDate} to ${termB.EndDate}`);
+                termA.StartDate = termB.EndDate;
+            }
+        }
 
         for (let i = terms.length - 1; i >= 0; i--) {
             const term = terms[i];
