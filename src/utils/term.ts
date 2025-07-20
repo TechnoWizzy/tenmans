@@ -41,8 +41,8 @@ export class TermManager {
             const termA = terms[i];
             const termB = terms[i-1];
 
-            if (termA.Name.toLowerCase().includes("fall")) {
-                console.log(`Changed ${termA.Name} start date from ${termA.StartDate} to ${termB.EndDate}`);
+            if (termA.Name.toLowerCase().includes("fall") && termB.Name.toLowerCase().includes("summer")) {
+                // Fall start dates are always early, use summer end date instead
                 termA.StartDate = termB.EndDate;
             }
         }
