@@ -45,10 +45,10 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 .sort((a, b) => b.cancelRate - a.cancelRate)
                 .map(stuff => {
                     const player = stuff.player
-                    const emote = `<:test:${player.getEmote(term.Id)}>`;
                     const index = sorted.indexOf(stuff);
-                    const rate = `${String(100 * stuff.cancelRate)}% games cancelled`
-                    return `**${index + 1} ${emote} ${player.username}** - ${rate}`;
+                    const rateV = Math.floor(1000 * stuff.cancelRate) * 1000;
+                    const rate = `${String(100 * rateV)}% games cancelled`
+                    return `**${index + 1} ${player.username}** - ${rate}`;
                 })
                 .join('\n')
             );
