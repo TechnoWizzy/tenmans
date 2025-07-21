@@ -1,9 +1,8 @@
-import {ChatInputCommandInteraction, type Guild, SlashCommandBuilder, TextChannel} from "discord.js";
-import {ephemeralReply, noReply, reply} from "../utils/utils.ts";
+import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder, TextChannel} from "discord.js";
+import {ephemeralReply, reply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
-import {QueueHandler} from "../queue/queue_handler.ts";
-import {TermManager} from "../utils/term.ts";
+import {Game} from "../models/game.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("test")
@@ -26,65 +25,28 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         }
 
         case 2: {
-            await reply(interaction, { content: "Test 2" });
-            break;
-        }
-
-        case 3: {
-            const { data } = await Bun.file("./tracker.json").json() as MatchResponse;
-            const users: string[] = [
-                "333424829279633408",
-                "204537858269118466",
-                "258440905327902720",
-                "723394718863458325",
-                "398853655681433601",
-                "457929277015326740",
-                "408612451546955787",
-                "751910711218667562",
-                "312770439631994880",
-                "193850796918571019"
-            ];
-            const players: Player[] = [];
-            for (const segment of data.segments) {
-                if (segment.type == "player-summary") {
-                    const username = segment.attributes.platformUserIdentifier;
-                    const userId = users.pop();
-                    if (!userId) throw new Error(
-                        `Failed to find userId for username: ${username}`
-                    )
-                    players.push(new Player(userId, username));
+            const stuff1 = await Player.fetchAll();
+            const stuff2 = await Promise.all(stuff1.map(async (player: Player) => {
+                const games = await Game.fetchByPlayerId(player.id);
+                const cancelled = games.filter(game => game.cancelled)
+                return {
+                    ...player,
+                    cancelRate: cancelled.length / games.length
                 }
-            }
+            }));
 
-            let text = '';
-            for (const player of players) {
-                text = text.concat(player.username + " - ");
-                await player.save();
-            }
-            await reply(interaction, { content: text });
-            break;
-        }
+            const embed = new EmbedBuilder()
+            embed.setTitle("Cancel Rates by Player")
+            embed.setFields(stuff2
+                .sort((a, b) => b.cancelRate - a.cancelRate)
+                .map(stuff => {
+                    return {
+                        name: stuff.username,
+                        value: `${String(100 * stuff.cancelRate)}%`
+                    }
+                }));
 
-        case 4: {
-            const players = await Player.fetchAll();
-            for (let i = 0; i < 10; i++) {
-                const user = await interaction.client.users.fetch(players[i].id);
-                await QueueHandler.join(user, interaction);
-            }
-            break;
-        }
-
-        case 5: {
-            const player = await Player.fetch(interaction.user.id);
-            if (!player) {
-                await ephemeralReply(interaction, { content: "Register" });
-                return;
-            }
-            const stats = player.getStats(TermManager.currentTerm.Id);
-            const timeout = 60 * 1000; // 1 minute
-            stats.timeout = new Date(Date.now() + timeout);
-            await player.save();
-            await noReply(interaction);
+            await reply(interaction, { embeds: [embed] });
             break;
         }
 
