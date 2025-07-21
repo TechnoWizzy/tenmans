@@ -46,7 +46,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 .map(stuff => {
                     const player = stuff.player
                     const index = sorted.indexOf(stuff);
-                    const rateV = Math.floor(1000 * stuff.cancelRate) * 1000;
+                    const rateV = Math.floor(1000 * stuff.cancelRate) / 1000;
                     const rate = `${String(100 * rateV)}% games cancelled`
                     return `**${index + 1} ${player.username}** - ${rate}`;
                 })
