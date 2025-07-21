@@ -32,23 +32,25 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 const cancelled = games.filter(game => game.cancelled)
                 return {
                     player: player,
-                    cancelRate: cancelled.length / games.length
+                    played: games.length,
+                    cancelled: cancelled.length
                 }
             }));
 
-            const sorted = stuff2.sort((a, b) => b.cancelRate - a.cancelRate);
+            const sorted = stuff2.sort((a, b) =>
+                b.cancelled - a.cancelled
+            );
 
             const term = TermManager.currentTerm;
             const embed = new EmbedBuilder()
             embed.setTitle("Cancel Rates by Player")
             embed.setDescription(sorted
-                .sort((a, b) => b.cancelRate - a.cancelRate)
                 .map(stuff => {
                     const player = stuff.player
                     const index = sorted.indexOf(stuff);
-                    const rateV = (100 * stuff.cancelRate).toFixed(2);
-                    const rate = `${rateV}% games cancelled`
-                    return `**${index + 1} ${player.username}** - ${rate}`;
+                    const emote = `<:test:${player.getEmote(term.Id)}>`;
+                    const rate = `${stuff.cancelled} of ${stuff.played} games cancelled`
+                    return `**${index + 1} ${emote} ${player.username}** - ${rate}`;
                 })
                 .join('\n')
             );
