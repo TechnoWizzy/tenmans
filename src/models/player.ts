@@ -2,7 +2,6 @@ import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
 import {removeFormatChars} from "../utils/utils.ts";
 import {ReflectionKind} from "typedoc";
-import pluralString = ReflectionKind.pluralString;
 
 /**
  * Represents a tenmans player

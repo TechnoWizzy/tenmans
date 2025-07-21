@@ -3,6 +3,7 @@ import {ephemeralReply, reply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {Game} from "../models/game.ts";
+import {TermManager} from "../utils/term.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("test")
@@ -30,21 +31,27 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 const games = await Game.fetchByPlayerId(player.id);
                 const cancelled = games.filter(game => game.cancelled)
                 return {
-                    ...player,
+                    player: player,
                     cancelRate: cancelled.length / games.length
                 }
             }));
 
+            const sorted = stuff2.sort((a, b) => b.cancelRate - a.cancelRate);
+
+            const term = TermManager.currentTerm;
             const embed = new EmbedBuilder()
             embed.setTitle("Cancel Rates by Player")
-            embed.setFields(stuff2
+            embed.setDescription(sorted
                 .sort((a, b) => b.cancelRate - a.cancelRate)
                 .map(stuff => {
-                    return {
-                        name: stuff.username,
-                        value: `${String(100 * stuff.cancelRate)}%`
-                    }
-                }));
+                    const player = stuff.player
+                    const emote = `<:test:${player.getEmote(term.Id)}>`;
+                    const index = sorted.indexOf(stuff);
+                    const rate = `${String(100 * stuff.cancelRate)}% games cancelled`
+                    return `**${index + 1} ${emote} ${player.username}** - ${rate}`;
+                })
+                .join('\n')
+            );
 
             await reply(interaction, { embeds: [embed] });
             break;
