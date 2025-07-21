@@ -39,7 +39,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             const sorted = stuff2.sort((a, b) =>
                 b.cancelled - a.cancelled
-            );
+            ).slice(0, 25);
 
             const term = TermManager.currentTerm;
             const embed = new EmbedBuilder()
