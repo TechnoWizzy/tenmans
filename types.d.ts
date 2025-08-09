@@ -15,8 +15,8 @@ interface MatchResponse {
     data: MatchData
 }
 
-interface UserResponse {
-    data: UserData
+interface ProfileResponse {
+    data: ProfileData
 }
 
 interface MatchData {
@@ -25,7 +25,7 @@ interface MatchData {
     metadata: MatchMetadata
 }
 
-interface UserData {
+interface ProfileData {
 
 }
 
@@ -136,7 +136,7 @@ interface PlayerRoundSegment {
         agentColor: string
         agentImageUrl: string
         agentPortraitUrl: string
-        platformInfo: UserData
+        platformInfo: ProfileData
         hasWon: boolean
     },
     stats: {
@@ -187,8 +187,8 @@ interface PlayerRoundDamageSegment {
         opponentPlatformUserIdentifier: string
     }
     metadata: {
-        platformInfo: UserData
-        opponentPlatformInfo: UserData
+        platformInfo: ProfileData
+        opponentPlatformInfo: ProfileData
     }
     stats: {
         damage: {
@@ -219,7 +219,7 @@ interface PlayerSummarySegment {
         agentImageUrl: string
         agentPortraitUrl: string
         countryCode: string
-        platformInfo: UserData
+        platformInfo: ProfileData
         accountLevel: number
     },
     stats: {
@@ -675,8 +675,8 @@ interface PlayerRoundKillsSegment {
         opponentPlatformUserIdentifier: string
     }
     metadata: {
-        platformInfo: UserData
-        opponentPlatformInfo: UserData
+        platformInfo: ProfileData
+        opponentPlatformInfo: ProfileData
         assistants: KillAssistant[]
         finishingDamage: {
             damageType: string

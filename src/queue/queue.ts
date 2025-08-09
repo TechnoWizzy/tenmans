@@ -28,7 +28,7 @@ import {TermManager} from "../utils/term.ts";
 export class Queue extends Map<string, [User, Timer]> {
     public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
-    public readonly timeout = 1000 * 60 * 30;
+    public readonly timeout = (15 * 60 * 1000) - 10000;
 
     private readonly channel: SendableChannels;
     private readonly modChannel: SendableChannels;
@@ -154,13 +154,7 @@ export class Queue extends Map<string, [User, Timer]> {
                 return;
             }
 
-            this.delete(user.id);
-            await this.update(`${removeFormatChars(user.username)} has been timed out.`);
-            await this.channel.send({ content: `<@${user.id}> You have been timed out of the queue` }).then(message => {
-                setTimeout(() => {
-                    message.delete().catch(console.log);
-                }, 15 * 60 * 1000);
-            });
+            await this.promptTimeout(user, interaction);
         }, this.timeout);
 
         this.set(user.id, [ user, timeout ]);
@@ -230,6 +224,27 @@ export class Queue extends Map<string, [User, Timer]> {
         } else {
             await this.update(`${removeFormatChars(user.username)} has left`, Colors.DarkOrange);
             await ephemeralReply(interaction, { content: "You have left the queue" });
+        }
+    }
+
+    public async promptTimeout(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction): Promise<void> {
+        try {
+            const embed = this.createConfirmEmbed(user);
+            const component = this.createConfirmComponent(user);
+            await ephemeralReply(interaction, {
+                content: `Hey <@${user.id}>, you will be removed from the queue unless you confirm your activity status`,
+                embeds: [ embed ],
+                components: [ component ],
+            });
+
+        } catch {
+            this.delete(user.id);
+            await this.update(`${removeFormatChars(user.username)} has been timed out.`);
+            await this.channel.send({ content: `<@${user.id}> You have been timed out of the queue` }).then(message => {
+                setTimeout(() => {
+                    message.delete().catch(console.log);
+                }, 10 * 60 * 1000);
+            });
         }
     }
 
@@ -370,5 +385,14 @@ export class Queue extends Map<string, [User, Timer]> {
             new ButtonBuilder().setLabel("Leave").setCustomId(createCustomId("queue", "leave")).setStyle(ButtonStyle.Danger),
             new ButtonBuilder().setEmoji("🔄").setCustomId(createCustomId("queue", "refresh")).setStyle(ButtonStyle.Secondary),
         )
+    }
+
+
+    private createConfirmEmbed(user: User) {
+        return new EmbedBuilder();
+    }
+
+    private createConfirmComponent(user: User) {
+        return new ActionRowBuilder<ButtonBuilder>()
     }
 }

@@ -13,6 +13,7 @@ import {QueueHandler} from "./src/queue/queue_handler.ts";
 import {Settings} from "./src/settings/settings.ts";
 import {Game} from "./src/models/game.ts";
 import {TermManager} from "./src/utils/term.ts";
+import {Playwright} from "./src/utils/playwright.ts";
 
 Express()
     .use('/', Express.static('docs'))
@@ -193,5 +194,16 @@ function getCommitMessage() {
         return "Update Applied - A new queue has started"
     }
 }
+
+// Process cleanup
+process.on("SIGINT", async () => {
+    await Playwright.close();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+    await Playwright.close();
+    process.exit(0);
+});
 
 console.log(`Tenmans: ${process.pid}`);

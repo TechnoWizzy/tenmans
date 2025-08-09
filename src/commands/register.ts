@@ -8,6 +8,7 @@ import {
 import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
+import {Tracker} from "../utils/tracker.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("register")
@@ -19,6 +20,7 @@ const builder = new SlashCommandBuilder()
     )
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
+    console.log("Register Command!!!");
     const player = await Player.fetch(interaction.user.id);
     if (player != null) {
         await ephemeralReply(interaction, { content: `You are already registered as **${player.username}** - Please contact an Admin to change your registration` });
@@ -32,6 +34,13 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
+    console.log(username);
+    const profile = await Tracker.fetchProfile(username);
+    if (profile == null) {
+        await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}** - Please double check your Riot Id. If this issue continues, please contact an Admin.` });
+        return;
+    }
+
     const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
         new ButtonBuilder()
             .setCustomId(createCustomId("register", interaction.user.id, username, Date.now()))
@@ -39,8 +48,8 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             .setLabel("Confirm"),
     )
 
-    const profileURL = getEnv("TRACKER_URL_USER") + encodeURIComponent(username)
-    await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify your profile. Then, click "Confirm"`, components: [ component ] });
+    const profileURL = getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(username)
+    await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) to verify your profile is correct. If your profile is wrong, dismiss and try again. Otherwise, click "Confirm"`, components: [ component ] });
 }
 
 export class RegisterCommand extends Command {
