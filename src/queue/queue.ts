@@ -33,6 +33,7 @@ export class Queue extends Map<string, [User, Timer]> {
     public readonly maxSize = 10;
     public readonly timeout = (5 * 60 * 1000);
 
+    private readonly promptTimeouts = new Map<string, Timer>;
     private readonly channel: SendableChannels;
     private readonly modChannel: SendableChannels;
     private lastMessage?: Message;
@@ -123,6 +124,11 @@ export class Queue extends Map<string, [User, Timer]> {
         if (tuple) {
             const timeout = tuple[1];
             global.clearTimeout(timeout);
+
+            const promptTimeout = this.promptTimeouts.get(user.id);
+            if (promptTimeout) {
+                global.clearTimeout(promptTimeout);
+            }
 
             this.set(user.id, [ user, this.createTimeout(user, interaction) ]);
 
@@ -250,6 +256,13 @@ export class Queue extends Map<string, [User, Timer]> {
                 content: `Hey <@${user.id}>, you will be removed from the queue unless you confirm your activity status ${timestamp}`,
                 components: [ component ],
             });
+
+            const timeout = setTimeout(async () => {
+                this.delete(user.id);
+                await this.update(`${removeFormatChars(user.username)} has been timed out.`);
+                await ephemeralReply(interaction, { content: `<@${user.id}> You have been timed out of the queue for inactivity. `});
+            }, then - now)
+            this.promptTimeouts.set(user.id, timeout);
 
         } catch {
             this.delete(user.id);
