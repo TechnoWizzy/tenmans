@@ -1,13 +1,16 @@
 import {
-    MessageCollector,
-    ButtonStyle,
+    ActionRowBuilder,
+    ButtonBuilder,
     ButtonInteraction,
+    ButtonStyle,
+    type ChatInputCommandInteraction,
+    type ColorResolvable,
     Colors,
-    EmbedBuilder, ActionRowBuilder, ButtonBuilder,
+    EmbedBuilder,
     type Message,
+    MessageCollector,
     type SendableChannels,
     type User,
-    type ColorResolvable, type ChatInputCommandInteraction,
 } from "discord.js";
 import {createCustomId, ephemeralReply, noReply, removeFormatChars} from "../utils/utils.ts";
 import {Game} from "../models/game.ts";
@@ -28,7 +31,7 @@ import {TermManager} from "../utils/term.ts";
 export class Queue extends Map<string, [User, Timer]> {
     public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
-    public readonly timeout = (15 * 60 * 1000) - 10000;
+    public readonly timeout = (5 * 60 * 1000);
 
     private readonly channel: SendableChannels;
     private readonly modChannel: SendableChannels;
@@ -115,8 +118,15 @@ export class Queue extends Map<string, [User, Timer]> {
             return;
         }
 
-        if (this.has(user.id)) {
-            await ephemeralReply(interaction, { content: "You are already in the queue!" });
+        const tuple = this.get(user.id);
+
+        if (tuple) {
+            const timeout = tuple[1];
+            global.clearTimeout(timeout);
+
+            this.set(user.id, [ user, this.createTimeout(user, interaction) ]);
+
+            await ephemeralReply(interaction, { content: "Your queue status has been renewed." });
             return;
         }
 
@@ -147,16 +157,7 @@ export class Queue extends Map<string, [User, Timer]> {
             return;
         }
 
-        const timeout = global.setTimeout(async () => {
-            const tuple = this.get(user.id)
-
-            if (!tuple) {
-                return;
-            }
-
-            await this.promptTimeout(user, interaction);
-        }, this.timeout);
-
+        const timeout = this.createTimeout(user, interaction);
         this.set(user.id, [ user, timeout ]);
 
         if (this.size == this.maxSize) {
@@ -227,24 +228,33 @@ export class Queue extends Map<string, [User, Timer]> {
         }
     }
 
+    public createTimeout(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction) {
+        return global.setTimeout(async () => {
+            const tuple = this.get(user.id)
+
+            if (!tuple) {
+                return;
+            }
+
+            await this.promptTimeout(user, interaction);
+        }, this.timeout);
+    }
+
     public async promptTimeout(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction): Promise<void> {
         try {
-            const embed = this.createConfirmEmbed(user);
-            const component = this.createConfirmComponent(user);
+            const component = this.createConfirmComponent();
+            const now = Date.now();
+            const then = now + (60 * 1000);
+            const timestamp = `<t:${Math.floor(then / 1000)}:R>`
             await ephemeralReply(interaction, {
-                content: `Hey <@${user.id}>, you will be removed from the queue unless you confirm your activity status`,
-                embeds: [ embed ],
+                content: `Hey <@${user.id}>, you will be removed from the queue unless you confirm your activity status ${timestamp}`,
                 components: [ component ],
             });
 
         } catch {
             this.delete(user.id);
             await this.update(`${removeFormatChars(user.username)} has been timed out.`);
-            await this.channel.send({ content: `<@${user.id}> You have been timed out of the queue` }).then(message => {
-                setTimeout(() => {
-                    message.delete().catch(console.log);
-                }, 10 * 60 * 1000);
-            });
+            await ephemeralReply(interaction, { content: `<@${user.id}> You have been timed out of the queue for inactivity. `});
         }
     }
 
@@ -387,12 +397,9 @@ export class Queue extends Map<string, [User, Timer]> {
         )
     }
 
-
-    private createConfirmEmbed(user: User) {
-        return new EmbedBuilder();
-    }
-
-    private createConfirmComponent(user: User) {
-        return new ActionRowBuilder<ButtonBuilder>()
+    private createConfirmComponent() {
+        return new ActionRowBuilder<ButtonBuilder>().setComponents(
+            new ButtonBuilder().setLabel("Join").setCustomId(createCustomId("queue", "join")).setStyle(ButtonStyle.Success),
+        )
     }
 }
