@@ -5,8 +5,8 @@ import {Player} from "../models/player.ts";
 import {Tracker} from "../utils/tracker.ts";
 
 const builder = new SlashCommandBuilder()
-    .setName("stats")
-    .setDescription("Look up a user's stats")
+    .setName("profile")
+    .setDescription("Look up a user's profile on tracker")
     .addUserOption((user) => user
         .setName("target")
         .setDescription("the user to look up")
@@ -38,13 +38,16 @@ function createProfileEmbed(data: ProfileData) {
     const embed = new EmbedBuilder()
         .setTitle(data.platformInfo.platformUserHandle)
         .setURL(getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(data.platformInfo.platformUserHandle))
-        .setImage(data.platformInfo.avatarUrl)
+        .setThumbnail(data.platformInfo.avatarUrl)
 
     for (const segment of data.segments) {
         switch (segment.type) {
             case "peak-rating":
                 const ratingStats = segment.stats;
-                embed.setThumbnail(ratingStats.peakRating.metadata.iconUrl);
+                embed.setAuthor({
+                    name: ratingStats.peakRating.displayValue,
+                    iconURL: ratingStats.peakRating.metadata.iconUrl
+                })
                 break;
 
             case "season":
