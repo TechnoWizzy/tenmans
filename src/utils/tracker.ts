@@ -1,7 +1,7 @@
 import {getEnv} from "./utils.ts";
 import {Mutex} from "./mutex.ts";
 import {Playwright} from "./playwright.ts";
-import * as NodeCache from "node-cache";
+import NodeCache from "node-cache";
 
 export class Tracker {
     private static lock = new Mutex();
