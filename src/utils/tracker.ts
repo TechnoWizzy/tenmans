@@ -38,8 +38,6 @@ export class Tracker {
     }
 
     public static async fetchProfile(riotId: string) {
-        console.log("Fetch profile");
-
         const data = this.profileCache.get<ProfileResponse>(riotId);
         if (data) {
             return data;

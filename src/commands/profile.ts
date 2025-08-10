@@ -62,7 +62,7 @@ function createProfileEmbed(data: ProfileData) {
     if (topAgent) {
         const agentName = topAgent.metadata.name.toLowerCase();
         const agentImagePath = encodeURIComponent(getEnv("TRACKER_HERO_CDN").replace("{HERO_NAME}", agentName));
-        const imageUrl = getEnv("TRACKER_IMAGE_CDN") + agentImagePath;
+        const imageUrl = getEnv("TRACKER_IMAGE_CDN") + agentImagePath + "/image.jpg";
 
         console.log(imageUrl);
 
