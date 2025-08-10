@@ -38,7 +38,13 @@ export async function ephemeralReply(interaction: Interaction, options: ReplyOpt
         if (interaction.deferred) {
             await interaction.editReply(options);
         } else {
-            await interaction.reply({ ...options, flags: 'Ephemeral' });
+            await interaction.reply({
+                ...options,
+                allowedMentions: {
+                    repliedUser: true,
+                    parse: [ 'roles', 'users', 'everyone' ],
+                },
+                flags: 'Ephemeral' });
         }
 
     } else {
