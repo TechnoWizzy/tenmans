@@ -64,6 +64,8 @@ function createProfileEmbed(data: ProfileData) {
         const agentImagePath = encodeURIComponent(getEnv("TRACKER_HERO_CDN").replace("{HERO_NAME}", agentName));
         const imageUrl = getEnv("TRACKER_IMAGE_CDN") + agentImagePath;
 
+        console.log(imageUrl);
+
         embed.setColor(topAgent.metadata.color);
         embed.setImage(imageUrl);
     }
