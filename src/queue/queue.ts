@@ -31,7 +31,7 @@ import {TermManager} from "../utils/term.ts";
 export class Queue extends Map<string, [User, Timer]> {
     public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
-    public readonly timeout = (10 * 60 * 1000);
+    public readonly timeout = (15 * 60 * 1000) - 10000;
 
     private readonly promptTimeouts = new Map<string, Timer>;
     private readonly channel: SendableChannels;
@@ -256,7 +256,7 @@ export class Queue extends Map<string, [User, Timer]> {
     public async promptTimeout(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction): Promise<void> {
         try {
             const now = Date.now();
-            const then = now + (60 * 1000);
+            const then = now + (5 * 60 * 1000) + 5000;
             const timestamp = `<t:${Math.floor(then / 1000)}:R>`
             await ephemeralReply(interaction, {
                 content: `<@${user.id}> please rejoin the queue to confirm your activity status and avoid being timed out ${timestamp}`,
