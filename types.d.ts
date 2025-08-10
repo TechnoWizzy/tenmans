@@ -929,7 +929,7 @@ interface AgentSegment {
         name: string;
         imageUrl: string;
         role: string;
-        color: string;
+        color: HexColorString;
         abilities: {
             Ability1: AbilityData;
             Ability2: AbilityData;
@@ -1875,7 +1875,7 @@ interface AgentTopMapSegment {
     metadata: {
         name: string;
         imageUrl: string;
-        color: string;
+        color: HexColorString;
         schema; string;
     },
     stats: {
@@ -3335,7 +3335,7 @@ interface PlayerRoundSegment {
         teamSide: TeamSide
         agentKey: string
         agentName: string
-        agentColor: string
+        agentcolor: HexColorString
         agentImageUrl: string
         agentPortraitUrl: string
         platformInfo: ProfileData
@@ -3417,7 +3417,7 @@ interface PlayerSummarySegment {
         teamId: TeamName
         agentKey: string
         agentName: string
-        agentColor: string
+        agentcolor: HexColorString
         agentImageUrl: string
         agentPortraitUrl: string
         countryCode: string

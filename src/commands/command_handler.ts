@@ -7,7 +7,7 @@ import {HelpCommand} from "./help.ts";
 import {PingCommand} from "./ping.ts";
 import {WhoisCommand} from "./whois.ts";
 import {TermManager} from "../utils/term.ts";
-import {StatsCommand} from "./stats.ts";
+import {StatsCommand} from "./profile.ts";
 
 export class CommandHandler {
     private static readonly commands = [
