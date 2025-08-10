@@ -248,13 +248,11 @@ export class Queue extends Map<string, [User, Timer]> {
 
     public async promptTimeout(user: User, interaction: ButtonInteraction | ChatInputCommandInteraction): Promise<void> {
         try {
-            const component = this.createConfirmComponent();
             const now = Date.now();
             const then = now + (60 * 1000);
             const timestamp = `<t:${Math.floor(then / 1000)}:R>`
             await ephemeralReply(interaction, {
-                content: `Hey <@${user.id}>, you will be removed from the queue unless you confirm your activity status ${timestamp}`,
-                components: [ component ],
+                content: `<@${user.id}> please rejoin the queue confirm your activity status and avoid being timed out ${timestamp}`,
             });
 
             const timeout = setTimeout(async () => {
@@ -408,12 +406,6 @@ export class Queue extends Map<string, [User, Timer]> {
             new ButtonBuilder().setLabel("Join").setCustomId(createCustomId("queue", "join")).setStyle(ButtonStyle.Success),
             new ButtonBuilder().setLabel("Leave").setCustomId(createCustomId("queue", "leave")).setStyle(ButtonStyle.Danger),
             new ButtonBuilder().setEmoji("🔄").setCustomId(createCustomId("queue", "refresh")).setStyle(ButtonStyle.Secondary),
-        )
-    }
-
-    private createConfirmComponent() {
-        return new ActionRowBuilder<ButtonBuilder>().setComponents(
-            new ButtonBuilder().setLabel("Join").setCustomId(createCustomId("queue", "join")).setStyle(ButtonStyle.Success),
         )
     }
 }
