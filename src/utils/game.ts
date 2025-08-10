@@ -91,6 +91,11 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 game.matchId = matchId;
                 game.cancelled = false;
                 await propagateGameChange(interaction, game);
+                if (interaction.isMessageComponent()) {
+                    try {
+                        await interaction.message.delete();
+                    } catch {}
+                }
             }
 
             if (interaction.isChatInputCommand()) {
@@ -141,13 +146,6 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
             game.cancelled = true;
             await game.save();
 
-            if (interaction.isButton()) {
-                const embed = game.createEmbed();
-                const component = game.createComponents();
-                const message = await interaction.message.fetchReference();
-                await message.edit({ embeds: [ embed ], components: [ component ] });
-            }
-
             for (const player of game.players) {
                 const stats = player.getStats(TermManager.currentTerm.Id);
                 const timeout = 60 * 1000; // 1 minute
@@ -156,7 +154,12 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
             }
 
             await propagateGameChange(interaction, game);
-            break;
+            if (interaction.isButton()) {
+                const message = await interaction.message.fetchReference();
+                try {
+                    await message.delete();
+                } catch {}
+            }
         }
     }
 }
@@ -286,13 +289,6 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
     const pluralityText = games.length == 1 ? "game update was" : "game updates were";
     await reply(interaction, { content: `${games.length} ${pluralityText} applied successfully.` });
 
-    if (interaction.isButton() || interaction.isModalSubmit()) {
-        if (interaction.message?.deletable) {
-            try {
-                await interaction.message?.delete()
-            } catch (_) { }
-        }
-    }
 
     // Delete leaderboard pages for this term
     leaderboardCache.keys().forEach(key => {
