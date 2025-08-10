@@ -31,7 +31,7 @@ import {TermManager} from "../utils/term.ts";
 export class Queue extends Map<string, [User, Timer]> {
     public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
-    public readonly timeout = (1 * 30 * 1000);
+    public readonly timeout = (10 * 60 * 1000);
 
     private readonly promptTimeouts = new Map<string, Timer>;
     private readonly channel: SendableChannels;

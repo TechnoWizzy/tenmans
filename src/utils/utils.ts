@@ -37,10 +37,6 @@ export async function ephemeralReply(interaction: Interaction, options: ReplyOpt
     if (interaction.isRepliable()) {
         if (interaction.deferred) {
             try {
-                try {
-                    await interaction.deleteReply();
-                } catch {}
-
                 await interaction.followUp({
                     ...options,
                     allowedMentions: {
