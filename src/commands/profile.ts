@@ -1,8 +1,9 @@
 import {ChatInputCommandInteraction, Colors, EmbedBuilder, type Guild, SlashCommandBuilder} from "discord.js";
 import {Command} from "./command.ts";
-import {ephemeralReply, getEnv} from "../utils/utils.ts";
+import {ephemeralReply, getEnv, reply} from "../utils/utils.ts";
 import {Player} from "../models/player.ts";
 import {Tracker} from "../utils/tracker.ts";
+import NodeCache from "node-cache";
 
 const builder = new SlashCommandBuilder()
     .setName("profile")
@@ -12,6 +13,8 @@ const builder = new SlashCommandBuilder()
         .setDescription("the user to look up")
         .setRequired(true)
     )
+
+const profileStore = new NodeCache({ stdTTL: 20, checkperiod: 2 });
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const target = interaction.options.getUser("target", true);
@@ -24,13 +27,19 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
     const profile = await Tracker.fetchProfile(player.username);
 
+    const time = profileStore.get<number>(player.id);
+    if (time) {
+        await ephemeralReply(interaction, { content: `You will be able to use this command <t:{time}:R>` });
+        return;
+    }
+
     if (!profile) {
         await ephemeralReply(interaction, { content: `Unable to fetch <@${target.id}>'s profile from Tracker. Please try again later.` });
         return;
     }
 
     const embed = createProfileEmbed(profile?.data);
-    await ephemeralReply(interaction, { embeds: [ embed ] });
+    await reply(interaction, { embeds: [ embed ] });
     return;
 }
 
