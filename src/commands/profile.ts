@@ -32,6 +32,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         await ephemeralReply(interaction, { content: `You will be able to use this command <t:{time}:R>` });
         return;
     }
+    profileStore.set<number>(player.id, Date.now() + (20 * 1000));
 
     if (!profile) {
         await ephemeralReply(interaction, { content: `Unable to fetch <@${target.id}>'s profile from Tracker. Please try again later.` });
