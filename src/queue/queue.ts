@@ -96,7 +96,9 @@ export class Queue extends Map<string, [User, Timer]> {
         if (interaction.isButton()) {
             if (interaction.message.id != this.lastMessage?.id) {
                 await ephemeralReply(interaction, { content: "This message is no longer active." });
-                await interaction.message.delete();
+                try {
+                    await interaction.message.delete();
+                } catch {}
                 return;
             }
         }
