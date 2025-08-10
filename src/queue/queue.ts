@@ -226,6 +226,11 @@ export class Queue extends Map<string, [User, Timer]> {
         const timeout = tuple[1];
         global.clearTimeout(timeout);
 
+        const promptTimeout = this.promptTimeouts.get(user.id);
+        if (promptTimeout) {
+            global.clearTimeout(promptTimeout);
+        }
+
         this.delete(user.id);
 
         if (ban) {
