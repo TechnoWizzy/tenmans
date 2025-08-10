@@ -31,7 +31,7 @@ import {TermManager} from "../utils/term.ts";
 export class Queue extends Map<string, [User, Timer]> {
     public static readonly name = "Val 10mans 2.0"
     public readonly maxSize = 10;
-    public readonly timeout = (5 * 60 * 1000);
+    public readonly timeout = (1 * 30 * 1000);
 
     private readonly promptTimeouts = new Map<string, Timer>;
     private readonly channel: SendableChannels;
@@ -264,7 +264,8 @@ export class Queue extends Map<string, [User, Timer]> {
             }, then - now)
             this.promptTimeouts.set(user.id, timeout);
 
-        } catch {
+        } catch (e) {
+            console.log(e);
             this.delete(user.id);
             await this.update(`${removeFormatChars(user.username)} has been timed out.`);
             await ephemeralReply(interaction, { content: `<@${user.id}> You have been timed out of the queue for inactivity. `});
