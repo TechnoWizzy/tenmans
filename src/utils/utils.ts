@@ -36,7 +36,20 @@ export type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], componen
 export async function ephemeralReply(interaction: Interaction, options: ReplyOptions) {
     if (interaction.isRepliable()) {
         if (interaction.deferred) {
-            await interaction.editReply(options);
+            try {
+                await interaction.followUp({
+                    ...options,
+                    allowedMentions: {
+                        repliedUser: true,
+                        parse: [ 'roles', 'users', 'everyone' ],
+                    },
+                    flags: 'Ephemeral' }
+                );
+            } catch (e) {
+                console.log(e);
+                await interaction.editReply(options);
+            }
+
         } else {
             await interaction.reply({
                 ...options,
@@ -44,7 +57,8 @@ export async function ephemeralReply(interaction: Interaction, options: ReplyOpt
                     repliedUser: true,
                     parse: [ 'roles', 'users', 'everyone' ],
                 },
-                flags: 'Ephemeral' });
+                flags: 'Ephemeral' }
+            );
         }
 
     } else {

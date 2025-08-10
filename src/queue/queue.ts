@@ -254,7 +254,7 @@ export class Queue extends Map<string, [User, Timer]> {
             const then = now + (60 * 1000);
             const timestamp = `<t:${Math.floor(then / 1000)}:R>`
             await ephemeralReply(interaction, {
-                content: `<@${user.id}> please rejoin the queue confirm your activity status and avoid being timed out ${timestamp}`,
+                content: `<@${user.id}> please rejoin the queue to confirm your activity status and avoid being timed out ${timestamp}`,
             });
 
             const timeout = setTimeout(async () => {
