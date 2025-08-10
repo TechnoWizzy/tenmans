@@ -94,7 +94,7 @@ function createProfileEmbed(data: ProfileData) {
                 `Win %: ${agent.stats.matchesWinPct.displayValue}\n` +
                 `K/D: ${agent.stats.kDRatio.displayValue}\n` +
                 `ACS: ${agent.stats.scorePerRound.displayValue}`,
-            inline: false,
+            inline: true,
         });
     }
 
