@@ -113,6 +113,8 @@ export class Queue extends Map<string, [User, Timer]> {
         }
 
         const stats = player?.getStats(TermManager.currentTerm.Id);
+
+        /*
         if (stats.timeout.getTime() > Date.now()) {
             const timeout = Math.floor(stats?.timeout.getTime() / 1000);
             const time = `<t:${timeout}:R>`
@@ -120,6 +122,7 @@ export class Queue extends Map<string, [User, Timer]> {
             await ephemeralReply(interaction, { content: message });
             return;
         }
+        */
 
         const tuple = this.get(user.id);
 
