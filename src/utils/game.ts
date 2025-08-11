@@ -62,7 +62,14 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                             return;
                         }
 
-                        player.getStats(game.termId).acs = Math.round(segment.stats.scorePerRound.value);
+                        const stats = player.getStats(game.termId);
+                        stats.acs = Math.round(segment.stats.scorePerRound.value);
+                        stats.kills += segment.stats.kills.value;
+                        stats.assists += segment.stats.assists.value;
+                        stats.deaths += segment.stats.deaths.value;
+                        stats.headshots += segment.stats.headshots.value;
+                        stats.totalshots = + Math.floor(segment.stats.headshots.value / segment.stats.hsAccuracy.value);
+                        stats.totalAcs += stats.acs;
 
                         const teamId = segment.metadata.teamId;
                         if (teamId == "Red") {
@@ -146,12 +153,12 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
             game.cancelled = true;
             await game.save();
 
-            for (const player of game.players) {
-                const stats = player.getStats(TermManager.currentTerm.Id);
-                const timeout = 60 * 1000; // 1 minute
-                stats.timeout = new Date(Date.now() + timeout);
-                await player.save();
-            }
+            // for (const player of game.players) {
+            //     const stats = player.getStats(TermManager.currentTerm.Id);
+            //     const timeout = 60 * 1000; // 1 minute
+            //     stats.timeout = new Date(Date.now() + timeout);
+            //     await player.save();
+            // }
 
             await propagateGameChange(interaction, game);
             if (interaction.isButton()) {
@@ -206,6 +213,11 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
                 stats.elo = modifiedStats.elo;
                 stats.wins = modifiedStats.wins;
                 stats.losses = modifiedStats.losses;
+                stats.kills = modifiedStats.kills;
+                stats.assists = modifiedStats.assists;
+                stats.deaths = modifiedStats.deaths;
+                stats.headshots = modifiedStats.headshots;
+                stats.totalshots = modifiedStats.totalshots;
                 stats.games = modifiedStats.games;
             }
         }
@@ -213,12 +225,17 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
         for (let i = 0; i < teamBlue.players.length; i++) {
             const player = teamBlue.players[i];
             const modifiedPlayer = modifiedPlayers.get(player.id);
-            if (modifiedPlayer) {
+            if (modifiedPlayer) { // Copy everything but ACS
                 const stats = player.getStats(game.termId);
                 const modifiedStats = modifiedPlayer.getStats(game.termId);
                 stats.elo = modifiedStats.elo;
                 stats.wins = modifiedStats.wins;
                 stats.losses = modifiedStats.losses;
+                stats.kills = modifiedStats.kills;
+                stats.assists = modifiedStats.assists;
+                stats.deaths = modifiedStats.deaths;
+                stats.headshots = modifiedStats.headshots;
+                stats.totalshots = modifiedStats.totalshots;
                 stats.games = modifiedStats.games;
             }
         }

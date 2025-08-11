@@ -1,4 +1,4 @@
-import {ChatInputCommandInteraction, Colors, EmbedBuilder, type Guild, SlashCommandBuilder} from "discord.js";
+import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder} from "discord.js";
 import {Command} from "./command.ts";
 import {ephemeralReply, getEnv, reply} from "../utils/utils.ts";
 import {Player} from "../models/player.ts";
@@ -6,15 +6,15 @@ import {Tracker} from "../utils/tracker.ts";
 import NodeCache from "node-cache";
 
 const builder = new SlashCommandBuilder()
-    .setName("profile")
-    .setDescription("Look up a user's profile on tracker")
+    .setName("tracker")
+    .setDescription("Look up a user's tracker profile")
     .addUserOption((user) => user
         .setName("target")
         .setDescription("the user to look up")
         .setRequired(true)
     )
 
-const profileStore = new NodeCache({ stdTTL: 20, checkperiod: 2 });
+const profileStore = new NodeCache({stdTTL: 20, checkperiod: 2});
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const target = interaction.options.getUser("target", true);
@@ -40,7 +40,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
 
     const embed = createProfileEmbed(profile?.data);
-    await reply(interaction, { embeds: [ embed ] });
+    await reply(interaction, {embeds: [embed]});
     return;
 }
 
@@ -81,7 +81,8 @@ function createProfileEmbed(data: ProfileData) {
             (a, b) =>
                 (b as AgentSegment).stats.timePlayed.value -
                 (a as AgentSegment).stats.timePlayed.value
-        ) as AgentSegment[];
+        )
+        .slice(0, 3) as AgentSegment[];
 
     const topAgent = agentSegments.at(0);
     if (topAgent) {
@@ -111,7 +112,7 @@ function createProfileEmbed(data: ProfileData) {
     return embed;
 }
 
-export class StatsCommand extends Command {
+export class TrackerCommand extends Command {
     constructor() {
         super(false, builder, execute);
     }

@@ -3417,7 +3417,7 @@ interface PlayerSummarySegment {
         teamId: TeamName
         agentKey: string
         agentName: string
-        agentcolor: HexColorString
+        agentColor: HexColorString
         agentImageUrl: string
         agentPortraitUrl: string
         countryCode: string

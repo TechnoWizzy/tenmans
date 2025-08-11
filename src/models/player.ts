@@ -1,7 +1,6 @@
 import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
 import {removeFormatChars} from "../utils/utils.ts";
-import {ReflectionKind} from "typedoc";
 
 /**
  * Represents a tenmans player
@@ -24,7 +23,8 @@ export class Player {
         this.id = id;
         this.username = removeFormatChars(username);
         this.stats = stats.map(stat => {
-            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.elo, stat.acs, stat.timeout, stat.termId);
+            return new PlayerStats(stat.games, stat.wins, stat.losses, stat.kills, stat.assists, stat.deaths,
+                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.termId);
         })
     }
 
@@ -162,9 +162,14 @@ export class PlayerStats {
     public games: number;
     public wins: number;
     public losses: number;
+    public kills: number;
+    public assists: number;
+    public deaths: number;
+    public headshots: number;
+    public totalshots: number;
     public elo: number;
     public acs: number;
-    public timeout: Date;
+    public totalAcs: number;
     public termId: string;
 
     /**
@@ -173,17 +178,30 @@ export class PlayerStats {
      * @param {number} games - The number of games played. Defaults to 0.
      * @param {number} wins - The number of games won. Defaults to 0.
      * @param {number} losses - The number of games lost. Defaults to 0.
+     * @param kills
+     * @param assists
+     * @param deaths
+     * @param headshots
+     * @param totalshots
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
+     * @param totalAcs
      * @param {string} termId - The ID of the current school term
      */
-    public constructor(games: number = 0, wins: number = 0, losses: number = 0, elo: number = 500, acs: number = 0, timeout?: Date, termId?: string) {
+    public constructor(games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0, assists: number = 0,
+                       deaths: number = 0,  headshots: number = 0, totalshots: number = 0, elo: number = 500,
+                       acs: number = 0, totalAcs: number = 0, termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
+        this.kills = kills;
+        this.assists = assists;
+        this.deaths = deaths;
+        this.headshots = headshots;
+        this.totalshots = totalshots;
         this.elo = elo;
         this.acs = acs;
-        this.timeout = timeout ?? new Date(0);
+        this.totalAcs = totalAcs;
         this.termId = termId ?? TermManager.currentTerm.Id;
     }
 }
