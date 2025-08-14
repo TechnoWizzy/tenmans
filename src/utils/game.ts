@@ -221,11 +221,13 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
                 stats.wins = modifiedStats.wins;
                 stats.losses = modifiedStats.losses;
                 stats.kills = modifiedStats.kills;
+                stats.games = modifiedStats.games;
                 stats.assists = modifiedStats.assists;
                 stats.deaths = modifiedStats.deaths;
                 stats.headshots = modifiedStats.headshots;
                 stats.totalshots = modifiedStats.totalshots;
-                stats.games = modifiedStats.games;
+                stats.totalAcs = modifiedStats.totalAcs;
+                stats.agents = modifiedStats.agents;
             }
         }
 
@@ -238,12 +240,14 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
                 stats.elo = modifiedStats.elo;
                 stats.wins = modifiedStats.wins;
                 stats.losses = modifiedStats.losses;
+                stats.games = modifiedStats.games;
                 stats.kills = modifiedStats.kills;
                 stats.assists = modifiedStats.assists;
                 stats.deaths = modifiedStats.deaths;
                 stats.headshots = modifiedStats.headshots;
                 stats.totalshots = modifiedStats.totalshots;
-                stats.games = modifiedStats.games;
+                stats.totalAcs = modifiedStats.totalAcs;
+                stats.agents = modifiedStats.agents;
             }
         }
 
@@ -280,6 +284,7 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon, game.termId);
             const modifiedPlayer = new Player(player.id, player.username, player.stats);
             const modifiedStats = modifiedPlayer.getStats(game.termId);
+            const agentStats = modifiedStats.getAgentStats(modifiedStats.agent);
             if (game.id == 0 && teamBlue.hasWon) {
                 modifiedStats.elo += Math.round(eloDelta * 1.5);
             } else if (game.id == 0) {
@@ -288,10 +293,13 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
                 modifiedStats.elo += eloDelta;
             }
             modifiedStats.games += 1;
+            agentStats.games += 1;
             if (teamBlue.hasWon) {
                 modifiedStats.wins += 1;
+                agentStats.wins += 1;
             } else {
                 modifiedStats.losses += 1;
+                agentStats.losses += 1;
             }
             game.players.push(player);
             modifiedPlayers.set(player.id, modifiedPlayer);

@@ -28,7 +28,7 @@ export class Player {
                     agent.deaths, agent.headshots, agent.totalshots, agent.totalAcs);
             })
             return new PlayerStats(stat.games, stat.wins, stat.losses, stat.kills, stat.assists, stat.deaths,
-                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, agents, stat.termId);
+                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.agent, agents, stat.termId);
         });
     }
 
@@ -174,6 +174,7 @@ export class PlayerStats {
     public elo: number;
     public acs: number;
     public totalAcs: number;
+    public agent: string;
     public agents: AgentStats[];
     public termId: string;
 
@@ -191,12 +192,13 @@ export class PlayerStats {
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
      * @param {number} totalAcs - The number of all ACS
+     * @param {string} agent - The name of the agent
      * @param {AgentStats[]} agents - The list of Agent Stats
      * @param {string} termId - The ID of the current school term
      */
     public constructor(games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0, assists: number = 0,
                        deaths: number = 0,  headshots: number = 0, totalshots: number = 0, elo: number = 500,
-                       acs: number = 0, totalAcs: number = 0, agents: AgentStats[] = [], termId?: string) {
+                       acs: number = 0, totalAcs: number = 0, agent: string = "", agents: AgentStats[] = [], termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
@@ -208,11 +210,16 @@ export class PlayerStats {
         this.elo = elo;
         this.acs = acs;
         this.totalAcs = totalAcs;
+        this.agent = agent;
         this.agents = agents;
         this.termId = termId ?? TermManager.currentTerm.Id;
     }
 
     public getAgentStats(name: string) {
+        if (name == "") {
+            return new AgentStats("");
+        }
+
         const stats = this.agents.find(agent => agent.name == name);
         if (stats) {
             return stats;
