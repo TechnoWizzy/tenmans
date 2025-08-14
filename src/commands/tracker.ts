@@ -55,7 +55,7 @@ function createProfileEmbed(data: ProfileData) {
             currentRank = segment.stats.rank;
             peakRank = segment.stats.peakRank;
 
-            if (!currentRank.metadata) {
+            if (!currentRank) {
                 return new EmbedBuilder()
                     .setTitle("You don't play the game")
                     .setDescription("Why are you using this command?")
