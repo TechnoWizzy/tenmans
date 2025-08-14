@@ -23,9 +23,13 @@ export class Player {
         this.id = id;
         this.username = removeFormatChars(username);
         this.stats = stats.map(stat => {
+            const agents = stat.agents.map(agent => {
+                return new AgentStats(agent.name, agent.games, agent.wins, agent.losses, agent.kills, agent.assists,
+                    agent.deaths, agent.headshots, agent.totalshots, agent.totalAcs);
+            })
             return new PlayerStats(stat.games, stat.wins, stat.losses, stat.kills, stat.assists, stat.deaths,
-                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.termId);
-        })
+                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, agents, stat.termId);
+        });
     }
 
     public getStats(termId: string) {
@@ -170,6 +174,7 @@ export class PlayerStats {
     public elo: number;
     public acs: number;
     public totalAcs: number;
+    public agents: AgentStats[];
     public termId: string;
 
     /**
@@ -186,11 +191,12 @@ export class PlayerStats {
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
      * @param totalAcs
+     * @param agents
      * @param {string} termId - The ID of the current school term
      */
     public constructor(games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0, assists: number = 0,
                        deaths: number = 0,  headshots: number = 0, totalshots: number = 0, elo: number = 500,
-                       acs: number = 0, totalAcs: number = 0, termId?: string) {
+                       acs: number = 0, totalAcs: number = 0, agents: AgentStats[] = [], termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
@@ -202,7 +208,47 @@ export class PlayerStats {
         this.elo = elo;
         this.acs = acs;
         this.totalAcs = totalAcs;
+        this.agents = agents;
         this.termId = termId ?? TermManager.currentTerm.Id;
+    }
+
+    public getAgentStats(name: string) {
+        const stats = this.agents.find(agent => agent.name == name);
+        if (stats) {
+            return stats;
+        } else {
+            const agent = new AgentStats(name);
+            this.agents.push(agent);
+            return agent;
+        }
+    }
+}
+
+export class AgentStats {
+    public name: string;
+    public games: number;
+    public wins: number;
+    public losses: number;
+    public kills: number;
+    public assists: number;
+    public deaths: number;
+    public headshots: number;
+    public totalshots: number;
+    public totalAcs: number;
+
+    public constructor(name: string, games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0,
+                       assists: number = 0, deaths: number = 0,  headshots: number = 0, totalshots: number = 0,
+                       totalAcs: number = 0) {
+        this.name = name;
+        this.games = games;
+        this.wins = wins
+        this.losses = losses;
+        this.kills = kills;
+        this.assists = assists;
+        this.deaths = deaths;
+        this.headshots = headshots;
+        this.totalshots = totalshots;
+        this.totalAcs = totalAcs;
     }
 }
 
