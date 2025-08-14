@@ -183,15 +183,15 @@ export class PlayerStats {
      * @param {number} games - The number of games played. Defaults to 0.
      * @param {number} wins - The number of games won. Defaults to 0.
      * @param {number} losses - The number of games lost. Defaults to 0.
-     * @param kills
-     * @param assists
-     * @param deaths
-     * @param headshots
-     * @param totalshots
+     * @param {number} kills - The number of all kills
+     * @param {number} assists - The number of all assists
+     * @param {number} deaths - The number of all deaths
+     * @param {number} headshots - The number of all headshots
+     * @param {number} totalshots - The number of all shots
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
-     * @param totalAcs
-     * @param agents
+     * @param {number} totalAcs - The number of all ACS
+     * @param {AgentStats[]} agents - The list of Agent Stats
      * @param {string} termId - The ID of the current school term
      */
     public constructor(games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0, assists: number = 0,
@@ -224,6 +224,9 @@ export class PlayerStats {
     }
 }
 
+/**
+ * Represents the statistical data of an agent, including their performance.
+ */
 export class AgentStats {
     public name: string;
     public games: number;
@@ -236,6 +239,20 @@ export class AgentStats {
     public totalshots: number;
     public totalAcs: number;
 
+    /**
+     * Initializes a new instance of the class with the provided values.
+     *
+     * @param {string} name - The name of the agent.
+     * @param {number} games - The number of games played. Defaults to 0.
+     * @param {number} wins - The number of games won. Defaults to 0.
+     * @param {number} losses - The number of games lost. Defaults to 0.
+     * @param {number} kills - The number of all kills
+     * @param {number} assists - The number of all assists
+     * @param {number} deaths - The number of all deaths
+     * @param {number} headshots - The number of all headshots
+     * @param {number} totalshots - The number of all shots
+     * @param {number} totalAcs - The number of all ACS
+     */
     public constructor(name: string, games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0,
                        assists: number = 0, deaths: number = 0,  headshots: number = 0, totalshots: number = 0,
                        totalAcs: number = 0) {
