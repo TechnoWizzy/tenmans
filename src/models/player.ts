@@ -23,7 +23,7 @@ export class Player {
         this.id = id;
         this.username = removeFormatChars(username);
         this.stats = stats.map(stat => {
-            const agents = stat.agents.map(agent => {
+            const agents = stat.agents?.map(agent => {
                 return new AgentStats(agent.name, agent.games, agent.wins, agent.losses, agent.kills, agent.assists,
                     agent.deaths, agent.headshots, agent.totalshots, agent.totalAcs);
             })
