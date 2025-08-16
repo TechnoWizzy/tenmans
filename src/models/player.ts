@@ -24,11 +24,11 @@ export class Player {
         this.username = removeFormatChars(username);
         this.stats = stats.map(stat => {
             const agents = stat.agents?.map(agent => {
-                return new AgentStats(agent.name, agent.games, agent.wins, agent.losses, agent.kills, agent.assists,
+                return new AgentStats(agent.id, agent.games, agent.wins, agent.losses, agent.kills, agent.assists,
                     agent.deaths, agent.headshots, agent.totalshots, agent.totalAcs);
             })
             return new PlayerStats(stat.games, stat.wins, stat.losses, stat.kills, stat.assists, stat.deaths,
-                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.agent, agents, stat.termId);
+                stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.agentId, agents, stat.termId);
         });
     }
 
@@ -174,7 +174,7 @@ export class PlayerStats {
     public elo: number;
     public acs: number;
     public totalAcs: number;
-    public agent: string;
+    public agentId: string;
     public agents: AgentStats[];
     public termId: string;
 
@@ -192,13 +192,13 @@ export class PlayerStats {
      * @param {number} elo - The Elo rating of the player. Defaults to 500.
      * @param {number} acs - The average combat score of the player. Defaults to 0.
      * @param {number} totalAcs - The number of all ACS
-     * @param {string} agent - The name of the agent
+     * @param {string} agentId - The id of the agent
      * @param {AgentStats[]} agents - The list of Agent Stats
      * @param {string} termId - The ID of the current school term
      */
     public constructor(games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0, assists: number = 0,
                        deaths: number = 0,  headshots: number = 0, totalshots: number = 0, elo: number = 500,
-                       acs: number = 0, totalAcs: number = 0, agent: string = "", agents: AgentStats[] = [], termId?: string) {
+                       acs: number = 0, totalAcs: number = 0, agentId: string = "", agents: AgentStats[] = [], termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
@@ -210,21 +210,21 @@ export class PlayerStats {
         this.elo = elo;
         this.acs = acs;
         this.totalAcs = totalAcs;
-        this.agent = agent;
+        this.agentId = agentId;
         this.agents = agents;
         this.termId = termId ?? TermManager.currentTerm.Id;
     }
 
-    public getAgentStats(name: string) {
-        if (name == "") {
+    public getAgentStats(id: string) {
+        if (id == "") {
             return new AgentStats("");
         }
 
-        const stats = this.agents.find(agent => agent.name == name);
+        const stats = this.agents.find(agent => agent.id == id);
         if (stats) {
             return stats;
         } else {
-            const agent = new AgentStats(name);
+            const agent = new AgentStats(id);
             this.agents.push(agent);
             return agent;
         }
@@ -235,7 +235,7 @@ export class PlayerStats {
  * Represents the statistical data of an agent, including their performance.
  */
 export class AgentStats {
-    public name: string;
+    public id: string;
     public games: number;
     public wins: number;
     public losses: number;
@@ -249,7 +249,7 @@ export class AgentStats {
     /**
      * Initializes a new instance of the class with the provided values.
      *
-     * @param {string} name - The name of the agent.
+     * @param {string} id - The id of the agent.
      * @param {number} games - The number of games played. Defaults to 0.
      * @param {number} wins - The number of games won. Defaults to 0.
      * @param {number} losses - The number of games lost. Defaults to 0.
@@ -260,10 +260,10 @@ export class AgentStats {
      * @param {number} totalshots - The number of all shots
      * @param {number} totalAcs - The number of all ACS
      */
-    public constructor(name: string, games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0,
+    public constructor(id: string, games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0,
                        assists: number = 0, deaths: number = 0,  headshots: number = 0, totalshots: number = 0,
                        totalAcs: number = 0) {
-        this.name = name;
+        this.id = id;
         this.games = games;
         this.wins = wins
         this.losses = losses;
@@ -306,4 +306,5 @@ export enum RankEmote {
     IronIII = "1171283462355943475",
     IronII = "1171283398199877632",
     IronI = "1171283369972203592",
+    Unrated = "1406402175520997497",
 }

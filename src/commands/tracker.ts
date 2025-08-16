@@ -1,7 +1,7 @@
 import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder} from "discord.js";
 import {Command} from "./command.ts";
 import {ephemeralReply, getEnv, reply} from "../utils/utils.ts";
-import {Player} from "../models/player.ts";
+import {Player, RankEmote} from "../models/player.ts";
 import {Tracker} from "../utils/tracker.ts";
 import NodeCache from "node-cache";
 
@@ -13,31 +13,11 @@ const builder = new SlashCommandBuilder()
         .setDescription("the user to look up")
         .setRequired(true)
     )
-    .addNumberOption((number) => number
-        .setName("lifetime")
-        .setDescription("How long to wait before deleting the response (default 1 minute)")
-        .setRequired(false)
-        .setChoices([
-            {
-                name: "30 seconds",
-                value: 30 * 1000
-            },
-            {
-                name: "1 minute",
-                value: 60 * 1000
-            },
-            {
-                name: "5 minutes",
-                value: 5 * 60 * 1000
-            },
-        ])
-    )
 
 const profileStore = new NodeCache({stdTTL: 20, checkperiod: 2});
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const target = interaction.options.getUser("target", true);
-    const lifetime = interaction.options.getNumber("lifetime") ?? 60 * 1000;
     const player = await Player.fetch(target.id);
 
     if (!player) {
@@ -60,7 +40,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
 
     const embed = createProfileEmbed(profile?.data);
-    await reply(interaction, {embeds: [embed]}, lifetime);
+    await reply(interaction, { embeds: [ embed ] });
     return;
 }
 
@@ -86,12 +66,15 @@ function createProfileEmbed(data: ProfileData) {
                     .setDescription("Why are you using this command?")
             }
 
-            embed.setThumbnail(currentRank.metadata.iconUrl)
+            const currentRankName = currentRank.metadata.tierName.replace(' ', '');
+            const peakRankName = peakRank?.metadata?.tierName.replace(' ', '') ?? "unrated";
+            const currentRankEmote = `<${currentRankName}:${getEmoteFromRank(currentRank.metadata.tierName)}>`;
+            const peakRankEmote = `<${peakRankName}:${getEmoteFromRank(peakRank?.metadata?.tierName)}>`;
 
             // Add main season stats to description
             embed.setDescription(
-                `**Current Rank:** ${currentRank.metadata.tierName}\n` +
-                `**Peak Rank:** ${peakRank?.metadata?.tierName ?? "N/A"}\n` +
+                `**Current Rank:** ${currentRank.metadata.tierName} ${currentRankEmote}\n` +
+                `**Peak Rank:** ${peakRank?.metadata?.tierName ?? "N/A"} ${peakRankEmote}\n` +
                 `**Win %:** ${segment.stats.matchesWinPct.displayValue}\n` +
                 `**K/D:** ${segment.stats.kDRatio.displayValue}\n` +
                 `**ACS:** ${segment.stats.scorePerRound.displayValue}\n` +
@@ -111,14 +94,8 @@ function createProfileEmbed(data: ProfileData) {
 
     const topAgent = agentSegments.at(0);
     if (topAgent) {
-        const agentName = topAgent.metadata.name.toLowerCase();
-        const agentImagePath = encodeURIComponent(
-            getEnv("TRACKER_HERO_CDN").replace("{HERO_NAME}", agentName)
-        );
-        const imageUrl = getEnv("TRACKER_IMAGE_CDN") + agentImagePath + "/image.jpg";
-
         embed.setColor(topAgent.metadata.color);
-        embed.setImage(imageUrl);
+        embed.setThumbnail(topAgent.metadata.imageUrl);
     }
 
     for (const agent of agentSegments) {
@@ -134,6 +111,35 @@ function createProfileEmbed(data: ProfileData) {
     }
 
     return embed;
+}
+
+function getEmoteFromRank(value?: string) {
+    if (value == "Radiant") return RankEmote.Radiant;
+    if (value == "Immortal 3") return RankEmote.ImmortalIII;
+    if (value == "Immortal 2") return RankEmote.ImmortalII;
+    if (value == "Immortal 1") return RankEmote.ImmortalI;
+    if (value == "Ascendant 3") return RankEmote.AscendantIII;
+    if (value == "Ascendant 2") return RankEmote.AscendantII;
+    if (value == "Ascendant 1") return RankEmote.AscendantI;
+    if (value == "Diamond 3") return RankEmote.DiamondIII;
+    if (value == "Diamond 2") return RankEmote.DiamondII;
+    if (value == "Diamond 1") return RankEmote.DiamondI;
+    if (value == "Platinum 3") return RankEmote.PlatinumIII;
+    if (value == "Platinum 2") return RankEmote.PlatinumII;
+    if (value == "Platinum 1") return RankEmote.PlatinumI;
+    if (value == "Gold 3") return RankEmote.GoldIII;
+    if (value == "Gold 2") return RankEmote.GoldII;
+    if (value == "Gold 1") return RankEmote.GoldI;
+    if (value == "Silver 3") return RankEmote.SilverIII;
+    if (value == "Silver 2") return RankEmote.SilverII;
+    if (value == "Silver 1") return RankEmote.SilverI;
+    if (value == "Bronze 3") return RankEmote.BronzeIII;
+    if (value == "Bronze 2") return RankEmote.BronzeII;
+    if (value == "Bronze 1") return RankEmote.BronzeI;
+    if (value == "Iron 3") return RankEmote.IronIII;
+    if (value == "Iron 2") return RankEmote.IronII;
+    if (value == "Iron 1") return RankEmote.IronI;
+    return RankEmote.Unrated;
 }
 
 export class TrackerCommand extends Command {

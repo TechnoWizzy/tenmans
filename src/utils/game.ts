@@ -10,7 +10,6 @@ import {Player} from "../models/player.ts";
 import {Tracker} from "./tracker.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
 import {leaderboardCache} from "./leaderboard.ts";
-import {TermManager} from "./term.ts";
 
 export async function handleGameAction(interaction: Interaction, game: Game, action: GameAction) {
     switch (action) {
@@ -63,7 +62,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                         }
 
                         const stats = player.getStats(game.termId);
-                        const agentStats = stats.getAgentStats(segment.metadata.agentName);
+                        const agentStats = stats.getAgentStats(segment.metadata.agentKey);
                         stats.acs = Math.round(segment.stats.scorePerRound.value);
                         stats.kills += segment.stats.kills.value;
                         stats.assists += segment.stats.assists.value;
@@ -284,7 +283,7 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon, game.termId);
             const modifiedPlayer = new Player(player.id, player.username, player.stats);
             const modifiedStats = modifiedPlayer.getStats(game.termId);
-            const agentStats = modifiedStats.getAgentStats(modifiedStats.agent);
+            const agentStats = modifiedStats.getAgentStats(modifiedStats.agentId);
             if (game.id == 0 && teamBlue.hasWon) {
                 modifiedStats.elo += Math.round(eloDelta * 1.5);
             } else if (game.id == 0) {
