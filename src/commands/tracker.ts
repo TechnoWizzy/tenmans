@@ -19,16 +19,12 @@ const builder = new SlashCommandBuilder()
         .setRequired(false)
         .setChoices([
             {
-                name: "5 seconds",
-                value: 5 * 1000
-            },
-            {
                 name: "30 seconds",
                 value: 30 * 1000
             },
             {
-                name: "2 minutes",
-                value: 2 * 60 * 1000
+                name: "1 minute",
+                value: 60 * 1000
             },
             {
                 name: "5 minutes",
