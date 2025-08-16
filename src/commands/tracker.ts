@@ -13,11 +13,35 @@ const builder = new SlashCommandBuilder()
         .setDescription("the user to look up")
         .setRequired(true)
     )
+    .addNumberOption((number) => number
+        .setName("lifetime")
+        .setDescription("How long to wait before deleting the response (default 1 minute)")
+        .setRequired(false)
+        .setChoices([
+            {
+                name: "5 seconds",
+                value: 5 * 1000
+            },
+            {
+                name: "30 seconds",
+                value: 30 * 1000
+            },
+            {
+                name: "2 minutes",
+                value: 2 * 60 * 1000
+            },
+            {
+                name: "5 minutes",
+                value: 5 * 60 * 1000
+            },
+        ])
+    )
 
 const profileStore = new NodeCache({stdTTL: 20, checkperiod: 2});
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const target = interaction.options.getUser("target", true);
+    const lifetime = interaction.options.getNumber("lifetime") ?? 60 * 1000;
     const player = await Player.fetch(target.id);
 
     if (!player) {
@@ -40,7 +64,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
 
     const embed = createProfileEmbed(profile?.data);
-    await reply(interaction, {embeds: [embed]});
+    await reply(interaction, {embeds: [embed]}, lifetime);
     return;
 }
 

@@ -66,7 +66,7 @@ export async function ephemeralReply(interaction: Interaction, options: ReplyOpt
     }
 }
 
-export async function reply(interaction: Interaction, options: ReplyOptions) {
+export async function reply(interaction: Interaction, options: ReplyOptions, lifetime: number = 0) {
     if (!interaction.isRepliable()) {
         throw new Error("Interaction is not repliable");
     } else {
@@ -76,11 +76,19 @@ export async function reply(interaction: Interaction, options: ReplyOptions) {
         if (!channel?.isSendable()) {
             throw new Error("Interaction channel is not sendable1")
         } else {
+            let message;
             if (interaction.isChatInputCommand()) {
                 const content = `<@${interaction.user.id}> </${interaction.commandName}:${interaction.commandId}>\n` + (options.content ?? "");
-                await channel?.send({ ...options, content: content });
+                message = await channel?.send({ ...options, content: content });
             } else {
-                await channel?.send(options);
+                message = await channel?.send(options);
+            }
+            if (lifetime > 0) {
+                setTimeout(async () => {
+                    try {
+                        await message.delete();
+                    } catch {}
+                }, lifetime)
             }
         }
     }
