@@ -65,7 +65,12 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 }
 
 function createProfileEmbed(data: ProfileData) {
-    const embed = new EmbedBuilder().setThumbnail(data.platformInfo.avatarUrl);
+    const embed = new EmbedBuilder()
+        .setAuthor({
+            name: data.platformInfo.platformUserHandle,
+            iconURL: data.platformInfo.avatarUrl,
+            url: getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(data.platformInfo.platformUserHandle),
+        });
 
     let currentRank: SeasonSegment["stats"]["rank"] | null = null;
     let peakRank: SeasonSegment["stats"]["peakRank"] | null = null;
@@ -81,13 +86,7 @@ function createProfileEmbed(data: ProfileData) {
                     .setDescription("Why are you using this command?")
             }
 
-            embed.setAuthor({
-                name: data.platformInfo.platformUserHandle,
-                iconURL: currentRank.metadata.iconUrl,
-                url:
-                    getEnv("TRACKER_URL_PROFILE") +
-                    encodeURIComponent(data.platformInfo.platformUserHandle),
-            });
+            embed.setThumbnail(currentRank.metadata.iconUrl)
 
             // Add main season stats to description
             embed.setDescription(
@@ -116,8 +115,7 @@ function createProfileEmbed(data: ProfileData) {
         const agentImagePath = encodeURIComponent(
             getEnv("TRACKER_HERO_CDN").replace("{HERO_NAME}", agentName)
         );
-        const imageUrl =
-            getEnv("TRACKER_IMAGE_CDN") + agentImagePath + "/image.jpg";
+        const imageUrl = getEnv("TRACKER_IMAGE_CDN") + agentImagePath + "/image.jpg";
 
         embed.setColor(topAgent.metadata.color);
         embed.setImage(imageUrl);
