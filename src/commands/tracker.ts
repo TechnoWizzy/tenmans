@@ -1,4 +1,4 @@
-import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder} from "discord.js";
+import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder, type User} from "discord.js";
 import {Command} from "./command.ts";
 import {ephemeralReply, getEnv, reply} from "../utils/utils.ts";
 import {Player, RankEmote} from "../models/player.ts";
@@ -39,16 +39,16 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
-    const embed = createProfileEmbed(profile?.data);
+    const embed = createProfileEmbed(target, profile?.data);
     await reply(interaction, { embeds: [ embed ] });
     return;
 }
 
-function createProfileEmbed(data: ProfileData) {
+function createProfileEmbed(user: User, data: ProfileData) {
     const embed = new EmbedBuilder()
         .setAuthor({
             name: data.platformInfo.platformUserHandle,
-            iconURL: data.platformInfo.avatarUrl,
+            iconURL: user.displayAvatarURL({ extension: "png" }),
             url: getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(data.platformInfo.platformUserHandle),
         });
 
@@ -68,8 +68,8 @@ function createProfileEmbed(data: ProfileData) {
 
             const currentRankName = currentRank.metadata.tierName.replace(' ', '');
             const peakRankName = peakRank?.metadata?.tierName.replace(' ', '') ?? "unrated";
-            const currentRankEmote = `<${currentRankName}:${getEmoteFromRank(currentRank.metadata.tierName)}>`;
-            const peakRankEmote = `<${peakRankName}:${getEmoteFromRank(peakRank?.metadata?.tierName)}>`;
+            const currentRankEmote = `<:${currentRankName}:${getEmoteFromRank(currentRank.metadata.tierName)}>`;
+            const peakRankEmote = `<:${peakRankName}:${getEmoteFromRank(peakRank?.metadata?.tierName)}>`;
 
             // Add main season stats to description
             embed.setDescription(

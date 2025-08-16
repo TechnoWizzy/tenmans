@@ -62,7 +62,12 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                         }
 
                         const stats = player.getStats(game.termId);
-                        const agentStats = stats.getAgentStats(segment.metadata.agentKey);
+                        const agentStats = stats.getAgentStats(segment.metadata.agentKey, {
+                            name: segment.metadata.agentName,
+                            color: segment.metadata.agentColor,
+                        });
+
+                        stats.agentId = agentStats.id;
                         stats.acs = Math.round(segment.stats.scorePerRound.value);
                         stats.kills += segment.stats.kills.value;
                         stats.assists += segment.stats.assists.value;

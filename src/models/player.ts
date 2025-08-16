@@ -1,6 +1,7 @@
 import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
 import {removeFormatChars} from "../utils/utils.ts";
+import type {HexColorString} from "discord.js";
 
 /**
  * Represents a tenmans player
@@ -24,8 +25,8 @@ export class Player {
         this.username = removeFormatChars(username);
         this.stats = stats.map(stat => {
             const agents = stat.agents?.map(agent => {
-                return new AgentStats(agent.id, agent.games, agent.wins, agent.losses, agent.kills, agent.assists,
-                    agent.deaths, agent.headshots, agent.totalshots, agent.totalAcs);
+                return new AgentStats(agent.id, agent.name, agent.color, agent.games, agent.wins, agent.losses,
+                    agent.kills, agent.assists, agent.deaths, agent.headshots, agent.totalshots, agent.totalAcs);
             })
             return new PlayerStats(stat.games, stat.wins, stat.losses, stat.kills, stat.assists, stat.deaths,
                 stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.agentId, agents, stat.termId);
@@ -39,6 +40,11 @@ export class Player {
             this.stats.push(termStats);
         }
         return termStats;
+    }
+
+    public getBestStats() {
+        const sorted = this.stats.sort((a, b) => b.elo - a.elo);
+        return sorted.at(0);
     }
 
     /**
@@ -129,7 +135,8 @@ export class Player {
      * @param delta An optional numerical adjustment to the player's elo. Defaults to 0.
      * @return The corresponding emojiID based on the adjusted elo.
      */
-    public getEmote(termId: string, delta: number = 0) {
+    public getEmote(termId?: string, delta: number = 0) {
+        if (!termId) return RankEmote.Unrated;
         const elo = this.getStats(termId).elo + delta;
         if (elo >= 1100) return RankEmote.Radiant
         if (elo >= 1000) return RankEmote.ImmortalIII;
@@ -198,7 +205,8 @@ export class PlayerStats {
      */
     public constructor(games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0, assists: number = 0,
                        deaths: number = 0,  headshots: number = 0, totalshots: number = 0, elo: number = 500,
-                       acs: number = 0, totalAcs: number = 0, agentId: string = "", agents: AgentStats[] = [], termId?: string) {
+                       acs: number = 0, totalAcs: number = 0, agentId: string = "", agents: AgentStats[] = [],
+                       termId?: string) {
         this.games = games;
         this.wins = wins
         this.losses = losses;
@@ -215,16 +223,19 @@ export class PlayerStats {
         this.termId = termId ?? TermManager.currentTerm.Id;
     }
 
-    public getAgentStats(id: string) {
+    public getAgentStats(id: string, options?: { name: string, color: HexColorString }) {
         if (id == "") {
-            return new AgentStats("");
+            return new AgentStats("", "", "#000000");
         }
 
         const stats = this.agents.find(agent => agent.id == id);
         if (stats) {
             return stats;
         } else {
-            const agent = new AgentStats(id);
+            if (!options) {
+                throw new Error("Agent not found and no options were provided");
+            }
+            const agent = new AgentStats(id, options.name, options.color);
             this.agents.push(agent);
             return agent;
         }
@@ -236,6 +247,8 @@ export class PlayerStats {
  */
 export class AgentStats {
     public id: string;
+    public name: string;
+    public color: HexColorString;
     public games: number;
     public wins: number;
     public losses: number;
@@ -250,6 +263,8 @@ export class AgentStats {
      * Initializes a new instance of the class with the provided values.
      *
      * @param {string} id - The id of the agent.
+     * @param {string} name - The name of the agent.
+     * @param {HexColorString} color - The color of agent.
      * @param {number} games - The number of games played. Defaults to 0.
      * @param {number} wins - The number of games won. Defaults to 0.
      * @param {number} losses - The number of games lost. Defaults to 0.
@@ -260,10 +275,12 @@ export class AgentStats {
      * @param {number} totalshots - The number of all shots
      * @param {number} totalAcs - The number of all ACS
      */
-    public constructor(id: string, games: number = 0, wins: number = 0, losses: number = 0, kills: number = 0,
-                       assists: number = 0, deaths: number = 0,  headshots: number = 0, totalshots: number = 0,
-                       totalAcs: number = 0) {
+    public constructor(id: string, name: string, color: HexColorString, games: number = 0, wins: number = 0,
+                       losses: number = 0, kills: number = 0, assists: number = 0, deaths: number = 0,
+                       headshots: number = 0, totalshots: number = 0, totalAcs: number = 0) {
         this.id = id;
+        this.name = name;
+        this.color = color;
         this.games = games;
         this.wins = wins
         this.losses = losses;
