@@ -72,6 +72,7 @@ function createProfileEmbed(user: User, data: ProfileData) {
             const peakRankEmote = `<:${peakRankName}:${getEmoteFromRank(peakRank?.metadata?.tierName)}>`;
 
             // Add main season stats to description
+            embed.setTitle("Tracker Stats")
             embed.setDescription(
                 `**Current Rank:** ${currentRank.metadata.tierName} ${currentRankEmote}\n` +
                 `**Peak Rank:** ${peakRank?.metadata?.tierName ?? "N/A"} ${peakRankEmote}\n` +

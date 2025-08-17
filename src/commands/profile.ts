@@ -58,6 +58,7 @@ function createProfileEmbed(member: GuildMember, player: Player, stats: PlayerSt
     const currentRankEmote = `<:rank:${currentRank}>`;
     const peakRankEmote = `<:rank:${peakRank}>`;
 
+    embed.setTitle("TenMans Stats")
     embed.setDescription(
         `**Current Rank:** ${getRankFromEmote(currentRank)} ${currentRankEmote}\n` +
         `**Peak Rank:** ${getRankFromEmote(peakRank)} ${peakRankEmote}\n` +
