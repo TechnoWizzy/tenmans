@@ -73,14 +73,15 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                         stats.assists += segment.stats.assists.value;
                         stats.deaths += segment.stats.deaths.value;
                         stats.headshots += segment.stats.headshots.value;
-                        stats.totalshots = + Math.floor(segment.stats.headshots.value / segment.stats.hsAccuracy.value);
+                        stats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
                         stats.totalAcs += stats.acs;
 
                         agentStats.kills += segment.stats.kills.value;
                         agentStats.assists += segment.stats.assists.value;
                         agentStats.deaths += segment.stats.deaths.value;
                         agentStats.headshots += segment.stats.headshots.value;
-                        agentStats.totalshots = + Math.floor(segment.stats.headshots.value / segment.stats.hsAccuracy.value);
+                        agentStats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
+                        agentStats.totalAcs += stats.acs;
 
                         const teamId = segment.metadata.teamId;
                         if (teamId == "Red") {

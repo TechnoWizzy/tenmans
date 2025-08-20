@@ -63,7 +63,7 @@ function createProfileEmbed(member: GuildMember, player: Player, stats: PlayerSt
         `**Current Rank:** ${getRankFromEmote(currentRank)} ${currentRankEmote}\n` +
         `**Peak Rank:** ${getRankFromEmote(peakRank)} ${peakRankEmote}\n` +
         `**Win %:** ${(100 * stats.wins / stats.games).toFixed(1)}%\n` +
-        `**K/D:** ${(stats.kills / stats.deaths).toFixed(2)}\n` +
+        `**K/D:** ${(stats.kills / Math.max(stats.deaths, 1)).toFixed(2)}\n` +
         `**ACS:** ${(stats.totalAcs / stats.games).toFixed(1)}\n` +
         `**HS%:** ${(100 * stats.headshots / stats.totalshots).toFixed(1)}%`
     );
@@ -84,7 +84,7 @@ function createProfileEmbed(member: GuildMember, player: Player, stats: PlayerSt
             value:
                 `Matches: ${agent.games}\n` +
                 `Win %: ${(100 * agent.wins / agent.games).toFixed(1)}%\n` +
-                `K/D: ${(agent.kills / agent.losses).toFixed(2)}\n` +
+                `K/D: ${(agent.kills / agent.deaths).toFixed(2)}\n` +
                 `ACS: ${(agent.totalAcs / agent.games).toFixed(1)}`,
             inline: true,
         });
