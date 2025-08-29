@@ -20,7 +20,6 @@ const builder = new SlashCommandBuilder()
     )
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
-    console.log("Register Command!!!");
     const player = await Player.fetch(interaction.user.id);
     if (player != null) {
         await ephemeralReply(interaction, { content: `You are already registered as **${player.username}** - Please contact an Admin to change your registration` });
@@ -34,7 +33,6 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
-    console.log(username);
     const profile = await Tracker.fetchProfile(username);
     if (profile == null) {
         await ephemeralReply(interaction, { content: `Failed to fetch user from Riot API - **${username}** - Please double check your Riot Id. If this issue continues, please contact an Admin.` });

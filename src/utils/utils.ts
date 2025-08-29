@@ -34,23 +34,40 @@ export function getEnv(key: string) {
 export type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[], allowedMentions?: MessageMentionOptions }
 
 export async function ephemeralReply(interaction: Interaction, options: ReplyOptions) {
-    if (interaction.isRepliable()) {
-        if (interaction.deferred) {
-            try {
-                await interaction.followUp({
-                    ...options,
-                    allowedMentions: {
-                        repliedUser: true,
-                        parse: [ 'roles', 'users', 'everyone' ],
-                    },
-                    flags: 'Ephemeral' }
-                );
-            } catch (e) {
-                console.log(e);
-                await interaction.editReply(options);
-            }
+    if (!interaction.isRepliable()) {
+        throw new Error("Interaction is not repliable");
+    }
 
-        } else {
+    if (interaction.deferred) {
+        try {
+            await interaction.followUp({
+                ...options,
+                allowedMentions: {
+                    repliedUser: true,
+                    parse: [ 'roles', 'users', 'everyone' ],
+                },
+                flags: 'Ephemeral' }
+            );
+        } catch (e) {
+            console.log("Follow Up:", e);
+            try {
+                await interaction.editReply(options);
+            } catch (e) {
+                console.log("Edit Reply:", e);
+                if (interaction.channel?.isSendable()) {
+                    const content = `<@${interaction.user.id}> \n` + (options.content ?? "");
+                    const message = await interaction.channel.send({ ...options, content: content });
+                    setTimeout(async () => {
+                        try {
+                            await message.delete();
+                        } catch {}
+                    }, 15000);
+                }
+            }
+        }
+
+    } else {
+        try {
             await interaction.reply({
                 ...options,
                 allowedMentions: {
@@ -59,37 +76,36 @@ export async function ephemeralReply(interaction: Interaction, options: ReplyOpt
                 },
                 flags: 'Ephemeral' }
             );
+        } catch (e) {
+            console.log("Reply:", e);
         }
-
-    } else {
-        throw new Error("Interaction is not repliable");
     }
 }
 
 export async function reply(interaction: Interaction, options: ReplyOptions, lifetime: number = 0) {
     if (!interaction.isRepliable()) {
         throw new Error("Interaction is not repliable");
-    } else {
-        await interaction.deleteReply();
-        const channel = interaction.channel;
+    }
 
-        if (!channel?.isSendable()) {
-            throw new Error("Interaction channel is not sendable1")
+    await interaction.deleteReply();
+    const channel = interaction.channel;
+
+    if (!channel?.isSendable()) {
+        throw new Error("Interaction channel is not sendable1")
+    } else {
+        let message;
+        if (interaction.isChatInputCommand()) {
+            const content = `<@${interaction.user.id}> </${interaction.commandName}:${interaction.commandId}>\n` + (options.content ?? "");
+            message = await channel?.send({ ...options, content: content });
         } else {
-            let message;
-            if (interaction.isChatInputCommand()) {
-                const content = `<@${interaction.user.id}> </${interaction.commandName}:${interaction.commandId}>\n` + (options.content ?? "");
-                message = await channel?.send({ ...options, content: content });
-            } else {
-                message = await channel?.send(options);
-            }
-            if (lifetime > 0) {
-                setTimeout(async () => {
-                    try {
-                        await message.delete();
-                    } catch {}
-                }, lifetime)
-            }
+            message = await channel?.send(options);
+        }
+        if (lifetime > 0) {
+            setTimeout(async () => {
+                try {
+                    await message.delete();
+                } catch {}
+            }, lifetime)
         }
     }
 }
