@@ -264,7 +264,6 @@ export class Game {
         const games = await Database.games.find(query).toArray();
         return games
             .map(game => formatGame(game))
-            .filter(game => !game.isOngoing())
             .sort((a, b) => a.id - b.id);
     }
 

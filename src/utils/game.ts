@@ -211,116 +211,142 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             continue;
         }
 
-        game.players = [];
-        const teamRed = game.teamRed;
-        const teamBlue = game.teamBlue;
+        if (i > 0 && game.isOngoing()) {
+            for (let i = 0; i < game.players.length; i++) {
+                const player = game.players[i];
+                const modifiedPlayer = modifiedPlayers.get(player.id);
 
-        for (let i = 0; i < teamRed.players.length; i++) {
-            const player = teamRed.players[i];
+                if (modifiedPlayer) { // Copy everything but ACS
+                    const stats = player.getStats(game.termId);
+                    const modifiedStats = modifiedPlayer.getStats(game.termId);
+                    stats.elo = modifiedStats.elo;
+                    stats.wins = modifiedStats.wins;
+                    stats.losses = modifiedStats.losses;
+                    stats.kills = modifiedStats.kills;
+                    stats.games = modifiedStats.games;
+                    stats.assists = modifiedStats.assists;
+                    stats.deaths = modifiedStats.deaths;
+                    stats.headshots = modifiedStats.headshots;
+                    stats.totalshots = modifiedStats.totalshots;
+                    stats.totalAcs = modifiedStats.totalAcs;
+                    stats.agents = modifiedStats.agents;
+                }
+            }
+        } else {
+            game.players = [];
+            const teamRed = game.teamRed;
+            const teamBlue = game.teamBlue;
 
-            const modifiedPlayer = modifiedPlayers.get(player.id);
-            if (modifiedPlayer) { // Copy everything but ACS
-                const stats = player.getStats(game.termId);
+            for (let i = 0; i < teamRed.players.length; i++) {
+                const player = teamRed.players[i];
+
+                const modifiedPlayer = modifiedPlayers.get(player.id);
+                if (modifiedPlayer) { // Copy everything but ACS
+                    const stats = player.getStats(game.termId);
+                    const modifiedStats = modifiedPlayer.getStats(game.termId);
+                    stats.elo = modifiedStats.elo;
+                    stats.wins = modifiedStats.wins;
+                    stats.losses = modifiedStats.losses;
+                    stats.kills = modifiedStats.kills;
+                    stats.games = modifiedStats.games;
+                    stats.assists = modifiedStats.assists;
+                    stats.deaths = modifiedStats.deaths;
+                    stats.headshots = modifiedStats.headshots;
+                    stats.totalshots = modifiedStats.totalshots;
+                    stats.totalAcs = modifiedStats.totalAcs;
+                    stats.agents = modifiedStats.agents;
+                }
+            }
+
+            for (let i = 0; i < teamBlue.players.length; i++) {
+                const player = teamBlue.players[i];
+                const modifiedPlayer = modifiedPlayers.get(player.id);
+                if (modifiedPlayer) { // Copy everything but ACS
+                    const stats = player.getStats(game.termId);
+                    const modifiedStats = modifiedPlayer.getStats(game.termId);
+                    stats.elo = modifiedStats.elo;
+                    stats.wins = modifiedStats.wins;
+                    stats.losses = modifiedStats.losses;
+                    stats.games = modifiedStats.games;
+                    stats.kills = modifiedStats.kills;
+                    stats.assists = modifiedStats.assists;
+                    stats.deaths = modifiedStats.deaths;
+                    stats.headshots = modifiedStats.headshots;
+                    stats.totalshots = modifiedStats.totalshots;
+                    stats.totalAcs = modifiedStats.totalAcs;
+                    stats.agents = modifiedStats.agents;
+                }
+            }
+
+            for (let i = 0; i < teamRed.players.length; i++) {
+                const player = teamRed.players[i];
+                const teamElo = teamRed.getAverageElo();
+                const opponentElo = teamBlue.getAverageElo();
+                const opponentScore = teamBlue.score;
+                const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamRed.hasWon, game.termId);
+                const modifiedPlayer = new Player(player.id, player.username, player.stats);
                 const modifiedStats = modifiedPlayer.getStats(game.termId);
-                stats.elo = modifiedStats.elo;
-                stats.wins = modifiedStats.wins;
-                stats.losses = modifiedStats.losses;
-                stats.kills = modifiedStats.kills;
-                stats.games = modifiedStats.games;
-                stats.assists = modifiedStats.assists;
-                stats.deaths = modifiedStats.deaths;
-                stats.headshots = modifiedStats.headshots;
-                stats.totalshots = modifiedStats.totalshots;
-                stats.totalAcs = modifiedStats.totalAcs;
-                stats.agents = modifiedStats.agents;
+                if (game.id == 0 && teamRed.hasWon) {
+                    modifiedStats.elo += Math.round(eloDelta * 1.5);
+                } else if (game.id == 0) {
+                    modifiedStats.elo += Math.round(eloDelta * 0.5);
+                } else {
+                    modifiedStats.elo += eloDelta;
+                }
+                modifiedStats.games += 1;
+                if (teamRed.hasWon) {
+                    modifiedStats.wins += 1;
+                } else {
+                    modifiedStats.losses += 1;
+                }
+                game.players.push(player);
+                modifiedPlayers.set(player.id, modifiedPlayer);
             }
-        }
 
-        for (let i = 0; i < teamBlue.players.length; i++) {
-            const player = teamBlue.players[i];
-            const modifiedPlayer = modifiedPlayers.get(player.id);
-            if (modifiedPlayer) { // Copy everything but ACS
-                const stats = player.getStats(game.termId);
+            for (let i = 0; i < teamBlue.players.length; i++) {
+                const player = teamBlue.players[i];
+                const teamElo = teamBlue.getAverageElo();
+                const opponentElo = teamRed.getAverageElo();
+                const opponentScore = teamRed.score;
+                const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon, game.termId);
+                const modifiedPlayer = new Player(player.id, player.username, player.stats);
                 const modifiedStats = modifiedPlayer.getStats(game.termId);
-                stats.elo = modifiedStats.elo;
-                stats.wins = modifiedStats.wins;
-                stats.losses = modifiedStats.losses;
-                stats.games = modifiedStats.games;
-                stats.kills = modifiedStats.kills;
-                stats.assists = modifiedStats.assists;
-                stats.deaths = modifiedStats.deaths;
-                stats.headshots = modifiedStats.headshots;
-                stats.totalshots = modifiedStats.totalshots;
-                stats.totalAcs = modifiedStats.totalAcs;
-                stats.agents = modifiedStats.agents;
+                const agentStats = modifiedStats.getAgentStats(modifiedStats.agentId);
+                if (game.id == 0 && teamBlue.hasWon) {
+                    modifiedStats.elo += Math.round(eloDelta * 1.5);
+                } else if (game.id == 0) {
+                    modifiedStats.elo += Math.round(eloDelta * 0.5);
+                } else {
+                    modifiedStats.elo += eloDelta;
+                }
+                modifiedStats.games += 1;
+                agentStats.games += 1;
+                if (teamBlue.hasWon) {
+                    modifiedStats.wins += 1;
+                    agentStats.wins += 1;
+                } else {
+                    modifiedStats.losses += 1;
+                    agentStats.losses += 1;
+                }
+                game.players.push(player);
+                modifiedPlayers.set(player.id, modifiedPlayer);
             }
-        }
 
-        for (let i = 0; i < teamRed.players.length; i++) {
-            const player = teamRed.players[i];
-            const teamElo = teamRed.getAverageElo();
-            const opponentElo = teamBlue.getAverageElo();
-            const opponentScore = teamBlue.score;
-            const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamRed.hasWon, game.termId);
-            const modifiedPlayer = new Player(player.id, player.username, player.stats);
-            const modifiedStats = modifiedPlayer.getStats(game.termId);
-            if (game.id == 0 && teamRed.hasWon) {
-                modifiedStats.elo += Math.round(eloDelta * 1.5);
-            } else if (game.id == 0) {
-                modifiedStats.elo += Math.round(eloDelta * 0.5);
-            } else {
-                modifiedStats.elo += eloDelta;
+            for (const player of modifiedPlayers.values()) {
+                await player.save();
             }
-            modifiedStats.games += 1;
-            if (teamRed.hasWon) {
-                modifiedStats.wins += 1;
-            } else {
-                modifiedStats.losses += 1;
-            }
-            game.players.push(player);
-            modifiedPlayers.set(player.id, modifiedPlayer);
-        }
-
-        for (let i = 0; i < teamBlue.players.length; i++) {
-            const player = teamBlue.players[i];
-            const teamElo = teamBlue.getAverageElo();
-            const opponentElo = teamRed.getAverageElo();
-            const opponentScore = teamRed.score;
-            const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, teamBlue.hasWon, game.termId);
-            const modifiedPlayer = new Player(player.id, player.username, player.stats);
-            const modifiedStats = modifiedPlayer.getStats(game.termId);
-            const agentStats = modifiedStats.getAgentStats(modifiedStats.agentId);
-            if (game.id == 0 && teamBlue.hasWon) {
-                modifiedStats.elo += Math.round(eloDelta * 1.5);
-            } else if (game.id == 0) {
-                modifiedStats.elo += Math.round(eloDelta * 0.5);
-            } else {
-                modifiedStats.elo += eloDelta;
-            }
-            modifiedStats.games += 1;
-            agentStats.games += 1;
-            if (teamBlue.hasWon) {
-                modifiedStats.wins += 1;
-                agentStats.wins += 1;
-            } else {
-                modifiedStats.losses += 1;
-                agentStats.losses += 1;
-            }
-            game.players.push(player);
-            modifiedPlayers.set(player.id, modifiedPlayer);
-        }
-
-        for (const player of modifiedPlayers.values()) {
-            await player.save();
         }
 
         console.log("Saving game ", game.id);
         await game.save();
         const embed = game.createEmbed();
         const components = game.createComponents();
-        const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!"
-        await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
         await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+
+        if (!game.isOngoing()) {
+            const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!"
+            await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
+        }
     }
 
     const pluralityText = games.length == 1 ? "game update was" : "game updates were";
