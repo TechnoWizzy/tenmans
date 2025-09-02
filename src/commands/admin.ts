@@ -12,6 +12,7 @@ import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {Game} from "../models/game.ts";
 import {TermManager} from "../utils/term.ts";
+import {QueueHandler} from "../queue/queue_handler.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -50,6 +51,25 @@ const builder = new SlashCommandBuilder()
         .addAttachmentOption((option) => option
             .setName("game-data")
             .setDescription("the data to be input")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) => subcommand
+        .setName("substitute")
+        .setDescription("substitute players in a tenmans game")
+        .addUserOption((option) => option
+            .setName("sub")
+            .setDescription("the player to be subbed in")
+            .setRequired(true)
+        )
+        .addUserOption((option) => option
+            .setName("target")
+            .setDescription("the player to be subbed out")
+            .setRequired(true)
+        )
+        .addIntegerOption((option) => option
+            .setName("game-id")
+            .setDescription("the id of the game")
             .setRequired(true)
         )
     )
@@ -152,6 +172,64 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 await player.save();
                 await reply(interaction, { content: `${player.username} has been completely reset`})
             }
+            break;
+        }
+
+        case "substitute": {
+            const target = interaction.options.getUser("target", true);
+            const sub = interaction.options.getUser("sub", true);
+            const gameId = interaction.options.getInteger("game-id", true);
+
+            const game = await Game.fetch(gameId);
+            if (!game) {
+                await ephemeralReply(interaction, { content: `Sorry, game ${gameId} was not found.` });
+                return;
+            }
+
+            if (!game.isOngoing()) {
+                await ephemeralReply(interaction, { content: `Sorry, players cannot be retroactively subbed into games.` });
+                return;
+            }
+
+            const targetPlayer = await Player.fetch(target.id);
+            if (!targetPlayer) {
+                await ephemeralReply(interaction, { content: `<@${target.id}> is not currently registered.` });
+                return;
+            }
+
+            const subPlayer = await Player.fetch(sub.id);
+            if (!subPlayer) {
+                await ephemeralReply(interaction, { content: `<@${sub.id}> is not currently registered.` });
+                return;
+            }
+
+            const targetIndex = game.players.findIndex(player => player.id === targetPlayer.id);
+            if (targetIndex == -1) {
+                await ephemeralReply(interaction, { content: `<@${target.id}> is not a member of game ${game.id}.` });
+                return;
+            }
+
+            const subIndex = game.players.findIndex(player => player.id === subPlayer.id);
+            if (subIndex != -1) {
+                await ephemeralReply(interaction, { content: `<@${sub.id}> is already a member of game ${game.id}.` });
+                return;
+            }
+
+            const isInGame = await subPlayer.isInGame();
+            if (isInGame) {
+                await ephemeralReply(interaction, { content: `<@${sub.id}> is already a member of another active game.` });
+                return;
+            }
+
+            game.players[targetIndex] = subPlayer;
+            await game.save();
+
+            const embed = game.createEmbed();
+            const message = `<@${sub.id}> has been subbed in for <@${target.id}> by <@${interaction.user.id}>`;
+
+            const channel = QueueHandler.getChannel();
+            await channel.send({ content: message, embeds: [ embed ] });
+            await ephemeralReply(interaction, { content: `Success` });
             break;
         }
 

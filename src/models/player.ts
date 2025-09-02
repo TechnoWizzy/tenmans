@@ -1,7 +1,8 @@
 import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
-import {removeFormatChars} from "../utils/utils.ts";
+import {ephemeralReply, removeFormatChars} from "../utils/utils.ts";
 import type {HexColorString} from "discord.js";
+import {Game} from "./game.ts";
 
 /**
  * Represents a tenmans player
@@ -45,6 +46,19 @@ export class Player {
     public getBestStats() {
         const sorted = this.stats.sort((a, b) => b.elo - a.elo);
         return sorted.at(0);
+    }
+
+    public async isInGame() {
+        const games = await Game.fetchAll();
+        for (const game of games) {
+            if (!game.isOngoing()) {
+                continue;
+            }
+            if (game.players.some(player => player.id == this.id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

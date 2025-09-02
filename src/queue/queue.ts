@@ -149,18 +149,10 @@ export class Queue extends Map<string, [User, Timer]> {
         }
          */
 
-        const games = await Game.fetchAll();
-        for (const game of games) {
-            if (game.cancelled) {
-                continue;
-            }
-            if (game.teamRed.hasWon || game.teamBlue.hasWon) {
-                continue;
-            }
-            if (game.players.some(player => player.id == user.id)) {
-                await ephemeralReply(interaction, { content: "You cannot join the queue while in a game." });
-                return;
-            }
+        const isInGame = await player.isInGame();
+        if (isInGame) {
+            await ephemeralReply(interaction, { content: "You cannot join the queue while in a game." });
+            return;
         }
 
         if (this.size == this.maxSize) {
