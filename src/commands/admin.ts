@@ -209,12 +209,6 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                 return;
             }
 
-            const subIndex = game.players.findIndex(player => player.id === subPlayer.id);
-            if (subIndex != -1) {
-                await ephemeralReply(interaction, { content: `<@${sub.id}> is already a member of game ${game.id}.` });
-                return;
-            }
-
             const isInGame = await subPlayer.isInGame();
             if (isInGame) {
                 await ephemeralReply(interaction, { content: `<@${sub.id}> is already a member of another active game.` });
