@@ -1,4 +1,4 @@
-import type {ButtonInteraction} from "discord.js";
+import type {ButtonInteraction, ChatInputCommandInteraction} from "discord.js";
 import {ephemeralReply, getEnv} from "./utils.ts";
 import {Player} from "../models/player";
 import {Game} from "../models/game.ts";
@@ -8,7 +8,7 @@ export async function confirmRegistration(interaction: ButtonInteraction, userId
     await ephemeralReply(interaction, { content: `Successfully registered as **${username}**` });
 }
 
-export async function confirmReregistration(interaction: ButtonInteraction, userId: string, username: string) {
+export async function confirmReregistration(interaction: ButtonInteraction | ChatInputCommandInteraction, userId: string, username: string) {
     const player = await Player.fetch(userId);
 
     if (!player) {

@@ -1,9 +1,11 @@
 import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder, TextChannel} from "discord.js";
-import {ephemeralReply, reply} from "../utils/utils.ts";
+import {ephemeralReply, noReply, reply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {Game} from "../models/game.ts";
 import {TermManager} from "../utils/term.ts";
+import {confirmReregistration} from "../utils/register.ts";
+import {propagateGameChange} from "../utils/game.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("test")
@@ -18,6 +20,10 @@ const builder = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const testNumber = interaction.options.getInteger("number", true);
+    if (!interaction.guild) {
+        await ephemeralReply(interaction, { content: `No guild` });
+        return;
+    }
 
     switch (testNumber) {
         case 1: {
@@ -56,6 +62,50 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             );
 
             await reply(interaction, { embeds: [embed] });
+            break;
+        }
+
+        case 3: {
+            let count = 0;
+            const players = await Player.fetchAll();
+            for (const player of players) {
+                try {
+                    await interaction.guild.members.fetch(player.id);
+                } catch {
+                    count++;
+                    const games = await Game.fetchByPlayerId(player.id);
+                    for (const game of games) {
+                        for (let i = 0; i < game.players.length; i++ ) {
+                            const gamePlayer = game.players[i];
+                            if (gamePlayer.id == player.id) {
+                                game.players[i] = new Player(gamePlayer.id, player.id, gamePlayer.stats);
+                            }
+                        }
+                        for (let i = 0; i < game.teamRed.players.length; i++ ) {
+                            const redPlayer = game.teamRed.players[i];
+                            if (redPlayer.id == player.id) {
+                                game.teamRed.players[i] = new Player(redPlayer.id, player.id, redPlayer.stats);
+                            }
+                        }
+                        for (let i = 0; i < game.teamBlue.players.length; i++ ) {
+                            const bluePlayer = game.teamBlue.players[i];
+                            if (bluePlayer.id == player.id) {
+                                game.teamBlue.players[i] = new Player(bluePlayer.id, player.id, bluePlayer.stats);
+                            }
+                        }
+
+                        await game.save();
+                    }
+                }
+            }
+
+            await ephemeralReply(interaction, { content: `${count}/${players.length} players caught leaving` });
+            break;
+        }
+
+        case 4: {
+            const game = await Game.fetch(0);
+            await propagateGameChange(interaction, game);
             break;
         }
 

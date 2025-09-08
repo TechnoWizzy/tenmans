@@ -20,127 +20,38 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 return;
             }
 
-            const uploadGame = async (matchId: string) => {
-                try {
-                    await Game.fetchByMatchId(matchId);
-                    await ephemeralReply(interaction, { content: `Error: Game with this Tracker Link already exists.` });
-                    return;
-                } catch {  }
+            // if (interaction.isChatInputCommand()) {
+            //     const attachment = interaction.options.getAttachment("game-data", true);
+            //     const response = await fetch(attachment.url);
+            //     if (!response.ok) {
+            //         await ephemeralReply(interaction, {content: "Failed to retrieved attached data"});
+            //         return;
+            //     }
+            //
+            //     const data = await response.json() as MatchResponse;
+            //     const matchId = data.data.attributes.id;
+            //     Tracker.setMatchData(matchId, data);
+            //     await uploadGame(matchId)
+            // }
 
-                const match = await Tracker.fetchMatch(matchId);
-                if (match == null) {
-                    await ephemeralReply(interaction, { content: `Failed to fetch match, please download match data from this [link](${getEnv("API_URL_MATCH") + matchId}) and upload via command` });
-                    return;
-                }
-
-                for (const segment of match.data.segments) {
-                    if (segment.type == "team-summary") {
-                        const teamId = segment.attributes.teamId;
-                        const score = segment.stats.roundsWon.value;
-                        const hasWon = segment.metadata.hasWon;
-                        if (teamId == "Red") {
-                            game.teamRed = new Team("Red", game.termId, score, hasWon)
-                        } else {
-                            game.teamBlue = new Team("Blue", game.termId, score, hasWon)
-                        }
-                    }
-                }
-
-                if (!game.teamRed.hasWon && !game.teamBlue.hasWon) {
-                    await ephemeralReply(interaction, { content: `Failed to load teams, please contact <@${getEnv("OWNER_ID")}>` });
-                    return;
-                }
-
-                for (const segment of match.data.segments) {
-                    if (segment.type == "player-summary") {
-                        const username = segment.attributes.platformUserIdentifier;
-                        const player = game.players.find(player => player.username.toLowerCase() == username.toLowerCase());
-
-                        if (player == null) {
-                            await ephemeralReply(interaction, { content: `Unregistered player in match: ${username}` });
-                            return;
-                        }
-
-                        const stats = player.getStats(game.termId);
-                        const agentStats = stats.getAgentStats(segment.metadata.agentKey, {
-                            name: segment.metadata.agentName,
-                            color: segment.metadata.agentColor,
-                        });
-
-                        stats.agentId = agentStats.id;
-                        stats.acs = Math.round(segment.stats.scorePerRound.value);
-                        stats.kills += segment.stats.kills.value;
-                        stats.assists += segment.stats.assists.value;
-                        stats.deaths += segment.stats.deaths.value;
-                        stats.headshots += segment.stats.headshots.value;
-                        stats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
-                        stats.totalAcs += stats.acs;
-
-                        agentStats.kills += segment.stats.kills.value;
-                        agentStats.assists += segment.stats.assists.value;
-                        agentStats.deaths += segment.stats.deaths.value;
-                        agentStats.headshots += segment.stats.headshots.value;
-                        agentStats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
-                        agentStats.totalAcs += stats.acs;
-
-                        const teamId = segment.metadata.teamId;
-                        if (teamId == "Red") {
-                            game.teamRed.players.push(player);
-                        } else {
-                            game.teamBlue.players.push(player);
-                        }
-                    }
-                }
-
-                if (game.teamRed.players.length != 5) {
-                    await ephemeralReply(interaction, { content: `Failed to load all players for Team Red, please contact <@${getEnv("OWNER_ID")}>` });
-                    return;
-                }
-
-                if (game.teamBlue.players.length != 5) {
-                    await ephemeralReply(interaction, { content: `Failed to load all players for Team Blue, please contact <@${getEnv("OWNER_ID")}>` });
-                    return;
-                }
-
-                if (game.players.length != 10) {
-                    await ephemeralReply(interaction, { content: `Failed to load all 10 players, please contact <@${getEnv("OWNER_ID")}>` });
-                    return;
-                }
-
-                game.matchId = matchId;
-                game.cancelled = false;
-                await propagateGameChange(interaction, game);
-                if (interaction.isMessageComponent()) {
-                    try {
-                        await interaction.message.delete();
-                    } catch {}
-                }
+            if (!interaction.isModalSubmit()) {
+                await ephemeralReply(interaction, { content: `This interaction type is temporarily disabled for game uploads.`});
+                return;
             }
 
-            if (interaction.isChatInputCommand()) {
-                const attachment = interaction.options.getAttachment("game-data", true);
-                const response = await fetch(attachment.url);
-                if (!response.ok) {
-                    await ephemeralReply(interaction, {content: "Failed to retrieved attached data"});
-                    return;
-                }
 
-                const data = await response.json() as MatchResponse;
-                const matchId = data.data.attributes.id;
-                Tracker.setMatchData(matchId, data);
-                await uploadGame(matchId)
-            } else if (interaction.isModalSubmit()) {
-                const url = interaction.fields.getTextInputValue("url")
-                const regex = /https:\/\/tracker\.gg\/valorant\/match\/([0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})/i;
-                const match = url.match(regex);
-                const matchId = match?.at(1);
-                if (!matchId) {
-                    await ephemeralReply(interaction, { content: "Invalid URL" });
-                    return;
-                }
-                await uploadGame(matchId);
+
+            const url = interaction.fields.getTextInputValue("url")
+            const regex = /https:\/\/tracker\.gg\/valorant\/match\/([0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})/i;
+            const regexMatch = url.match(regex);
+            const matchId = regexMatch?.at(1);
+            if (!matchId) {
+                await ephemeralReply(interaction, { content: "Invalid URL" });
+                return;
             }
 
+            game.matchId = matchId;
+            await propagateGameChange(interaction, game);
             break;
         }
 
@@ -201,6 +112,20 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
     }
 
     const modifiedPlayers = new Map<string, Player>()
+
+    for (const game of games) {
+        await parseGameStats(game, modifiedPlayers);
+
+        const embed = game.createEmbed();
+        const components = game.createComponents();
+        await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+
+        if (!game.isOngoing()) {
+            const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!"
+            await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
+        }
+    }
+
     for (let i = 0; i < games.length; i++) {
         const game = games[i];
         if (game.cancelled) {
@@ -343,14 +268,7 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
 
         console.log("Saving game ", game.id);
         await game.save();
-        const embed = game.createEmbed();
-        const components = game.createComponents();
-        await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
 
-        if (!game.isOngoing()) {
-            const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!"
-            await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
-        }
     }
 
     const pluralityText = games.length == 1 ? "game update was" : "game updates were";
@@ -363,4 +281,134 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
             leaderboardCache.delete(key);
         }
     });
+}
+
+async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) {
+    for (let i = 0; i < game.players.length; i++) {
+        const player = game.players[i];
+        const modifiedPlayer = modifiedPlayers.get(player.id);
+        if (modifiedPlayer) {
+            game.players[i] = modifiedPlayer;
+        }
+    }
+
+    if (!game.matchId) {
+        return;
+    }
+
+    const match = await Tracker.fetchMatch(game.matchId);
+    if (match == null) {
+        return;
+    }
+
+    for (const segment of match.data.segments) {
+        if (segment.type == "team-summary") {
+            const teamId = segment.attributes.teamId;
+            const score = segment.stats.roundsWon.value;
+            const hasWon = segment.metadata.hasWon;
+            if (teamId == "Red") {
+                game.teamRed = new Team("Red", game.termId, score, hasWon)
+            } else {
+                game.teamBlue = new Team("Blue", game.termId, score, hasWon);
+            }
+        }
+    }
+
+    if (!game.teamRed.hasWon && !game.teamBlue.hasWon) {
+        throw new Error(`Neither team has won game ${game.id}`);
+    }
+
+    let missingPlayers = 0;
+    const knownMissingPlayers = game.players
+        .filter(player => {
+        const regex = /\d{13,}/;
+        const match = player.username.match(regex);
+        return match && match.length > 0;
+        })
+        .length;
+
+    for (const segment of match.data.segments) {
+        if (segment.type == "player-summary") {
+            const username = segment.attributes.platformUserIdentifier;
+            const player = game.players.find(player => player.username.toLowerCase() == username.toLowerCase());
+
+            if (player == null) {
+                if (missingPlayers + 1 > knownMissingPlayers) {
+                    throw new Error(`More players missing than expected (> ${knownMissingPlayers}).`);
+                }
+                missingPlayers += 1;
+                continue;
+            }
+
+            const stats = player.getStats(game.termId);
+            const agentStats = stats.getAgentStats(segment.metadata.agentKey, {
+                name: segment.metadata.agentName,
+                color: segment.metadata.agentColor,
+            });
+
+            stats.agentId = agentStats.id;
+            stats.acs = Math.round(segment.stats.scorePerRound.value);
+            stats.kills += segment.stats.kills.value;
+            stats.assists += segment.stats.assists.value;
+            stats.deaths += segment.stats.deaths.value;
+            stats.headshots += segment.stats.headshots.value;
+            stats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
+            stats.totalAcs += stats.acs;
+            stats.games += 1;
+
+            agentStats.kills += segment.stats.kills.value;
+            agentStats.assists += segment.stats.assists.value;
+            agentStats.deaths += segment.stats.deaths.value;
+            agentStats.headshots += segment.stats.headshots.value;
+            agentStats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
+            agentStats.totalAcs += stats.acs;
+            agentStats.games += 1;
+
+            const teamId = segment.metadata.teamId;
+            if (teamId == "Red") {
+                game.teamRed.players.push(player);
+            } else {
+                game.teamBlue.players.push(player);
+            }
+        }
+    }
+
+    // Save game before doing win/loss/elo stats
+    await game.save();
+
+    // Win/Loss stats + elo
+    for (const player of game.players) {
+        let team: Team;
+        let opponent: Team;
+
+        if (game.teamBlue.players.some(teamPlayer => teamPlayer.id == player.id)) {
+            team = game.teamBlue;
+            opponent = game.teamRed;
+        } else if (game.teamRed.players.some(teamPlayer => teamPlayer.id == player.id)) {
+            team = game.teamRed;
+            opponent = game.teamBlue;
+        } else {
+            continue;
+        }
+
+        const teamElo = team.getAverageElo();
+        const opponentElo = opponent.getAverageElo();
+        const opponentScore = opponent.score;
+        const eloDelta = player.getEloChange(teamElo, opponentElo, opponentScore, team.hasWon, game.termId);
+
+        const stats = player.getStats(game.termId);
+        const agentStats = stats.getAgentStats(stats.agentId);
+
+        stats.elo += eloDelta;
+        if (team.hasWon) {
+            stats.wins += 1;
+            agentStats.wins += 1;
+        } else {
+            stats.losses += 1;
+            agentStats.losses += 1;
+        }
+
+        await player.save();
+        modifiedPlayers.set(player.id, player);
+    }
 }

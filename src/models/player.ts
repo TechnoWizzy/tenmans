@@ -1,6 +1,6 @@
 import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
-import {ephemeralReply, removeFormatChars} from "../utils/utils.ts";
+import {removeFormatChars} from "../utils/utils.ts";
 import type {HexColorString} from "discord.js";
 import {Game} from "./game.ts";
 
