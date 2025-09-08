@@ -333,8 +333,10 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
             const player = game.players.find(player => player.username.toLowerCase() == username.toLowerCase());
 
             if (player == null) {
+
                 if (missingPlayers + 1 > knownMissingPlayers) {
-                    throw new Error(`More players missing than expected (> ${knownMissingPlayers}).`);
+                    throw new Error(`Player ${username} is missing`);
+                    // throw new Error(`More players missing than expected (> ${knownMissingPlayers}).`);
                 }
                 missingPlayers += 1;
                 continue;
