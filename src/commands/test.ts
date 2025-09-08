@@ -105,7 +105,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         }
 
         case 4: {
-            const game = await Game.fetch(0);
+            const game = await Game.fetch(25);
             await propagateGameChange(interaction, game);
             break;
         }
