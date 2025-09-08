@@ -6,6 +6,7 @@ import {Game} from "../models/game.ts";
 import {TermManager} from "../utils/term.ts";
 import {confirmReregistration} from "../utils/register.ts";
 import {propagateGameChange} from "../utils/game.ts";
+import {Tracker} from "../utils/tracker.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("test")
@@ -106,6 +107,50 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         case 4: {
             const game = await Game.fetch(0);
             await propagateGameChange(interaction, game);
+            break;
+        }
+
+        case 5: {
+            let count = 0;
+            const players = await Player.fetchAll();
+            for (const player of players) {
+                try {
+                    const regex = /\d{13,}/;
+                    const match = player.username.match(regex);
+                    if (!match ) {
+                        const result = await Tracker.fetchProfile(player.username);
+                        if (!result) {
+                            const games = await Game.fetchByPlayerId(player.id);
+                            for (const game of games) {
+                                for (let i = 0; i < game.players.length; i++ ) {
+                                    const gamePlayer = game.players[i];
+                                    if (gamePlayer.id == player.id) {
+                                        game.players[i] = new Player(gamePlayer.id, player.id, gamePlayer.stats);
+                                    }
+                                }
+                                for (let i = 0; i < game.teamRed.players.length; i++ ) {
+                                    const redPlayer = game.teamRed.players[i];
+                                    if (redPlayer.id == player.id) {
+                                        game.teamRed.players[i] = new Player(redPlayer.id, player.id, redPlayer.stats);
+                                    }
+                                }
+                                for (let i = 0; i < game.teamBlue.players.length; i++ ) {
+                                    const bluePlayer = game.teamBlue.players[i];
+                                    if (bluePlayer.id == player.id) {
+                                        game.teamBlue.players[i] = new Player(bluePlayer.id, player.id, bluePlayer.stats);
+                                    }
+                                }
+
+                                await game.save();
+                            }
+                        }
+                    }
+                } catch {
+                    count++;
+                }
+            }
+
+            await ephemeralReply(interaction, { content: `${count}/${players.length} players have outdated usernames` });
             break;
         }
 
