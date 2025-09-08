@@ -3,7 +3,6 @@ import {HttpStatusCode} from "axios";
 
 export class Playwright {
     private static browser: Browser | null = null;
-    private static locked = false;
 
     private static async getBrowser() {
         if (!this.browser) {
@@ -13,11 +12,6 @@ export class Playwright {
     }
 
     public static async fetch<T>(apiUrl: string): Promise<T | null> {
-        while (Playwright.locked) {
-            await wait(100);
-        }
-
-        Playwright.locked = true;
         const browser = await Playwright.getBrowser();
         const context = await browser.newContext(devices['Desktop Chrome']);
         const page = await context.newPage();
@@ -43,10 +37,6 @@ export class Playwright {
 
         const data = (await response.json()) as T;
         await context.close();
-        setTimeout(() => {
-            Playwright.locked = false;
-        }, 1000);
-
         return data;
     }
 
