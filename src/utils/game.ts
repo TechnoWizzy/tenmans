@@ -335,7 +335,7 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
             if (player == null) {
 
                 if (missingPlayers + 1 > knownMissingPlayers) {
-                    throw new Error(`Player ${username} is missing`);
+                    throw new Error(`Player ${username} is in game ${game.id} but is not registered on discord.`);
                     // throw new Error(`More players missing than expected (> ${knownMissingPlayers}).`);
                 }
                 missingPlayers += 1;
