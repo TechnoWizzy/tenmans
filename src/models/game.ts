@@ -135,24 +135,10 @@ export class Game {
         const stats = player.getStats(this.termId);
         const acs = stats.acs;
         const elo = stats.elo
-        if (this.id == 0) {
-            if (team.hasWon) {
-                const eloDelta = Math.round(1.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId));
-                const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-                const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
-                return `${emote}: **${username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
-            } else {
-                const eloDelta = Math.round(0.5 * player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId));
-                const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-                const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
-                return `${emote}: **${username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
-            }
-        } else {
-            const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId);
-            const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-            const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
-            return `${emote}: **${username}** - ${elo + eloDelta} ${eloDeltaString} elo - ${acs} acs`;
-        }
+        const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId);
+        const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
+        const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
+        return `${emote}: **${username}** - ${elo} ${eloDeltaString} elo - ${acs} acs`;
     }
 
     /**
