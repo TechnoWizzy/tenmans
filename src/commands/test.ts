@@ -112,6 +112,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
         case 6: {
             const games = await Game.fetchAll();
+            let count = 0;
             for (const game of games) {
                 if (game.termId == TermManager.currentTerm.Id) {
                     for (const player of game.players) {
@@ -123,9 +124,12 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                         }
                     }
 
+                    count++;
                     await game.save();
                 }
             }
+
+            await ephemeralReply(interaction, { content: `Updated ${count}/${games.length} games` });
             break;
         }
 
