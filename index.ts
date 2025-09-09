@@ -169,7 +169,7 @@ async function interactionCreate(interaction: Interaction) {
         await channel.send({ embeds: [ embed ] });
         try {
             const error = e as Error;
-            await ephemeralReply(interaction, { content: "Sorry, there was an error performing this operation. " + error.name });
+            await ephemeralReply(interaction, { content: `Sorry, there was an error performing this operation: ${error.name}\n${error.message}` });
         } catch {
             console.log(e);
         }

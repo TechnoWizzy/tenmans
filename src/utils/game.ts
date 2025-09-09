@@ -39,8 +39,6 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 return;
             }
 
-
-
             const url = interaction.fields.getTextInputValue("url")
             const regex = /https:\/\/tracker\.gg\/valorant\/match\/([0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})/i;
             const regexMatch = url.match(regex);
