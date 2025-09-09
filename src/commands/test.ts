@@ -1,7 +1,7 @@
 import {ChatInputCommandInteraction, EmbedBuilder, type Guild, SlashCommandBuilder, TextChannel} from "discord.js";
 import {ephemeralReply, noReply, reply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
-import {Player} from "../models/player.ts";
+import {Player, PlayerStats} from "../models/player.ts";
 import {Game} from "../models/game.ts";
 import {TermManager} from "../utils/term.ts";
 import {confirmReregistration} from "../utils/register.ts";
@@ -110,47 +110,22 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             break;
         }
 
-        case 5: {
-            let count = 0;
-            const players = await Player.fetchAll();
-            for (const player of players) {
-                try {
-                    const regex = /\d{13,}/;
-                    const match = player.username.match(regex);
-                    if (!match ) {
-                        const result = await Tracker.fetchProfile(player.username);
-                        if (!result) {
-                            const games = await Game.fetchByPlayerId(player.id);
-                            for (const game of games) {
-                                for (let i = 0; i < game.players.length; i++ ) {
-                                    const gamePlayer = game.players[i];
-                                    if (gamePlayer.id == player.id) {
-                                        game.players[i] = new Player(gamePlayer.id, player.id, gamePlayer.stats);
-                                    }
-                                }
-                                for (let i = 0; i < game.teamRed.players.length; i++ ) {
-                                    const redPlayer = game.teamRed.players[i];
-                                    if (redPlayer.id == player.id) {
-                                        game.teamRed.players[i] = new Player(redPlayer.id, player.id, redPlayer.stats);
-                                    }
-                                }
-                                for (let i = 0; i < game.teamBlue.players.length; i++ ) {
-                                    const bluePlayer = game.teamBlue.players[i];
-                                    if (bluePlayer.id == player.id) {
-                                        game.teamBlue.players[i] = new Player(bluePlayer.id, player.id, bluePlayer.stats);
-                                    }
-                                }
-
-                                await game.save();
+        case 6: {
+            const games = await Game.fetchAll();
+            for (const game of games) {
+                if (game.termId == TermManager.currentTerm.Id) {
+                    for (const player of game.players) {
+                        for (let i = 0; i < player.stats.length; i++) {
+                            const stat = player.stats[i];
+                            if (stat.termId == TermManager.currentTerm.Id) {
+                                player.stats[i] = new PlayerStats();
                             }
                         }
                     }
-                } catch {
-                    count++;
+
+                    await game.save();
                 }
             }
-
-            await ephemeralReply(interaction, { content: `${count}/${players.length} players have outdated usernames` });
             break;
         }
 
