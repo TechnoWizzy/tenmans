@@ -114,9 +114,9 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
     const modifiedPlayers = new Map<string, Player>()
 
     for (const game of games) {
-        await parseGameStats(game, modifiedPlayers);
+        const eloChange = await parseGameStats(game, modifiedPlayers);
 
-        const embed = game.createEmbed();
+        const embed = game.createEmbed(eloChange);
         const components = game.createComponents();
         await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
 
@@ -232,6 +232,7 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
 
     // Save game before doing win/loss/elo stats
     await game.save();
+    const eloChange = new Map<string, number>();
 
     // Win/Loss stats + elo
     for (const player of game.players) {
@@ -257,6 +258,7 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
         const agentStats = stats.getAgentStats(stats.agentId);
 
         stats.elo += eloDelta;
+        eloChange.set(player.id, eloDelta);
         if (team.hasWon) {
             stats.wins += 1;
             agentStats.wins += 1;
@@ -268,4 +270,6 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
         await player.save();
         modifiedPlayers.set(player.id, player);
     }
+
+    return eloChange;
 }

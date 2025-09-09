@@ -74,7 +74,7 @@ export class Game {
      *
      * @return {EmbedBuilder} An instance of EmbedBuilder containing the structured embed data.
      */
-    public createEmbed(): EmbedBuilder {
+    public createEmbed(eloChange?: Map<string, number>): EmbedBuilder {
         const builder = new EmbedBuilder();
         const term = TermManager.getTerm(this.termId);
         builder.setAuthor({ name: term.Name })
@@ -90,11 +90,11 @@ export class Game {
 
         if (this.teamRed.hasWon || this.teamBlue.hasWon) {
             const teamRedText = this.teamRed.players
-                .map(player => this.formatPlayer(player, this.teamRed, this.teamBlue))
+                .map(player => this.formatPlayer(player, eloChange?.get(player.id)))
                 .join('\n');
 
             const teamBlueText = this.teamBlue.players
-                .map(player => this.formatPlayer(player, this.teamBlue, this.teamRed))
+                .map(player => this.formatPlayer(player, eloChange?.get(player.id)))
                 .join('\n');
 
             builder.setDescription(`🔴 Team Red : **${this.teamRed.score}**\n${teamRedText}\n\n🔵 Team Blue: **${this.teamBlue.score}**\n${teamBlueText}`)
@@ -124,19 +124,17 @@ export class Game {
      * Formats the player's information into a string based on their performance, team result, and other stats.
      *
      * @param {Player} player - The player object containing the stats and relevant information about the player.
-     * @param {Team} team - The team object representing the team the player belongs to, including its performance
+     * @param {number} eloDelta
      * details.
-     * @param {Team} opponent - The opposing team object containing its performance and stats.
      * @return {string} A formatted string containing the player's username, updated elo, elo change, and acs, along
      * with an associated rank Emoji.
      */
-    private formatPlayer(player: Player, team: Team, opponent: Team): string {
+    private formatPlayer(player: Player, eloDelta?: number): string {
         const username = removeFormatChars(player.username);
         const stats = player.getStats(this.termId);
         const acs = stats.acs;
         const elo = stats.elo
-        const eloDelta = player.getEloChange(team.getAverageElo(), opponent.getAverageElo(), opponent.score, team.hasWon, this.termId);
-        const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
+        const eloDeltaString = `(${eloDelta ?? 0 > 0 ? "+" : ""}${eloDelta})`;
         const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
         return `${emote}: **${username}** - ${elo} ${eloDeltaString} elo - ${acs} acs`;
     }
