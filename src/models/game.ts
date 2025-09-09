@@ -129,12 +129,12 @@ export class Game {
      * @return {string} A formatted string containing the player's username, updated elo, elo change, and acs, along
      * with an associated rank Emoji.
      */
-    private formatPlayer(player: Player, eloDelta?: number): string {
+    private formatPlayer(player: Player, eloDelta: number = 0): string {
         const username = removeFormatChars(player.username);
         const stats = player.getStats(this.termId);
         const acs = stats.acs;
         const elo = stats.elo
-        const eloDeltaString = `(${eloDelta ?? 0 > 0 ? "+" : ""}${eloDelta})`;
+        const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
         const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
         return `${emote}: **${username}** - ${elo} ${eloDeltaString} elo - ${acs} acs`;
     }
