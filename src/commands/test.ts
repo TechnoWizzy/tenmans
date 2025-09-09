@@ -110,7 +110,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             break;
         }
 
-        case 6: {
+        case 5: {
             const games = await Game.fetchAll();
             let count = 0;
             for (const game of games) {
