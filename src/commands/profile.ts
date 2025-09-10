@@ -19,6 +19,7 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const target = interaction.options.getUser("target", true);
     const member = await interaction.guild?.members.fetch(target.id);
     const player = await Player.fetch(target.id);
+    const userPlayer = await Player.fetch(interaction.user.id);
 
     if (!member) {
         await ephemeralReply(interaction, { content: `<@${target.id}> is not currently in this server` });
@@ -32,12 +33,12 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
     const stats = player.getStats(TermManager.currentTerm.Id);
     const bestStats = player.getBestStats();
-    const embed = createProfileEmbed(member, player, stats, bestStats);
+    const embed = createProfileEmbed(member, player, userPlayer, stats, bestStats);
     await reply(interaction, {embeds: [embed]});
     return;
 }
 
-function createProfileEmbed(member: GuildMember, player: Player, stats: PlayerStats, best?: PlayerStats) {
+function createProfileEmbed(member: GuildMember, player: Player, userPlayer: Player | null, stats: PlayerStats, best?: PlayerStats, ) {
     const embed = new EmbedBuilder()
         .setAuthor({
             name: player.username,
@@ -45,12 +46,14 @@ function createProfileEmbed(member: GuildMember, player: Player, stats: PlayerSt
             url: getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(player.username),
         });
 
-    if (stats.games < 1) {
+    if (stats.games < 1 && !userPlayer) {
         return new EmbedBuilder()
             .setTitle("You don't play the game")
             .setDescription("Why are you using this command?")
+    } else if (stats.games < 1) {
+        return new EmbedBuilder()
+            .setTitle("No Stats Found")
     }
-
 
 
     const currentRank = player.getEmote(stats.termId);

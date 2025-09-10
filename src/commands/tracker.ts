@@ -19,6 +19,7 @@ const profileStore = new NodeCache({stdTTL: 20, checkperiod: 2});
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const target = interaction.options.getUser("target", true);
     const player = await Player.fetch(target.id);
+    const userPlayer = await Player.fetch(interaction.user.id);
 
     if (!player) {
         await ephemeralReply(interaction, { content: `<@${target.id}> is not currently registered` });
@@ -39,12 +40,12 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
-    const embed = createProfileEmbed(target, profile?.data);
+    const embed = createProfileEmbed(target, profile.data, userPlayer);
     await reply(interaction, { embeds: [ embed ] });
     return;
 }
 
-function createProfileEmbed(user: User, data: ProfileData) {
+function createProfileEmbed(user: User, data: ProfileData, player: Player | null) {
     const embed = new EmbedBuilder()
         .setAuthor({
             name: data.platformInfo.platformUserHandle,
@@ -60,10 +61,13 @@ function createProfileEmbed(user: User, data: ProfileData) {
             currentRank = segment.stats.rank;
             peakRank = segment.stats.peakRank;
 
-            if (!currentRank) {
+            if (!currentRank && !player) {
                 return new EmbedBuilder()
                     .setTitle("You don't play the game")
                     .setDescription("Why are you using this command?")
+            } else if (!currentRank) {
+                return new EmbedBuilder()
+                    .setTitle("No Stats Found")
             }
 
             const currentRankName = currentRank.metadata.tierName.replace(' ', '');
