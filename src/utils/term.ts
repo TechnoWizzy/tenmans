@@ -1,6 +1,6 @@
 import {getEnv} from "./utils.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
-import {generateLeaderboard} from "./leaderboard.ts";
+import {aggregatePlayers, LeaderboardEmbed} from "./leaderboard.ts";
 
 export class TermManager {
     public static currentTerm: Term;
@@ -54,12 +54,13 @@ export class TermManager {
             if (start.getTime() < Date.now()) {
                 if (this.currentTerm && this.currentTerm.Id != term.Id) {
                     const channel = QueueHandler.getChannel();
-                    const [embed] = await generateLeaderboard(1, 0, 10, this.currentTerm.Id);
-                    if (!embed) {
+                    const players = await aggregatePlayers(1, 0, 10, this.currentTerm.Id);
+                    if (!players) {
                         await channel.send({
                             content: `The ${term.Name} semester has begun!`
                         });
                     } else {
+                        const embed = new LeaderboardEmbed(players, 1, 0, this.currentTerm.Id);
                         await channel.send({
                             content: `<@&822549851530461185> The ${term.Name} semester has begun. Here are the final standings for ${this.currentTerm.Name}!`,
                             embeds: [ embed ]
