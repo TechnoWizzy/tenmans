@@ -1,16 +1,17 @@
 import {
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonInteraction, ButtonStyle,
+    ButtonInteraction,
+    ButtonStyle,
     ChatInputCommandInteraction,
     EmbedBuilder
 } from "discord.js";
-import {ephemeralReply, noReply, removeFormatChars, reply} from "./utils.ts";
+import {ephemeralReply, noReply, reply} from "./utils.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 import {TermManager} from "./term.ts";
 
-export const leaderboardCache = new Map<string, [EmbedBuilder, ActionRowBuilder<ButtonBuilder>]>;
+export const leaderboardCache = new Map<string, Player[]>;
 
 export async function handleLeaderboardAction(interaction: ButtonInteraction | ChatInputCommandInteraction, action: LeaderboardAction, page: number, termId: string) {
     switch (action) {
@@ -36,12 +37,15 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
 
     const itemsPerPage = 10;
     const skip = (page - 1) * itemsPerPage;
-    const [embed, components] = await generateLeaderboard(page, skip, itemsPerPage, termId);
+    const players = await aggregatePlayers(page, skip, itemsPerPage, termId);
 
-    if (!embed || !components) {
+    if (!players) {
         await ephemeralReply(interaction, { content: "No players found for this page." });
         return;
     }
+    
+    const embed = new LeaderboardEmbed(players, page, skip, termId);
+    const components = new LeaderboardComponents(page, players?.length, termId);
 
     if (interaction.isChatInputCommand()) {
         await reply(interaction, { embeds: [ embed ], components: [ components ] });
@@ -51,7 +55,7 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
     }
 }
 
-export async function generateLeaderboard(page: number, skip: number, itemsPerPage: number, termId: string) {
+export async function aggregatePlayers(page: number, skip: number, itemsPerPage: number, termId: string) {
     const pipeline = [
         { // Find players with games this term
             $match: {
@@ -103,16 +107,14 @@ export async function generateLeaderboard(page: number, skip: number, itemsPerPa
         const players = await Database.players.aggregate(pipeline).toArray();
 
         if (players.length == 0) {
-            return [null, null];
+            return;
         }
 
         const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
-        const embed = new LeaderboardEmbed(classifiedPlayers, page, skip, termId);
-        const components = new LeaderboardComponents(page, players.length, termId);
-        leaderboardCache.set(createKey(page, termId), [ embed, components ]);
+        leaderboardCache.set(createKey(page, termId), classifiedPlayers);
     }
 
-    return leaderboardCache.get(createKey(page, termId))!;
+    return leaderboardCache.get(createKey(page, termId));
 }
 
 export class LeaderboardEmbed extends EmbedBuilder {

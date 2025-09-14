@@ -14,9 +14,14 @@ import {Settings} from "./src/settings/settings.ts";
 import {Game} from "./src/models/game.ts";
 import {TermManager} from "./src/utils/term.ts";
 import {Playwright} from "./src/utils/playwright.ts";
+import {PlayerController} from "./src/controllers/player.ts";
+import {ExceptionController} from "./src/controllers/exception.ts";
 
 Express()
-    .use('/', Express.static('docs'))
+    .use(Express.json())
+    .use(new ExceptionController().handler)
+    .use('/docs', Express.static('docs'))
+    .use("/players", new PlayerController().router)
     .listen(3000)
 
 Database
