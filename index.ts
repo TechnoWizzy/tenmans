@@ -20,7 +20,7 @@ import {ExceptionController} from "./src/controllers/exception.ts";
 Express()
     .use(Express.json())
     .use(new ExceptionController().handler)
-    .use('/docs', Express.static('docs'))
+    .use('/tenmans/api/docs', Express.static('docs'))
     .use("/players", new PlayerController().router)
     .listen(3000)
 
