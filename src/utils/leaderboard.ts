@@ -110,7 +110,7 @@ export async function aggregatePlayers(page: number, skip: number, itemsPerPage:
             return;
         }
 
-        const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.stats));
+        const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.altUsername, player.stats));
         leaderboardCache.set(createKey(page, termId), classifiedPlayers);
     }
 
