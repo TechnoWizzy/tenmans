@@ -79,19 +79,19 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
                         for (let i = 0; i < game.players.length; i++ ) {
                             const gamePlayer = game.players[i];
                             if (gamePlayer.id == player.id) {
-                                game.players[i] = new Player(gamePlayer.id, player.id, gamePlayer.stats);
+                                game.players[i] = new Player(gamePlayer.id, player.id, player.altUsername, gamePlayer.stats);
                             }
                         }
                         for (let i = 0; i < game.teamRed.players.length; i++ ) {
                             const redPlayer = game.teamRed.players[i];
                             if (redPlayer.id == player.id) {
-                                game.teamRed.players[i] = new Player(redPlayer.id, player.id, redPlayer.stats);
+                                game.teamRed.players[i] = new Player(redPlayer.id, player.id, player.altUsername, redPlayer.stats);
                             }
                         }
                         for (let i = 0; i < game.teamBlue.players.length; i++ ) {
                             const bluePlayer = game.teamBlue.players[i];
                             if (bluePlayer.id == player.id) {
-                                game.teamBlue.players[i] = new Player(bluePlayer.id, player.id, bluePlayer.stats);
+                                game.teamBlue.players[i] = new Player(bluePlayer.id, player.id, player.altUsername, bluePlayer.stats);
                             }
                         }
 
