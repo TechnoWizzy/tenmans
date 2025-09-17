@@ -31,5 +31,5 @@ jobs:
       # Clean up dangling resources
       - name: Clean up Docker resources
         run: |
-          docker system prune
-          docker builder prune
+          docker system prune -f
+          docker builder prune -f

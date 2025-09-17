@@ -188,7 +188,8 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
         if (segment.type == "player-summary") {
             const username = segment.attributes.platformUserIdentifier;
             const player = game.players.find(player =>
-                player.username.toLowerCase() == username.toLowerCase() || player.altUsername == username.toLowerCase());
+                player.username.toLowerCase() == username.toLowerCase() ||
+                player.altUsername.toLowerCase() == username.toLowerCase());
 
             if (player == null) {
 
