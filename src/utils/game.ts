@@ -92,7 +92,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
     }
 }
 
-export async function propagateGameChange(interaction: Interaction, game: Game) {
+export async function propagateGameChange(interaction: Interaction, game: Game, silent: boolean = false) {
     const games = await game.fetchAllAfter();
     games.unshift(game);
 
@@ -103,8 +103,10 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
         if (game.cancelled) {
             const embed = game.createEmbed();
             const components = game.createComponents();
-            await channel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ] });
-            await modChannel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+            if (!silent) {
+                await channel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ] });
+                await modChannel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+            }
             return;
         }
     }
@@ -116,9 +118,11 @@ export async function propagateGameChange(interaction: Interaction, game: Game) 
 
         const embed = game.createEmbed(eloChange);
         const components = game.createComponents();
-        await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+        if (!silent) {
+            await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+        }
 
-        if (!game.isOngoing()) {
+        if (!game.isOngoing() && !silent) {
             const winnerText = game.teamRed.hasWon ? "Team Red has won!" : game.teamBlue.hasWon ? "Team Blue has won!" : "Cancelled";
             await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
         }
@@ -207,7 +211,6 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
             stats.assists += segment.stats.assists.value;
             stats.deaths += segment.stats.deaths.value;
             stats.headshots += segment.stats.headshots.value;
-            stats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
             stats.totalAcs += stats.acs;
             stats.games += 1;
 
@@ -215,9 +218,14 @@ async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) 
             agentStats.assists += segment.stats.assists.value;
             agentStats.deaths += segment.stats.deaths.value;
             agentStats.headshots += segment.stats.headshots.value;
-            agentStats.totalshots = + Math.floor(100 * segment.stats.headshots.value / segment.stats.hsAccuracy.value);
             agentStats.totalAcs += stats.acs;
             agentStats.games += 1;
+
+            const headshots = segment.stats.headshots.value;
+            const hsAccuracy = segment.stats.hsAccuracy.value;
+            const totalShots = Math.round(100 * headshots / hsAccuracy);
+            stats.totalshots += totalShots;
+            agentStats.totalshots += totalShots;
 
             const teamId = segment.metadata.teamId;
             if (teamId == "Red") {

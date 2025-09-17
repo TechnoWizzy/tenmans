@@ -68,7 +68,7 @@ function createProfileEmbed(member: GuildMember, player: Player, userPlayer: Pla
         `**Win %:** ${(100 * stats.wins / stats.games).toFixed(1)}%\n` +
         `**K/D:** ${(stats.kills / Math.max(stats.deaths, 1)).toFixed(2)}\n` +
         `**ACS:** ${(stats.totalAcs / stats.games).toFixed(1)}\n` +
-        `**HS%:** ${(10 * stats.headshots / stats.totalshots).toFixed(1)}%`
+        `**HS%:** ${(100 * stats.headshots / stats.totalshots).toFixed(1)}%`
     );
 
     const agentStats = stats.agents
