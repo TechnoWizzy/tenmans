@@ -1,6 +1,5 @@
 import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
-import {removeFormatChars} from "../utils/utils.ts";
 import type {HexColorString} from "discord.js";
 import {Game} from "./game.ts";
 
@@ -10,6 +9,7 @@ import {Game} from "./game.ts";
 export class Player {
     public readonly id: string;
     public readonly username: string;
+    public readonly altUsername: string;
     public readonly stats: PlayerStats[];
 
     /**
@@ -19,11 +19,13 @@ export class Player {
      *
      * @param {string} id - The unique identifier for the player. This is the same as their Discord ID
      * @param {string} username - The username of the player. This is their full RiotID
+     * @param altUsername
      * @param {PlayerStats} [stats=new PlayerStats()] - The player's statistics. Defaults to a new `PlayerStats` instance.
      */
-    public constructor(id: string, username: string, stats: PlayerStats[] = []) {
+    public constructor(id: string, username: string, altUsername: string, stats: PlayerStats[] = []) {
         this.id = id;
-        this.username = removeFormatChars(username);
+        this.username = username;
+        this.altUsername = altUsername;
         this.stats = stats.map(stat => {
             const agents = stat.agents?.map(agent => {
                 return new AgentStats(agent.id, agent.name, agent.color, agent.games, agent.wins, agent.losses,
@@ -86,7 +88,7 @@ export class Player {
         const query = { id: id };
         const player = await Database.players.findOne(query);
         if (!player) return null;
-        return new Player(player.id, player.username, player.stats);
+        return new Player(player.id, player.username, player.altUsername, player.stats);
     }
 
     /**
@@ -100,7 +102,14 @@ export class Player {
         const query = { username: new RegExp(`^${username}$`, 'i') };
         const player = await Database.players.findOne(query);
         if (!player) return null;
-        return new Player(player.id, player.username, player.stats);
+        return new Player(player.id, player.username, player.altUsername, player.stats);
+    }
+
+    public static async fetchByAltUsername(altUsername: string): Promise<Player | null> {
+        const query = { altUsername: new RegExp(`^${altUsername}$`, 'i') };
+        const player = await Database.players.findOne(query);
+        if (!player) return null;
+        return new Player(player.id, player.username, player.altUsername, player.stats);
     }
 
     /**
@@ -110,7 +119,7 @@ export class Player {
      */
     public static async fetchAll(): Promise<Player[]> {
         const players = await Database.players.find().toArray();
-        return players.map(player => new Player(player.id, player.username, player.stats));
+        return players.map(player => new Player(player.id, player.username, player.altUsername, player.stats));
     }
 
     /**

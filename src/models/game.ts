@@ -284,9 +284,9 @@ export class Team {
             const stats = player.stats;
             if (stats.length == undefined) {
                 // @ts-ignore
-                return new Player(player.id, player.username, [player.stats])
+                return new Player(player.id, player.username, player.altUsername [player.stats])
             } else {
-                return new Player(player.id, player.username, player.stats)
+                return new Player(player.id, player.username, player.altUsername, player.stats)
             }
         });
     }
@@ -331,9 +331,9 @@ function formatGame(game: WithId<Game>): Game {
         const stats = player.stats;
         if (stats.length == undefined) {
             // @ts-ignore
-            return new Player(player.id, player.username, [player.stats])
+            return new Player(player.id, player.username, player.altUsername, [player.stats])
         } else {
-            return new Player(player.id, player.username, player.stats)
+            return new Player(player.id, player.username, player.altUsername, player.stats)
         }
     });
     const teamRed = new Team(game.teamRed.name, game.teamRed.termId, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);

@@ -32,6 +32,20 @@ const builder = new SlashCommandBuilder()
         )
     )
     .addSubcommand((subcommand) => subcommand
+        .setName("set-alt")
+        .setDescription("change a registered player's alt username")
+        .addUserOption((option) => option
+            .setName("user")
+            .setDescription("the discord user to be reregistered")
+            .setRequired(true)
+        )
+        .addStringOption((option) => option
+            .setName("alt-riot-id")
+            .setDescription("the alt Riot ID of the user (Name#Tag)")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) => subcommand
         .setName("reset-player")
         .setDescription("reset a single player")
         .addUserOption((option) => option
@@ -154,6 +168,39 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             )
 
             const profileURL = getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(username)
+            await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
+            break;
+        }
+
+        case "set-alt": {
+            const user = interaction.options.getUser("user", true);
+            const altUsername = interaction.options.getString("alt-riot-id", true);
+            const player = await Player.fetch(user.id);
+            if (!player) {
+                await ephemeralReply(interaction, { content: `Player is not currently registered` });
+                return;
+            }
+
+            const existingPlayer = await Player.fetchByUsername(altUsername);
+            if (existingPlayer != null) {
+                await ephemeralReply(interaction, { content: `Another user is already registered with **${altUsername}**` });
+                return;
+            }
+
+            const existingAltPlayer = await Player.fetchByAltUsername(altUsername);
+            if (existingAltPlayer != null) {
+                await ephemeralReply(interaction, { content: `Another user is already registered with **${altUsername}**` });
+                return;
+            }
+
+            const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+                new ButtonBuilder()
+                    .setCustomId(createCustomId("set-alt",user.id, altUsername, Date.now()))
+                    .setStyle(ButtonStyle.Primary)
+                    .setLabel("Confirm"),
+            )
+
+            const profileURL = getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(altUsername)
             await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
             break;
         }

@@ -1,6 +1,6 @@
 import {Client, EmbedBuilder, Events, type Interaction, TextChannel} from "discord.js";
 import {BOT_OPTIONS, ephemeralReply, getEnv} from "./src/utils/utils.ts";
-import {confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
+import {confirmAltUsername, confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
 import {handleLeaderboardAction} from "./src/utils/leaderboard.ts";
 import {handleGameAction} from "./src/utils/game.ts";
 import {handleQueueAction} from "./src/utils/queue.ts";
@@ -156,6 +156,20 @@ async function interactionCreate(interaction: Interaction) {
                         return;
                     }
                     await confirmReregistration(interaction, userId, username);
+                    break;
+                }
+
+                case "set-alt": {
+                    await interaction.deferReply({ flags: 'Ephemeral' });
+                    const userId = args[1];
+                    const altUsername = args[2];
+                    const date = args[3];
+                    const then = new Date(Number(date));
+                    if (Date.now() - then.getTime() > (30 * 1000)) {
+                        await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
+                        return;
+                    }
+                    await confirmAltUsername(interaction, userId, altUsername);
                     break;
                 }
 
