@@ -12,7 +12,7 @@ import {
     type SendableChannels,
     type User,
 } from "discord.js";
-import {createCustomId, ephemeralReply, noReply, removeFormatChars} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply, getEnv, noReply, removeFormatChars} from "../utils/utils.ts";
 import {Game} from "../models/game.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
@@ -162,6 +162,16 @@ export class Queue extends Map<string, [User, Timer]> {
 
         const timeout = this.createTimeout(user, interaction);
         this.set(user.id, [ user, timeout ]);
+
+        if (this.size == this.maxSize) {
+            const tuple = this.get(getEnv("SPECIAL"));
+            if (tuple) {
+                const user = tuple[0];
+                const timer = tuple[1];
+                clearTimeout(timer);
+                this.delete(user.id);
+            }
+        }
 
         if (this.size == this.maxSize) {
             await this.update(`${removeFormatChars(user.username)} has joined - THE QUEUE HAS POPPED!`, Colors.Gold, true);
