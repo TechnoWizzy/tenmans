@@ -188,6 +188,10 @@ export class Queue extends Map<string, [User, Timer]> {
                 return player;
             }));
 
+            if (players.length != this.maxSize) {
+                throw new Error("How?");
+            }
+
             const gameId = await Database.games.countDocuments();
             const game = await new Game(gameId, TermManager.currentTerm.Id, players).save();
             const embed = game.createEmbed();
