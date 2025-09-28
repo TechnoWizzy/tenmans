@@ -16,11 +16,12 @@ import {TermManager} from "./src/utils/term.ts";
 import {Playwright} from "./src/utils/playwright.ts";
 import {PlayerController} from "./src/controllers/player.ts";
 import {ExceptionController} from "./src/controllers/exception.ts";
+import * as path from "node:path";
 
 Express()
     .use(Express.json())
     .use(new ExceptionController().handler)
-    .use("/docs", Express.static('/tenmans/api/docs', { redirect: false }))
+    .use("/docs", Express.static(path.join(__dirname, "tenmans", "api", "docs"), { redirect: false }))
     .use("/players", new PlayerController().router)
     .listen(3000)
 
