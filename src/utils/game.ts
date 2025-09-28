@@ -1,9 +1,9 @@
-import {ephemeralReply, getEnv, noReply, reply} from "./utils.ts";
+import {createCustomId, ephemeralReply, getEnv, noReply, reply} from "./utils.ts";
 import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    type Interaction,
+    type Interaction, ModalBuilder, TextInputBuilder, TextInputStyle,
 } from "discord.js";
 import {Game, Team} from "../models/game.ts";
 import {Player} from "../models/player.ts";
@@ -59,35 +59,44 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 return;
             }
 
-            const component = new ActionRowBuilder<ButtonBuilder>()
-                .setComponents(
-                    new ButtonBuilder()
-                        .setLabel("Confirm Cancellation")
-                        .setStyle(ButtonStyle.Danger)
-                        .setCustomId(["game", game.id, "cancel-confirm"].join(','))
+            const modal = new ModalBuilder()
+                .setTitle("Cancel")
+                .setCustomId(createCustomId("game", game.id, "cancel-confirm"))
+                .setComponents(new ActionRowBuilder<TextInputBuilder>()
+                    .setComponents(
+                        new TextInputBuilder()
+                            .setLabel("Reason")
+                            .setPlaceholder("Why was the game cancelled?")
+                            .setCustomId(createCustomId("reason"))
+                            .setStyle(TextInputStyle.Short)
+                            .setRequired(true)
+                    )
                 )
-            await ephemeralReply(interaction, { content: "Please confirm, or dismiss. This action is irreversible", components: [ component ] });
+
+            await interaction.showModal(modal);
             break;
         }
 
         case "cancel-confirm": {
-            game.cancelled = true;
-            await game.save();
+            if (interaction.isModalSubmit()) {
+                const reason = interaction.fields.getTextInputValue("reason");
+                game.cancelled = true;
+                game.cancelReason = reason;
+                await game.save();
 
-            // for (const player of game.players) {
-            //     const stats = player.getStats(TermManager.currentTerm.Id);
-            //     const timeout = 60 * 1000; // 1 minute
-            //     stats.timeout = new Date(Date.now() + timeout);
-            //     await player.save();
-            // }
+                // for (const player of game.players) {
+                //     const stats = player.getStats(TermManager.currentTerm.Id);
+                //     const timeout = 60 * 1000; // 1 minute
+                //     stats.timeout = new Date(Date.now() + timeout);
+                //     await player.save();
+                // }
 
-            await propagateGameChange(interaction, game);
-            if (interaction.isButton()) {
-                const message = await interaction.message.fetchReference();
-                try {
-                    await message.delete();
-                } catch {}
+                await propagateGameChange(interaction, game);
+            } else {
+                await ephemeralReply(interaction, { content: "This operation is not supported." });
             }
+
+            break;
         }
     }
 }

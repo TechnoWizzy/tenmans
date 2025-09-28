@@ -27,6 +27,7 @@ export class Game {
     public players: Player[];
     public modifiers: Modifier[];
     public cancelled: boolean;
+    public cancelReason?: string;
 
     /**
      * Constructs a new instance of a Game.
@@ -39,8 +40,9 @@ export class Game {
      * @param {string} [matchId] - The trackerID for the match, which isn't set until the game is played
      * @param {Modifier[]} [modifiers=[]] - A list of match modifiers, which defaults to an empty array if not provided.
      * @param {boolean} [cancelled=false] - Indicates if the match is canceled. Defaults to false.
+     * @param {string} [cancelReason=false] - Indicates the reason a the match is canceled. Defaults to undefined.
      */
-    public constructor(id: number, termId?: string, players?: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false) {
+    public constructor(id: number, termId?: string, players?: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false, cancelReason?: string) {
         this.id = id;
         this.termId = termId ?? TermManager.currentTerm.Id
         this.matchId = matchId;
@@ -48,7 +50,8 @@ export class Game {
         this.teamBlue = teamBlue ?? new Team("Blue", this.termId);
         this.players = players ?? [];
         this.modifiers = modifiers;
-        this.cancelled = cancelled
+        this.cancelled = cancelled;
+        this.cancelReason = cancelReason;
     }
 
     /**
@@ -338,5 +341,5 @@ function formatGame(game: WithId<Game>): Game {
     });
     const teamRed = new Team(game.teamRed.name, game.teamRed.termId, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled);
+    return new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled, game.cancelReason);
 }
