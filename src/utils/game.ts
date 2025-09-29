@@ -113,8 +113,15 @@ export async function propagateGameChange(interaction: Interaction, game: Game, 
             const embed = game.createEmbed();
             const components = game.createComponents();
             if (!silent) {
-                await channel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ] });
-                await modChannel.send({ content: `Game ${game.id} has been cancelled by <@${interaction.user.id}>.`, embeds: [ embed ], components: [ components ] });
+                await channel.send({
+                    content: `Game ${game.id} has been cancelled by <@${interaction.user.id}> with reason "${game.cancelReason}"`,
+                    embeds: [ embed ]
+                });
+                await modChannel.send({
+                    content: `Game ${game.id} has been cancelled by <@${interaction.user.id}> with reason "${game.cancelReason}"`,
+                    embeds: [ embed ],
+                    components: [ components ]
+                });
             }
             return;
         }
