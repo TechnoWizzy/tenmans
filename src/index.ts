@@ -1,27 +1,26 @@
 import {Client, EmbedBuilder, Events, type Interaction, TextChannel} from "discord.js";
-import {BOT_OPTIONS, ephemeralReply, getEnv} from "./src/utils/utils.ts";
-import {confirmAltUsername, confirmRegistration, confirmReregistration} from "./src/utils/register.ts";
-import {handleLeaderboardAction} from "./src/utils/leaderboard.ts";
-import {handleGameAction} from "./src/utils/game.ts";
-import {handleQueueAction} from "./src/utils/queue.ts";
+import {BOT_OPTIONS, ephemeralReply, getEnv} from "./utils/utils.ts";
+import {confirmAltUsername, confirmRegistration, confirmReregistration} from "./utils/register.ts";
+import {handleLeaderboardAction} from "./utils/leaderboard.ts";
+import {handleGameAction} from "./utils/game.ts";
+import {handleQueueAction} from "./utils/queue.ts";
 import util from "node:util";
 import process from "process";
 import Express from "express";
-import {Database} from "./src/database/database.ts";
-import {CommandHandler} from "./src/commands/command_handler.ts";
-import {QueueHandler} from "./src/queue/queue_handler.ts";
-import {Settings} from "./src/settings/settings.ts";
-import {Game} from "./src/models/game.ts";
-import {TermManager} from "./src/utils/term.ts";
-import {Playwright} from "./src/utils/playwright.ts";
-import {PlayerController} from "./src/controllers/player.ts";
-import {ExceptionController} from "./src/controllers/exception.ts";
-import * as path from "node:path";
+import {Database} from "./database/database.ts";
+import {CommandHandler} from "./commands/command_handler.ts";
+import {QueueHandler} from "./queue/queue_handler.ts";
+import {Settings} from "./settings/settings.ts";
+import {Game} from "./models/game.ts";
+import {TermManager} from "./utils/term.ts";
+import {Playwright} from "./utils/playwright.ts";
+import {PlayerController} from "./controllers/player.ts";
+import {ExceptionController} from "./controllers/exception.ts";
 
 Express()
     .use(Express.json())
     .use(new ExceptionController().handler)
-    .use("/docs", Express.static(path.join(__dirname, "tenmans", "api", "docs"), { redirect: false }))
+    .use("/docs", Express.static("./docs"))
     .use("/players", new PlayerController().router)
     .listen(3000)
 

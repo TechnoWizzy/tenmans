@@ -24,12 +24,4 @@ jobs:
       # Build and run containers
       - name: Build and Run Docker Image
         run: |
-          make build
-          make stop
-          make run
-
-      # Clean up dangling resources
-      - name: Clean up Docker resources
-        run: |
-          docker system prune -f
-          docker builder prune -f
+          task

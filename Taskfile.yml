@@ -1,0 +1,39 @@
+version: '3'
+
+dotenv:
+  - .env
+
+vars:
+  CONFIG: compose.yml
+
+tasks:
+  # Default task: build and run
+  default:
+    desc: Build and run all containers
+    cmds:
+      - task: build
+      - task: run
+
+  # Build images
+  build:
+    desc: Build Docker images
+    cmds:
+      - docker compose -f {{.CONFIG}} build
+
+  # Run containers (detached)
+  run:
+    desc: Run containers in detached mode
+    cmds:
+      - docker compose -f {{.CONFIG}} up -d
+
+  # Stop and remove containers/networks
+  stop:
+    desc: Stop and remove containers
+    cmds:
+      - docker compose -f {{.CONFIG}} down
+
+  # Stop and remove containers/networks/images/volumes
+  clean:
+    desc: Full cleanup (containers, images, orphans)
+    cmds:
+      - docker compose -f {{.CONFIG}} down --rmi all --remove-orphans

@@ -1,6 +1,6 @@
 {
-    "entryPoints": ["types.d.ts", "index.ts", "src"],
+    "entryPoints": ["types.d.ts", "./src/index.ts", "src"],
     "entryPointStrategy": "expand",
-    "out": "tenmans/api/docs",
+    "out": "docs",
     "tsconfig": "tsconfig.json"
 }
