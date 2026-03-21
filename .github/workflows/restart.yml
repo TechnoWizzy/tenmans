@@ -10,5 +10,16 @@ jobs:
     runs-on: self-hosted
     environment: production
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Update Environment Variables
+        run: |
+          touch .env
+          echo "${{ secrets.ENV }}" >> .env
+          echo "COMMIT_MESSAGE='Executed Daily Restart'" >> .env
+
       - name: Restart Containers
-        run: docker compose restart
+        run: docker compose up -d --force-recreate
