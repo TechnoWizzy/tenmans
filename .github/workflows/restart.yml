@@ -6,24 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  restart:
     runs-on: self-hosted
     environment: production
     steps:
-      # Checkout latest commit
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          ref: master
-
-      # Load environment variables
-      - name: Load Environment Variables
-        run: |
-          touch .env
-          echo "${{ secrets.ENV }}" >> .env
-          echo "COMMIT_MESSAGE='Executed Daily Restart'" >> .env
-
-      # Build and run containers
-      - name: Build and Run Docker Image
-        run: |
-          task
+      - name: Restart Containers
+        run: docker compose restart
