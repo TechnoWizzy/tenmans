@@ -2,11 +2,14 @@ import {getEnv} from "./utils.ts";
 import {Mutex} from "./mutex.ts";
 import {Playwright} from "./playwright.ts";
 import NodeCache from "node-cache";
+import {RateLimiter} from "./rateLimiter.ts";
 
 export class Tracker {
     private static lock = new Mutex();
+    private static profileRateLimiter = new RateLimiter(1000);
     private static matchCache = new NodeCache({ stdTTL: 60 * 60 });
     private static profileCache = new NodeCache();
+    private static pendingProfiles = new Map<string, Promise<ProfileResponse | null>>();
 
     public static setMatchData(matchId: string, data: MatchResponse) {
         this.matchCache.set(matchId, data);
@@ -37,28 +40,51 @@ export class Tracker {
         }
     }
 
-    public static async fetchProfile(riotId: string) {
-        const data = this.profileCache.get<ProfileResponse>(riotId);
-        if (data) {
-            return data;
+    public static async fetchProfile(
+        riotId: string
+    ): Promise<ProfileResponse | null> {
+        const cached = this.profileCache.get<ProfileResponse>(riotId);
+
+        if (cached) {
+            return cached;
         }
 
-        const unlock = await this.lock.lock();
+        const pending = this.pendingProfiles.get(riotId);
+
+        if (pending) {
+            return pending;
+        }
+
+        const request = this.fetchProfileFromApi(riotId);
+
+        this.pendingProfiles.set(riotId, request);
+
         try {
-            const apiUrl = getEnv("API_URL_PROFILE") + encodeURIComponent(riotId);
-
-            try {
-                const data = await Playwright.fetch<ProfileResponse>(apiUrl);
-                if (data != null) {
-                    this.profileCache.set<ProfileResponse>(riotId, data);
-                }
-
-                return data;
-            } catch (e) {
-                return null;
-            }
+            return await request;
         } finally {
-            setTimeout(unlock, 1000);
+            this.pendingProfiles.delete(riotId);
+        }
+    }
+
+    private static async fetchProfileFromApi(
+        riotId: string
+    ): Promise<ProfileResponse | null> {
+        await this.profileRateLimiter.wait();
+
+        const apiUrl =
+            getEnv("API_URL_PROFILE") + encodeURIComponent(riotId);
+
+        try {
+            const data =
+                await Playwright.fetch<ProfileResponse>(apiUrl);
+
+            if (data != null) {
+                this.profileCache.set(riotId, data);
+            }
+
+            return data;
+        } catch {
+            return null;
         }
     }
 }
