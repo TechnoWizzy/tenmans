@@ -15,6 +15,7 @@
     "express": "^5.1.0",
     "mongodb": "^6.15.0",
     "node-cache": "^5.1.2",
+    "patchright": "^1.62.3",
     "playwright": "^1.54.2",
     "typedoc": "^0.28.3"
   },

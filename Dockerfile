@@ -82,7 +82,7 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Playwright chromium binary (deps already installed above)
-RUN bunx -y playwright@1.54.0 install chromium
+# Install Patchwright chromium binary (deps already installed above)
+RUN bunx -y patchright install chromium
 
 ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./src/index.ts"]

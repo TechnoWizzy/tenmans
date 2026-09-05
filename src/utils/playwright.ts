@@ -1,4 +1,4 @@
-import {type Browser, chromium, devices} from "playwright";
+import {type Browser, chromium, devices} from "patchright";
 import {HttpStatusCode} from "axios";
 
 export class Playwright {
