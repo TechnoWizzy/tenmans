@@ -1,8 +1,6 @@
-import {createCustomId, ephemeralReply, getEnv, noReply, reply} from "./utils.ts";
+import {createCustomId, ephemeralReply, noReply, reply} from "./utils.ts";
 import {
     ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
     type Interaction, ModalBuilder, TextInputBuilder, TextInputStyle,
 } from "discord.js";
 import {Game, Team} from "../models/game.ts";
@@ -13,26 +11,43 @@ import {leaderboardCache} from "./leaderboard.ts";
 
 export async function handleGameAction(interaction: Interaction, game: Game, action: GameAction) {
     switch (action) {
+        case "upload-data": {
+            if (interaction.isChatInputCommand()) {
+                const attachment = interaction.options.getAttachment("game-data", true);
+                const response = await fetch(attachment.url);
+                if (!response.ok) {
+                    await ephemeralReply(interaction, {content: "Failed to retrieved attached data"});
+                    return;
+                }
+
+                const data = await response.json() as MatchResponse;
+                const matchId = data.data.attributes.id;
+
+                // Load players from game data
+                for (const segment of data.data.segments) {
+                    if (segment.type == "player-summary") {
+                        const username = segment.attributes.platformUserIdentifier;
+                        const player = await Player.fetchByUsername(username) ?? await Player.fetchByAltUsername(username);
+
+                        if (player == null) {
+                            throw new Error(`Player ${username} is in game ${game.id} but is not registered on discord.`);
+                        }
+
+                        game.players.push(player);
+                    }
+                }
+
+                Tracker.setMatchData(matchId, data);
+                await propagateGameChange(interaction, game);
+            }
+            break;
+        }
 
         case "set-url": {
             if (interaction.isButton()) {
                 await interaction.showModal(game.createModal());
                 return;
             }
-
-            // if (interaction.isChatInputCommand()) {
-            //     const attachment = interaction.options.getAttachment("game-data", true);
-            //     const response = await fetch(attachment.url);
-            //     if (!response.ok) {
-            //         await ephemeralReply(interaction, {content: "Failed to retrieved attached data"});
-            //         return;
-            //     }
-            //
-            //     const data = await response.json() as MatchResponse;
-            //     const matchId = data.data.attributes.id;
-            //     Tracker.setMatchData(matchId, data);
-            //     await uploadGame(matchId)
-            // }
 
             if (!interaction.isModalSubmit()) {
                 await ephemeralReply(interaction, { content: `This interaction type is temporarily disabled for game uploads.`});

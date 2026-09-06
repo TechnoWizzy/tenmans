@@ -13,6 +13,7 @@ import {Player} from "../models/player.ts";
 import {Game} from "../models/game.ts";
 import {TermManager} from "../utils/term.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
+import {Database} from "../database/database.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("admin")
@@ -74,7 +75,7 @@ const builder = new SlashCommandBuilder()
         .addIntegerOption((option) => option
             .setName("game-id")
             .setDescription("the game ID to be input")
-            .setRequired(true)
+            .setRequired(false)
         )
         .addAttachmentOption((option) => option
             .setName("game-data")
@@ -301,9 +302,19 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         }
 
         case "input-game-data": {
-            const gameId = interaction.options.getInteger("game-id", true);
-            const game = await Game.fetch(gameId);
-            await handleGameAction(interaction, game, "set-url");
+            const gameId = interaction.options.getInteger("game-id", false);
+
+            if (!gameId) {
+                const gameId = await Database.games.countDocuments();
+                const game = await new Game(gameId, TermManager.currentTerm.Id, []).save();
+                await handleGameAction(interaction, game, "upload-data");
+                return;
+            } else {
+                const game = await Game.fetch(gameId);
+                await handleGameAction(interaction, game, "set-url");
+            }
+
+
             break;
         }
 
