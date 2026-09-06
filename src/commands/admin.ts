@@ -303,17 +303,22 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
         case "input-game-data": {
             const gameId = interaction.options.getInteger("game-id", false);
+            const attachment = interaction.options.getAttachment("game-data", false);
 
             if (!gameId) {
                 const gameId = await Database.games.countDocuments();
                 const game = await new Game(gameId, TermManager.currentTerm.Id, []).save();
                 await handleGameAction(interaction, game, "upload-data");
                 return;
-            } else {
+            }
+            if (attachment) {
+                const game = await new Game(gameId, TermManager.currentTerm.Id, []).save();
+                await handleGameAction(interaction, game, "upload-data");
+            }
+            else {
                 const game = await Game.fetch(gameId);
                 await handleGameAction(interaction, game, "set-url");
             }
-
 
             break;
         }
