@@ -18,6 +18,20 @@ const builder = new SlashCommandBuilder()
     .setName("admin")
     .setDescription("10-mans management commands")
     .addSubcommand((subcommand) => subcommand
+        .setName("register")
+        .setDescription("Registers a new player")
+        .addUserOption((option) => option
+            .setName("user")
+            .setDescription("the discord user to be registered")
+            .setRequired(true)
+        )
+        .addStringOption((option) => option
+            .setName("riot-id")
+            .setDescription("the Riot ID of the user (Name#Tag)")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((subcommand) => subcommand
         .setName("re-register")
         .setDescription("change a registered player's username")
         .addUserOption((option) => option
@@ -145,6 +159,18 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
+        case "register": {
+            const user = interaction.options.getUser("user", true);
+            const username = interaction.options.getString("riot-id", true);
+            const existingPlayer = await Player.fetchByUsername(username);
+            if (existingPlayer != null) {
+                await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** - Please re-register them first to free this username` });
+                return;
+            }
+            await new Player(user.id, username, "").save();
+            await ephemeralReply(interaction, { content: `Player **${username}** has been registered` });
+            break;
+        }
         case "re-register": {
             const user = interaction.options.getUser("user", true);
             const username = interaction.options.getString("riot-id", true);
