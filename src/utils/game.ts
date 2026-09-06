@@ -38,6 +38,7 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
                 }
 
                 Tracker.setMatchData(matchId, data);
+                game.matchId = matchId;
                 await propagateGameChange(interaction, game);
             }
             break;
