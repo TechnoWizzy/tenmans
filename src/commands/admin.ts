@@ -72,15 +72,15 @@ const builder = new SlashCommandBuilder()
     .addSubcommand((subcommand) => subcommand
         .setName("input-game-data")
         .setDescription("manually input game data from API")
-        .addIntegerOption((option) => option
-            .setName("game-id")
-            .setDescription("the game ID to be input")
-            .setRequired(false)
-        )
         .addAttachmentOption((option) => option
             .setName("game-data")
             .setDescription("the data to be input")
             .setRequired(true)
+        )
+        .addIntegerOption((option) => option
+            .setName("game-id")
+            .setDescription("the game ID to be input")
+            .setRequired(false)
         )
     )
     .addSubcommand((subcommand) => subcommand
