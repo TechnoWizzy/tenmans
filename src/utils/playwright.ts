@@ -1,6 +1,7 @@
 import { launch } from "cloakbrowser";
 import {HttpStatusCode} from "axios";
 import {type Browser} from "playwright-core";
+import {getEnv} from "./utils.ts";
 
 /**
  * Thrown when a request could not be completed. Carries the HTTP status when one was received, so callers can tell a
@@ -22,6 +23,7 @@ export class Playwright {
     private static async getBrowser() {
         if (!this.browser) {
             this.browser = await launch({
+                licenseKey: getEnv("CLOAKBROWSER_KEY"),
                 geoip: false,
                 args: ["--fingerprint-noise=false", "--fingerprint-windows-font-metrics"],
                 headless: false,
