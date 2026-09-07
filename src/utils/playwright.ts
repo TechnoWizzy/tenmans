@@ -37,9 +37,8 @@ export class Playwright {
      */
     public static async fetch<T>(apiUrl: string): Promise<T> {
         const browser = await Playwright.getBrowser();
-        const context = await browser.newContext(devices['Desktop Chrome']);
         try {
-            const page = await context.newPage();
+            const page = await browser.newPage();
             const response = await page.goto(apiUrl, { waitUntil: "networkidle" });
 
             if (!response) {
@@ -65,7 +64,6 @@ export class Playwright {
             }
             throw new FetchError(`Request to ${apiUrl} failed`, undefined, { cause: e });
         } finally {
-            await context.close();
         }
     }
 
