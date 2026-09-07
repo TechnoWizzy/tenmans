@@ -79,10 +79,15 @@ RUN apt-get update && \
       libxrender1 \
       libxss1 \
       libxtst6 \
+      xvfb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Patchwright chromium binary (deps already installed above)
-RUN bunx -y patchright install chromium
+# Start virtual display
+RUN Xvfb :99 -screen 0 1920x1080x24 &
+RUN export DISPLAY=:99
+
+# Install CloakBrowser Chromium binary
+RUN bunx -y cloakbrowser install
 
 ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./src/index.ts"]

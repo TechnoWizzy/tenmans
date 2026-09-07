@@ -1,12 +1,16 @@
-import {type Browser, chromium, devices} from "patchright";
+import { launch } from "cloakbrowser";
 import {HttpStatusCode} from "axios";
+import {type Browser, devices} from "playwright-core";
 
 export class Playwright {
     private static browser: Browser | null = null;
 
     private static async getBrowser() {
         if (!this.browser) {
-            this.browser = await chromium.launch({ headless: true });
+            this.browser = await launch({
+                headless: false,
+                humanize: true
+            });
         }
         return this.browser;
     }
