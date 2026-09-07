@@ -63,6 +63,7 @@ export class Tracker {
 
                 return data;
             } catch (e) {
+                console.log(e);
                 lastError = e;
                 const status = e instanceof FetchError ? e.status : undefined;
                 if (status != undefined && status >= 400 && status < 500 && status != HttpStatusCode.TooManyRequests) {
