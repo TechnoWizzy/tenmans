@@ -83,7 +83,7 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN sudo apt install -y fonts-noto-color-emoji fonts-freefont-ttf fonts-unifont \
+RUN apt install -y fonts-noto-color-emoji fonts-freefont-ttf fonts-unifont \
         fonts-ipafont-gothic fonts-wqy-zenhei fonts-tlwg-loma-otf
 
 RUN mkdir -p ~/.local/share/fonts/windows
