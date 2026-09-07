@@ -45,6 +45,9 @@ COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/settings.json ./
 COPY --from=builder /app/package.json ./
 
+COPY fonts/ /usr/local/share/fonts/windows/
+RUN fc-cache -f -v
+
 # Install Playwright chromium dependencies
 RUN apt-get update && \
     apt-get install -y \
