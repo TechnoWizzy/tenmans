@@ -83,6 +83,13 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN sudo apt install -y fonts-noto-color-emoji fonts-freefont-ttf fonts-unifont \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-tlwg-loma-otf
+
+RUN mkdir -p ~/.local/share/fonts/windows
+RUN cp -r /path/to/windows/Fonts/. ~/.local/share/fonts/windows/
+RUN fc-cache -f
+
 # Start virtual display
 RUN Xvfb :99 -screen 0 1920x1080x24 &
 RUN export DISPLAY=:99

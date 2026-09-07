@@ -8,6 +8,7 @@ export class Playwright {
     private static async getBrowser() {
         if (!this.browser) {
             this.browser = await launch({
+                args: ["--fingerprint=481516"],
                 headless: false,
                 humanize: true
             });
