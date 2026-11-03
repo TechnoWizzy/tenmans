@@ -26,7 +26,7 @@ jobs:
           echo "COMMIT_MESSAGE='Executed Daily Restart'" >> .env
 
       - name: Restart Containers
-        run: docker compose up -d --force-recreate --wait --wait-timeout 600
+        run: docker compose up -d --force-recreate --wait
 
       - name: Show Container Logs
         if: failure()
