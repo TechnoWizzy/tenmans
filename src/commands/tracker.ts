@@ -26,14 +26,15 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
-    const profile = await Tracker.fetchProfile(player.username);
-
     const time = profileStore.get<number>(player.id);
     if (time) {
-        await ephemeralReply(interaction, { content: `You will be able to use this command <t:{time}:R>` });
+        // Discord timestamps are in seconds
+        await ephemeralReply(interaction, { content: `You will be able to use this command <t:${Math.floor(time / 1000)}:R>` });
         return;
     }
     profileStore.set<number>(player.id, Date.now() + (20 * 1000));
+
+    const profile = await Tracker.fetchProfile(player.username);
 
     if (!profile) {
         await ephemeralReply(interaction, { content: `Unable to fetch <@${target.id}>'s profile from Tracker. Please try again later.` });

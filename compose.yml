@@ -3,6 +3,8 @@ volumes:
     driver: local
   database:
     driver: local
+  cloakbrowser:
+    driver: local
 
 services:
   mongo-tenmans:
@@ -16,6 +18,27 @@ services:
     volumes:
       - database:/data/db
 
+  fetcher:
+    container_name: tenmans-fetcher
+    restart: unless-stopped
+    build:
+      context: ./fetcher
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    # Chromium crashes with Docker's 64MB default /dev/shm
+    shm_size: 1gb
+    stop_grace_period: 30s
+    volumes:
+      - cloakbrowser:/root/.cloakbrowser
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      # The first start downloads the Chromium build
+      start_period: 5m
+
   tenmans:
     container_name: tenmans
     restart: unless-stopped
@@ -26,10 +49,15 @@ services:
       - "27101:3000"
     env_file:
       - .env
+    environment:
+      FETCHER_URL: http://fetcher:3000
     volumes:
       - cache:/var/lib/cache
     depends_on:
-      - mongo-tenmans
+      mongo-tenmans:
+        condition: service_started
+      fetcher:
+        condition: service_healthy
 
 networks:
   default:

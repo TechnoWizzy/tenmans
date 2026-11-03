@@ -1,6 +1,6 @@
-import {getEnv} from "./utils.ts";
+import {wait} from "./utils.ts";
 import {Mutex} from "./mutex.ts";
-import {FetchError, Playwright, wait} from "./playwright.ts";
+import {FetchError, Fetcher} from "./fetcher.ts";
 import NodeCache from "node-cache";
 import {RateLimiter} from "./rateLimiter.ts";
 import {HttpStatusCode} from "axios";
@@ -44,7 +44,6 @@ export class Tracker {
      * Fetches match data from the API, retrying with an exponential backoff.
      */
     private static async fetchMatchFromApi(matchId: string): Promise<MatchResponse> {
-        const apiUrl = getEnv("API_URL_MATCH") + matchId;
         let lastError: unknown;
 
         for (let attempt = 1; attempt <= MATCH_FETCH_ATTEMPTS; attempt++) {
@@ -55,7 +54,7 @@ export class Tracker {
             }
 
             try {
-                const data = await Playwright.fetch<MatchResponse>(apiUrl);
+                const data = await Fetcher.fetchMatch(matchId);
 
                 if (!data?.data?.segments) {
                     throw new FetchError(`Match ${matchId} returned no segment data`);
@@ -107,19 +106,16 @@ export class Tracker {
     ): Promise<ProfileResponse | null> {
         await this.profileRateLimiter.wait();
 
-        const apiUrl =
-            getEnv("API_URL_PROFILE") + encodeURIComponent(riotId);
-
         try {
-            const data =
-                await Playwright.fetch<ProfileResponse>(apiUrl);
+            const data = await Fetcher.fetchProfile(riotId);
 
             if (data != null) {
                 this.profileCache.set(riotId, data);
             }
 
             return data;
-        } catch {
+        } catch (e) {
+            console.log(`Failed to fetch profile ${riotId}`, e);
             return null;
         }
     }

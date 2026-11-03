@@ -32,10 +32,7 @@ FROM ${RUNTIME_IMAGE} as runtime
 
 # Install runtime dependencies
 RUN apt-get update && \
-    apt-get install -y \
-      tini \
-      wget \
-      fontconfig \
+    apt-get install -y tini \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -48,54 +45,4 @@ COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/settings.json ./
 COPY --from=builder /app/package.json ./
 
-COPY fonts/ /usr/local/share/fonts/windows/
-RUN fc-cache -f -v
-
-# Install Playwright chromium dependencies
-RUN apt-get update && \
-    apt-get install -y \
-      fonts-unifont \
-      fonts-noto-color-emoji \
-      fonts-freefont-ttf \
-      fonts-ipafont-gothic \
-      fonts-wqy-zenhei \
-      fonts-tlwg-loma-otf \
-      libasound2 \
-      libatk-bridge2.0-0 \
-      libatk1.0-0 \
-      libatspi2.0-0 \
-      libcairo2 \
-      libcups2 \
-      libdbus-1-3 \
-      libdrm2 \
-      libgbm1 \
-      libglib2.0-0 \
-      libgtk-3-0 \
-      libnspr4 \
-      libnss3 \
-      libpango-1.0-0 \
-      libpangocairo-1.0-0 \
-      libudev1 \
-      libx11-6 \
-      libx11-xcb1 \
-      libxcb1 \
-      libxcomposite1 \
-      libxcursor1 \
-      libxdamage1 \
-      libxext6 \
-      libxfixes3 \
-      libxi6 \
-      libxrandr2 \
-      libxrender1 \
-      libxss1 \
-      libxtst6 \
-      xvfb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install CloakBrowser Chromium binary
-RUN bunx -y cloakbrowser install
-
-ENV DISPLAY=:99
-
-ENTRYPOINT ["/usr/bin/tini", "--", "sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 & exec bun run ./src/index.ts"]
+ENTRYPOINT ["/usr/bin/tini", "--", "bun", "run", "./src/index.ts"]

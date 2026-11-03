@@ -5,6 +5,10 @@ on:
     branches:
       - "master"
 
+concurrency:
+  group: production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: self-hosted
@@ -26,3 +30,7 @@ jobs:
       - name: Build and Run Docker Image
         run: |
           task
+
+      - name: Show Container Logs
+        if: failure()
+        run: docker compose logs --tail 200 fetcher tenmans

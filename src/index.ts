@@ -13,7 +13,7 @@ import {QueueHandler} from "./queue/queue_handler.ts";
 import {Settings} from "./settings/settings.ts";
 import {Game} from "./models/game.ts";
 import {TermManager} from "./utils/term.ts";
-import {Playwright} from "./utils/playwright.ts";
+import {Fetcher} from "./utils/fetcher.ts";
 import {PlayerController} from "./controllers/player.ts";
 import {ExceptionController} from "./controllers/exception.ts";
 
@@ -57,10 +57,10 @@ async function ready(client: Client) {
     }
 
     try {
-        await Playwright.healthCheck();
+        await Fetcher.healthCheck();
     } catch (e: unknown) {
         const channel = await client.channels.fetch(settings.channels.log) as TextChannel;
-        const embed = new ErrorEmbed(e as Error, "Browser Startup Error");
+        const embed = new ErrorEmbed(e as Error, "Fetcher Startup Error");
         await channel.send({ embeds: [ embed ] });
     }
 }
@@ -223,14 +223,7 @@ function getCommitMessage() {
 }
 
 // Process cleanup
-process.on("SIGINT", async () => {
-    await Playwright.close();
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    await Playwright.close();
-    process.exit(0);
-});
+process.on("SIGINT", () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
 
 console.log(`Tenmans: ${process.pid}`);
