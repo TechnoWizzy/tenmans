@@ -31,6 +31,12 @@ export function getEnv(key: string) {
     return value;
 }
 
+export function wait(milliseconds: number) {
+    return new Promise(resolve => {
+        setTimeout(resolve, milliseconds);
+    });
+}
+
 export type ReplyOptions = { content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder<any>[], allowedMentions?: MessageMentionOptions }
 
 export async function ephemeralReply(interaction: Interaction, options: ReplyOptions) {

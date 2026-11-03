@@ -1,0 +1,17 @@
+{
+  "name": "tenmans-fetcher",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "cloakbrowser": "^0.5.10",
+    "express": "^5.1.0",
+    "playwright-core": "^1.63.0"
+  }
+}
