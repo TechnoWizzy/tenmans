@@ -55,6 +55,14 @@ async function ready(client: Client) {
         const embed = new ErrorEmbed(e as Error, "Ready Error");
         await channel.send({ embeds: [ embed ] });
     }
+
+    try {
+        await Playwright.healthCheck();
+    } catch (e: unknown) {
+        const channel = await client.channels.fetch(settings.channels.log) as TextChannel;
+        const embed = new ErrorEmbed(e as Error, "Browser Startup Error");
+        await channel.send({ embeds: [ embed ] });
+    }
 }
 
 async function interactionCreate(interaction: Interaction) {

@@ -1,6 +1,6 @@
 import { launch } from "cloakbrowser";
 import {HttpStatusCode} from "axios";
-import {type Browser} from "playwright-core";
+import {type Browser, type Page} from "playwright-core";
 import {getEnv} from "./utils.ts";
 
 /**
@@ -18,19 +18,49 @@ export class FetchError extends Error {
 }
 
 export class Playwright {
-    private static browser: Browser | null = null;
+    private static browser: Promise<Browser> | null = null;
 
-    private static async getBrowser() {
+    private static getBrowser() {
+        // Cache the launch promise so concurrent callers share a single browser
         if (!this.browser) {
-            this.browser = await launch({
-                licenseKey: getEnv("CLOAKBROWSER_KEY"),
-                geoip: false,
-                args: ["--fingerprint-noise=false", "--fingerprint-windows-font-metrics"],
-                headless: false,
-                humanize: true
+            this.browser = this.launchBrowser().catch((e) => {
+                this.browser = null;
+                throw e;
             });
         }
         return this.browser;
+    }
+
+    private static async launchBrowser() {
+        if (process.platform == "linux" && !process.env.DISPLAY) {
+            throw new Error("DISPLAY is not set. A headed browser requires an X server (e.g. Xvfb)");
+        }
+
+        const browser = await launch({
+            licenseKey: getEnv("CLOAKBROWSER_KEY"),
+            geoip: false,
+            args: ["--fingerprint-noise=false", "--fingerprint-windows-font-metrics"],
+            headless: false,
+            humanize: true
+        });
+
+        // Drop the dead instance so the next fetch relaunches
+        browser.on("disconnected", () => {
+            console.log("Browser disconnected, will relaunch on next request");
+            this.browser = null;
+        });
+
+        return browser;
+    }
+
+    /**
+     * Launches the browser so configuration problems surface at startup rather than on the first fetch.
+     *
+     * @throws {Error} If the browser could not be launched.
+     */
+    public static async healthCheck() {
+        const browser = await Playwright.getBrowser();
+        console.log(`Browser ready: ${browser.version()}`);
     }
 
     /**
@@ -39,10 +69,19 @@ export class Playwright {
      * @throws {FetchError} If the request could not be completed or the response was an error.
      */
     public static async fetch<T>(apiUrl: string): Promise<T> {
-        const browser = await Playwright.getBrowser();
+        let page: Page | undefined;
         try {
-            const page = await browser.newPage();
+            const browser = await Playwright.getBrowser();
+            page = await browser.newPage();
             const response = await page.goto(apiUrl, { waitUntil: "networkidle" });
+
+            const stealthCheck = await page.evaluate(() => ({
+                webdriver: navigator.webdriver,
+                platform: navigator.platform,
+                userAgent: navigator.userAgent,
+            }));
+
+            console.log(stealthCheck);
 
             if (!response) {
                 throw new FetchError(`No response from ${apiUrl}`);
@@ -67,12 +106,15 @@ export class Playwright {
             }
             throw new FetchError(`Request to ${apiUrl} failed`, undefined, { cause: e });
         } finally {
+            await page?.close().catch(() => {});
         }
     }
 
     public static async close() {
         if (this.browser != null) {
-            await this.browser.close();
+            const browser = await this.browser.catch(() => null);
+            this.browser = null;
+            await browser?.close();
         }
     }
 }
