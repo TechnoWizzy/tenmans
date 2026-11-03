@@ -24,13 +24,13 @@ tasks:
   run:
     desc: Run containers in detached mode and wait until healthy
     cmds:
-      - docker compose -f {{.CONFIG}} up -d --wait --wait-timeout 600
+      - docker compose -f {{.CONFIG}} up -d --wait
 
   # Run locally with the fetcher on localhost:3001
   dev:
     desc: Build and run all containers with compose.dev.yml overrides
     cmds:
-      - docker compose -f {{.CONFIG}} -f compose.dev.yml up -d --build --wait --wait-timeout 600
+      - docker compose -f {{.CONFIG}} -f compose.dev.yml up -d --build --wait
 
   # Show logs
   logs:
