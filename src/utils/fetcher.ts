@@ -44,7 +44,7 @@ export class Fetcher {
         }
 
         if (status >= 400) {
-            const body = (await response.text()).slice(0, 500);
+            const body = (await response.text()).replace(/\s+/g, " ").slice(0, 150);
             throw new FetchError(`Request to ${url} failed with status ${status}: ${body}`, status);
         }
 

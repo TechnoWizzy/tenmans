@@ -1,14 +1,14 @@
 import Express, {type Response} from "express";
 import process from "process";
 import {Browser} from "./browser.ts";
-import {getEnv} from "./utils.ts";
+import {describeError, getEnv} from "./utils.ts";
 
 async function relay(res: Response, pageUrl: string, apiUrl: string) {
     try {
         const response = await Browser.fetch(pageUrl, apiUrl);
         res.status(response.status).type(response.contentType).send(response.body);
     } catch (e) {
-        console.log(`Failed to fetch ${pageUrl}`, e);
+        console.log(`Failed to fetch ${pageUrl}: ${describeError(e)}`);
         res.status(502).json({ error: (e as Error).message });
     }
 }
