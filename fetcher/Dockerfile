@@ -69,4 +69,5 @@ COPY ./src ./src
 # The licensed Chromium build is downloaded on first launch into /root/.cloakbrowser, which compose mounts as a volume
 ENV DISPLAY=:99
 
-ENTRYPOINT ["/usr/bin/tini", "--", "sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 & exec bun run ./src/index.ts"]
+# Clear the lock a restarted container leaves behind, then wait for Xvfb's socket before launching the browser
+ENTRYPOINT ["/usr/bin/tini", "--", "sh", "-c", "rm -f /tmp/.X99-lock /tmp/.X11-unix/X99; Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp & for i in $(seq 100); do [ -e /tmp/.X11-unix/X99 ] && break; sleep 0.1; done; exec bun run ./src/index.ts"]
