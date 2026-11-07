@@ -26,6 +26,6 @@
   },
   "include": [
       "src/types.d.ts",
-      "src/index.ts", "src/**/*"],
+      "src/index.ts", "src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }

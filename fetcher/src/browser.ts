@@ -12,6 +12,7 @@ export type BrowserResponse = {
     status: number;
     contentType: string;
     body: string;
+    url: string;
 };
 
 const LAUNCH_TIMEOUT_MS = 60 * 1000;
@@ -199,7 +200,15 @@ export class Browser {
         return browser.version();
     }
 
-    public static async fetch(pageUrl: string, apiUrl: string): Promise<BrowserResponse> {
+    /**
+     * Opens pageUrl and returns the response to the apiUrl request it makes. `after` runs with the page still open
+     * when that response succeeded, e.g. to request more pages with the same session.
+     */
+    public static async fetch(
+        pageUrl: string,
+        apiUrl: string,
+        after?: (page: Page, first: BrowserResponse) => Promise<BrowserResponse>,
+    ): Promise<BrowserResponse> {
         const target = normalizeUrl(apiUrl);
         let page: Page | undefined;
         try {
@@ -225,6 +234,7 @@ export class Browser {
                     status: 503,
                     contentType: "application/json",
                     body: JSON.stringify({ error: `Cloudflare verification required for ${pageUrl}` }),
+                    url: apiUrl,
                 };
             }
 
@@ -259,11 +269,13 @@ export class Browser {
                 if (DEBUG) console.log(`[debug] body: ${body.slice(0, 300)}`);
             }
 
-            return {
+            const result = {
                 status,
                 contentType: response.headers()["content-type"] ?? "application/json",
                 body,
+                url: response.url(),
             };
+            return after && status < 400 ? await after(page, result) : result;
         } finally {
             await page?.close().catch(() => {});
         }

@@ -15,6 +15,16 @@ interface MatchResponse {
     data: MatchData;
 }
 
+/** Tracker match-history list. Only the fields the backfill script reads; the shape is not guaranteed. */
+interface MatchHistoryResponse {
+    data?: {
+        matches?: {
+            attributes?: { id?: string };
+            metadata?: { timestamp?: string; modeKey?: string; modeName?: string };
+        }[];
+    };
+}
+
 interface ProfileResponse {
     data: ProfileData;
 }

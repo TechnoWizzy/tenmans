@@ -1,11 +1,14 @@
 import Express, {type Response} from "express";
 import process from "process";
-import {Browser} from "./browser.ts";
+import {Browser, type BrowserResponse} from "./browser.ts";
 import {describeError, getEnv} from "./utils.ts";
+import {fetchMoreMatches} from "./history.ts";
+import type {Page} from "playwright-core";
 
-async function relay(res: Response, pageUrl: string, apiUrl: string) {
+async function relay(res: Response, pageUrl: string, apiUrl: string,
+                     after?: (page: Page, first: BrowserResponse) => Promise<BrowserResponse>) {
     try {
-        const response = await Browser.fetch(pageUrl, apiUrl);
+        const response = await Browser.fetch(pageUrl, apiUrl, after);
         res.status(response.status).type(response.contentType).send(response.body);
     } catch (e) {
         console.log(`Failed to fetch ${pageUrl}: ${describeError(e)}`);
@@ -32,6 +35,19 @@ const server = Express()
     .get("/match/:matchId", async (req, res) => {
         const id = encodeURIComponent(req.params.matchId);
         await relay(res, getEnv("TRACKER_URL_MATCH") + id, getEnv("API_URL_MATCH") + id);
+    })
+    // A player's custom games, newest first. Used by scripts/backfill-games.ts
+    //   ?season=<seasonId>   act to list (tracker's default is the current act)
+    //   ?pages=<n>           follow the `next` cursor for up to n pages of 20 (default 1, max 30)
+    //   ?until=<ISO date>    stop paging once matches older than this are loaded
+    .get("/matches/:riotId", async (req, res) => {
+        const id = encodeURIComponent(req.params.riotId);
+        const season = typeof req.query.season == "string" ? `&season=${encodeURIComponent(req.query.season)}` : "";
+        const pages = Number(req.query.pages) || 1;
+        const until = typeof req.query.until == "string" ? Date.parse(req.query.until) : NaN;
+        const pageUrl = `${getEnv("TRACKER_URL_PROFILE")}${id}/customs?platform=pc${season}`;
+        await relay(res, pageUrl, `${getEnv("API_URL_MATCH")}riot/${id}`,
+            (page, first) => fetchMoreMatches(page, first, pages, until));
     })
     .listen(3000, () => console.log(`Fetcher: ${process.pid}`));
 

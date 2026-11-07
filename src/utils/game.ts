@@ -172,7 +172,7 @@ export async function propagateGameChange(interaction: Interaction, game: Game, 
     });
 }
 
-async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) {
+export async function parseGameStats(game: Game, modifiedPlayers: Map<string, Player>) {
     for (let i = 0; i < game.players.length; i++) {
         const player = game.players[i];
         const modifiedPlayer = modifiedPlayers.get(player.id);

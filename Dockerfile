@@ -20,6 +20,7 @@ RUN bun install --frozen-lockfile
 
 # Copy source files
 COPY ./src ./src
+COPY ./scripts ./scripts
 COPY ./settings.json ./
 
 # Generate documentation
@@ -41,6 +42,8 @@ WORKDIR /app
 # Copy built artifacts and dependencies from builder
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/src ./src
+# One-off maintenance scripts, run with `docker compose run` (see scripts/backfill-games.ts)
+COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/settings.json ./
 COPY --from=builder /app/package.json ./

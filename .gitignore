@@ -4,6 +4,7 @@ docs
 .idea
 player.json
 tracker.json
+history.json
 tenmans.iml
 
 # Logs
@@ -179,3 +180,8 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# backfill script output (contains player data backups)
+.backfill-cache/
+backfill-plan.json
+backfill-report.json

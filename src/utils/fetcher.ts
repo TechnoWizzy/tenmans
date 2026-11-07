@@ -22,6 +22,15 @@ export class Fetcher {
         return Fetcher.get<MatchResponse>(`/match/${encodeURIComponent(matchId)}`);
     }
 
+    /** Custom-game history, following pages back to `until` (at most `pages` pages of 20) */
+    public static fetchCustomMatches(riotId: string, options: { seasonId?: string, until?: Date, pages?: number } = {}) {
+        const query = new URLSearchParams();
+        if (options.seasonId) query.set("season", options.seasonId);
+        if (options.until) query.set("until", options.until.toISOString());
+        if (options.pages) query.set("pages", String(options.pages));
+        return Fetcher.get<MatchHistoryResponse>(`/matches/${encodeURIComponent(riotId)}?${query}`);
+    }
+
     public static async healthCheck() {
         const health = await Fetcher.get<{ version: string }>("/health");
         console.log(`Fetcher ready: ${health.version}`);
