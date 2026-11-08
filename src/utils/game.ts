@@ -155,7 +155,11 @@ export async function propagateGameChange(interaction: Interaction, game: Game, 
         }
 
         if (!game.isOngoing() && !silent) {
-            const winnerText = game.teamRed.hasWon ? "Team Red has won!" : game.teamBlue.hasWon ? "Team Blue has won!" : "Cancelled";
+            if (game.cancelled) {
+                // Skip cancelled games they just make noise
+                continue;
+            }
+            const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!";
             await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
         }
     }
