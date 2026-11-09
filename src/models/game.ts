@@ -54,6 +54,8 @@ export class Game {
     public version?: number;
     /** Resolved match slots for {@link matchId}. Absent on legacy games and until a match is attached. */
     public participants?: Participant[];
+    /** When the queue popped. Absent on legacy games. */
+    public startedAt?: Date;
 
     /**
      * Constructs a new instance of a Game.
@@ -384,6 +386,8 @@ function formatGame(game: WithId<Game>): Game {
     const players = game.players.map(player => Player.from(player));
     const teamRed = new Team(game.teamRed.name, game.teamRed.termId, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled,
+    const result = new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled,
         game.cancelReason, game.version, game.participants);
+    result.startedAt = game.startedAt;
+    return result;
 }

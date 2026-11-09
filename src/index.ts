@@ -14,6 +14,7 @@ import {Settings} from "./settings/settings.ts";
 import {Game} from "./models/game.ts";
 import {TermManager} from "./utils/term.ts";
 import {Fetcher} from "./utils/fetcher.ts";
+import {MatchScanner} from "./utils/scanner.ts";
 import {PlayerController} from "./controllers/player.ts";
 import {ExceptionController} from "./controllers/exception.ts";
 
@@ -47,6 +48,7 @@ async function ready(client: Client) {
         await TermManager.loadTerms();
         await CommandHandler.registerCommands(client);
         await QueueHandler.loadQueue(client, getCommitMessage());
+        await MatchScanner.resume();
         client.user?.setActivity(settings.status)
         console.log("TenMans is ready at " + client.readyAt?.toISOString());
         console.log(`Current Term: ${TermManager.currentTerm.Name}`);

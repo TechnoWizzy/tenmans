@@ -119,7 +119,13 @@ export async function handleGameAction(interaction: Interaction, game: Game, act
     }
 }
 
-export async function propagateGameChange(interaction: Interaction, game: Game, silent: boolean = false) {
+/**
+ * Applies a change to a game and replays every later game of the term.
+ *
+ * @param interaction - The interaction that made the change, or undefined when the bot made it (auto-detection)
+ */
+export async function propagateGameChange(interaction: Interaction | undefined, game: Game, silent: boolean = false) {
+    const actor = interaction ? `by <@${interaction.user.id}>` : "automatically";
     const games = await game.fetchAllAfter();
     games.unshift(game);
 
@@ -132,11 +138,11 @@ export async function propagateGameChange(interaction: Interaction, game: Game, 
             const components = game.createComponents();
             if (!silent) {
                 await channel.send({
-                    content: `Game ${game.id} has been cancelled by <@${interaction.user.id}> with reason "${game.cancelReason}"`,
+                    content: `Game ${game.id} has been cancelled ${actor} with reason "${game.cancelReason}"`,
                     embeds: [ embed ]
                 });
                 await modChannel.send({
-                    content: `Game ${game.id} has been cancelled by <@${interaction.user.id}> with reason "${game.cancelReason}"`,
+                    content: `Game ${game.id} has been cancelled ${actor} with reason "${game.cancelReason}"`,
                     embeds: [ embed ],
                     components: [ components ]
                 });
@@ -155,7 +161,7 @@ export async function propagateGameChange(interaction: Interaction, game: Game, 
         const components = game.createComponents();
         if (!silent) {
             const noteText = notes.map(note => `\n- ${note}`).join("");
-            await modChannel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>.${noteText}`, embeds: [ embed ], components: [ components ] });
+            await modChannel.send({ content: `Game ${game.id} has been updated ${actor}.${noteText}`, embeds: [ embed ], components: [ components ] });
         }
 
         if (!game.isOngoing() && !silent) {
@@ -164,12 +170,14 @@ export async function propagateGameChange(interaction: Interaction, game: Game, 
                 continue;
             }
             const winnerText = game.teamRed.hasWon ? "Team Red has won!" : "Team Blue has won!";
-            await channel.send({ content: `Game ${game.id} has been updated by <@${interaction.user.id}>. ${winnerText}`, embeds: [ embed ] });
+            await channel.send({ content: `Game ${game.id} has been updated ${actor}. ${winnerText}`, embeds: [ embed ] });
         }
     }
 
     const pluralityText = games.length == 1 ? "game update was" : "game updates were";
-    await reply(interaction, { content: `${games.length} ${pluralityText} applied successfully.` });
+    if (interaction) {
+        await reply(interaction, { content: `${games.length} ${pluralityText} applied successfully.` });
+    }
 
 
     // Delete leaderboard pages for this term
