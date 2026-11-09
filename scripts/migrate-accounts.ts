@@ -6,7 +6,10 @@
  *   1. plan   Look up every active player's username and alt on tracker and record whether each account is
  *             public (with its PUUID), private, or no longer exists. Read-only.
  *
- *             bun scripts/migrate-accounts.ts plan [--active-since 2026-08-01] [--out accounts-plan.json]
+ *             bun scripts/migrate-accounts.ts plan [--active-since 2026-08-01] [--delay-ms 10000] [--out accounts-plan.json]
+ *
+ *             --delay-ms pauses between tracker lookups (default 10s): looking players up too quickly makes
+ *             tracker put a Cloudflare captcha in front of every profile.
  *
  *             Players without a game since --active-since (default: every player) are not looked up; their
  *             names are migrated as unverified, unranked accounts until they run /register.
@@ -35,6 +38,7 @@ const {values: args, positionals} = parseArgs({
     allowPositionals: true,
     options: {
         "active-since": {type: "string"},
+        "delay-ms": {type: "string", default: "10000"},
         out: {type: "string", default: "accounts-plan.json"},
         plan: {type: "string", default: "accounts-plan.json"},
         commit: {type: "boolean", default: false},
@@ -68,6 +72,7 @@ async function lookup(riotId: string): Promise<AccountLookup> {
     const result = await Tracker.lookupAccount(riotId);
     // Errors are retried on the next run
     if (result.status != "error") writeFileSync(path, JSON.stringify(result));
+    await Bun.sleep(Number(args["delay-ms"]));
     return result;
 }
 
