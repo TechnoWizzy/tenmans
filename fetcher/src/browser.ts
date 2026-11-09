@@ -77,6 +77,11 @@ async function clickChallengeCheckbox(frame: Frame, page: Page) {
     return true;
 }
 
+// Statuses tracker answers with when it wants the captcha solved
+function isChallengeStatus(status: number) {
+    return status == 429 || status == 403;
+}
+
 // Wait for the Cloudflare Turnstile captcha to pass, clicking its checkbox if it stalls
 async function solveChallenge(page: Page, target: string): Promise<ChallengeResult> {
     // The page may call the API again on its own once the captcha passes
@@ -104,7 +109,9 @@ async function solveChallenge(page: Page, target: string): Promise<ChallengeResu
         const start = Date.now();
         let nextClick = start + CHALLENGE_CLICK_AFTER_MS;
         while (Date.now() - start < CHALLENGE_SOLVE_MS) {
-            if (retried && retried.status() < 400) {
+            // Anything but another challenge is the real answer, including errors like 404 (unknown
+            // Riot ID) or 451 (private profile) - waiting for a success would never end for those
+            if (retried && !isChallengeStatus(retried.status())) {
                 console.log(`Page retried the API itself: ${retried.status()}`);
                 return { kind: "response", response: retried };
             }
@@ -242,7 +249,7 @@ export class Browser {
                 throw new Error(`${pageUrl} did not request ${apiUrl}`, { cause: e });
             });
 
-            if (response.status() == 429 || response.status() == 403) {
+            if (isChallengeStatus(response.status())) {
                 console.log(`${response.status()} from ${response.url()}, waiting for the captcha`);
                 const result = await solveChallenge(page, target);
 
