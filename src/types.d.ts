@@ -29,6 +29,15 @@ interface ProfileResponse {
     data: ProfileData;
 }
 
+/** Result of resolving a Riot ID through tracker. Only public profiles reveal the account's PUUID. */
+type AccountLookup =
+    | { status: "public", puuid: string, riotId: string }
+    | { status: "private" }
+    | { status: "not-found" }
+    | { status: "error", error: unknown };
+
+type AccountVisibility = "public" | "private" | "unknown";
+
 interface MatchData {
     segments: MatchSegment[];
     attributes: MatchAttributes;

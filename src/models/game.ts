@@ -1,5 +1,5 @@
 import {Database} from "../database/database.ts";
-import {Player} from "./player.ts";
+import {Player, RankEmote} from "./player.ts";
 import {
     ActionRowBuilder,
     ButtonBuilder,
@@ -15,6 +15,28 @@ import type {WithId} from "mongodb";
 import {TermManager} from "../utils/term.ts";
 
 /**
+ * Data model version written on new games. Games without a version predate linked Riot accounts: they are
+ * frozen and are never edited or replayed again, so their stats stay exactly as they were computed.
+ */
+export const CURRENT_GAME_VERSION = 2;
+
+/**
+ * Who played which slot of a match. Resolved once, when the match is attached to the game, and reused by every
+ * later replay - so renames, newly linked accounts and shared accounts can never change a past game.
+ */
+export interface Participant {
+    /** Discord ID of the player */
+    playerId: string;
+    /** Riot ID as it appears in the match */
+    riotId: string;
+    puuid?: string;
+    team: TeamName;
+    /** Played on a ranked (public, PUUID-linked) account: the game counts toward their stats and elo */
+    ranked: boolean;
+    resolvedBy: "name" | "puuid" | "elimination";
+}
+
+/**
  * Represents a game with teams, players, and other relevant details such as match ID,
  * modifiers, and cancellation status.
  */
@@ -28,6 +50,10 @@ export class Game {
     public modifiers: Modifier[];
     public cancelled: boolean;
     public cancelReason?: string;
+    /** Absent on legacy games */
+    public version?: number;
+    /** Resolved match slots for {@link matchId}. Absent on legacy games and until a match is attached. */
+    public participants?: Participant[];
 
     /**
      * Constructs a new instance of a Game.
@@ -41,8 +67,10 @@ export class Game {
      * @param {Modifier[]} [modifiers=[]] - A list of match modifiers, which defaults to an empty array if not provided.
      * @param {boolean} [cancelled=false] - Indicates if the match is canceled. Defaults to false.
      * @param {string} [cancelReason=false] - Indicates the reason a the match is canceled. Defaults to undefined.
+     * @param {number} [version] - The data model version. Pass {@link CURRENT_GAME_VERSION} for new games.
+     * @param {Participant[]} [participants] - The resolved match slots
      */
-    public constructor(id: number, termId?: string, players?: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false, cancelReason?: string) {
+    public constructor(id: number, termId?: string, players?: Player[], teamRed?: Team, teamBlue?: Team, matchId?: string, modifiers: Modifier[] = [], cancelled: boolean = false, cancelReason?: string, version?: number, participants?: Participant[]) {
         this.id = id;
         this.termId = termId ?? TermManager.currentTerm.Id
         this.matchId = matchId;
@@ -52,6 +80,39 @@ export class Game {
         this.modifiers = modifiers;
         this.cancelled = cancelled;
         this.cancelReason = cancelReason;
+        this.version = version;
+        this.participants = participants;
+    }
+
+    /** Legacy games predate linked accounts and are frozen */
+    public isLegacy() {
+        return (this.version ?? 1) < CURRENT_GAME_VERSION;
+    }
+
+    public getParticipant(playerId: string) {
+        return this.participants?.find(participant => participant.playerId == playerId);
+    }
+
+    /**
+     * Whether this game counts toward the player's stats. Before a match is attached, this is whether the
+     * player has any ranked account. Legacy games counted for everyone.
+     */
+    public isRankedFor(player: Player) {
+        if (this.isLegacy()) return true;
+        const participant = this.getParticipant(player.id);
+        return participant ? participant.ranked : player.isRanked();
+    }
+
+    /**
+     * Average elo of the team's ranked players. Unranked players have no elo and are left out; a team
+     * without any ranked players counts as the default 500.
+     */
+    public getTeamElo(team: Team): number {
+        const ranked = team.players.filter(player => this.isRankedFor(player));
+        if (ranked.length == 0) return 500;
+        return ranked
+            .map(player => player.getStats(this.termId).elo)
+            .reduce((a, b) => a + b) / ranked.length;
     }
 
     /**
@@ -112,7 +173,8 @@ export class Game {
                 .map(player => {
                     const stats = player.getStats(this.termId);
                     const emote = `<:test:${player.getEmote(this.termId)}>`;
-                    return `${emote}: **${player.username}** - ${stats.elo} elo`;
+                    const elo = this.isRankedFor(player) ? `${stats.elo} elo` : "Unranked";
+                    return `${emote}: **${player.username}** - ${elo}`;
                 })
                 .join('\n');
 
@@ -134,6 +196,12 @@ export class Game {
      */
     private formatPlayer(player: Player, eloDelta: number = 0): string {
         const username = removeFormatChars(player.username);
+        if (!this.isRankedFor(player)) {
+            const riotId = this.getParticipant(player.id)?.riotId;
+            const playedAs = riotId && riotId.toLowerCase() != player.username.toLowerCase()
+                ? ` (as ${removeFormatChars(riotId)})` : "";
+            return `<:test:${RankEmote.Unrated}>: **${username}**${playedAs} - Unranked`;
+        }
         const stats = player.getStats(this.termId);
         const acs = stats.acs;
         const elo = stats.elo
@@ -155,12 +223,12 @@ export class Game {
                 .setLabel("Set Match URL")
                 .setStyle(ButtonStyle.Primary)
                 .setCustomId(createCustomId("game", this.id, "set-url"))
-                .setDisabled(this.cancelled),
+                .setDisabled(this.cancelled || this.isLegacy()),
             new ButtonBuilder()
                 .setLabel("Cancel Game")
                 .setStyle(ButtonStyle.Danger)
                 .setCustomId(createCustomId("game", this.id, "cancel"))
-                .setDisabled(this.cancelled)
+                .setDisabled(this.cancelled || this.isLegacy())
         )
     }
 
@@ -251,6 +319,8 @@ export class Game {
         const games = await Database.games.find(query).toArray();
         return games
             .map(game => formatGame(game))
+            // Legacy games are frozen and never replayed
+            .filter(game => !game.isLegacy())
             .sort((a, b) => a.id - b.id);
     }
 
@@ -283,26 +353,7 @@ export class Team {
         this.termId = termId ?? TermManager.currentTerm.Id;
         this.score = score;
         this.hasWon = hasWon;
-        this.players = players.map(player => {
-            const stats = player.stats;
-            if (stats.length == undefined) {
-                // @ts-ignore
-                return new Player(player.id, player.username, player.altUsername [player.stats])
-            } else {
-                return new Player(player.id, player.username, player.altUsername, player.stats)
-            }
-        });
-    }
-
-    /**
-     * Computes and returns the average Elo rating of all players on the team.
-     *
-     * @return {number} The average Elo rating of the players.
-     */
-    public getAverageElo(): number {
-        return this.players
-            .map(player => player.getStats(this.termId).elo)
-            .reduce((a, b) => a + b) / this.players.length;
+        this.players = players.map(player => Player.from(player));
     }
 }
 
@@ -330,16 +381,9 @@ export class Modifier {
  * @return {Game} A new instance of the Game class with formatted player and team data.
  */
 function formatGame(game: WithId<Game>): Game {
-    const players = game.players.map(player => {
-        const stats = player.stats;
-        if (stats.length == undefined) {
-            // @ts-ignore
-            return new Player(player.id, player.username, player.altUsername, [player.stats])
-        } else {
-            return new Player(player.id, player.username, player.altUsername, player.stats)
-        }
-    });
+    const players = game.players.map(player => Player.from(player));
     const teamRed = new Team(game.teamRed.name, game.teamRed.termId, game.teamRed.score, game.teamRed.hasWon, game.teamRed.players);
     const teamBlue = new Team(game.teamBlue.name, game.teamBlue.termId, game.teamBlue.score, game.teamBlue.hasWon, game.teamBlue.players);
-    return new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled, game.cancelReason);
+    return new Game(game.id, game.termId, players, teamRed, teamBlue, game.matchId, game.modifiers, game.cancelled,
+        game.cancelReason, game.version, game.participants);
 }

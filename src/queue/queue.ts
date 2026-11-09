@@ -13,7 +13,7 @@ import {
     type User,
 } from "discord.js";
 import {createCustomId, ephemeralReply, getEnv, noReply, removeFormatChars} from "../utils/utils.ts";
-import {Game} from "../models/game.ts";
+import {CURRENT_GAME_VERSION, Game} from "../models/game.ts";
 import {Database} from "../database/database.ts";
 import {Player} from "../models/player.ts";
 import {TermManager} from "../utils/term.ts";
@@ -193,7 +193,8 @@ export class Queue extends Map<string, [User, Timer]> {
             }
 
             const gameId = await Database.games.countDocuments();
-            const game = await new Game(gameId, TermManager.currentTerm.Id, players).save();
+            const game = await new Game(gameId, TermManager.currentTerm.Id, players, undefined, undefined, undefined,
+                [], false, undefined, CURRENT_GAME_VERSION).save();
             const embed = game.createEmbed();
             const components = game.createComponents();
             await this.modChannel.send({ content: `Game ${gameId} has started.`, embeds: [ embed ], components: [ components ] });

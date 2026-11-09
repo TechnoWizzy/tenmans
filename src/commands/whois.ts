@@ -16,14 +16,16 @@ const builder = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const riotId = interaction.options.getString("riot-id", true);
-    const player = await Player.fetchByUsername(riotId);
+    const players = await Player.fetchByRiotId(riotId);
 
-    if (!player) {
+    if (players.length == 0) {
         await ephemeralReply(interaction, { content: `\`${riotId}\` is not currently registered` });
         return;
     }
 
-    await ephemeralReply(interaction, { content: `\`${riotId}\` is currently registered to <@${player.id}>` });
+    const mentions = players.map(player => `<@${player.id}>`).join(", ");
+    const shared = players.length > 1 ? " (shared account)" : "";
+    await ephemeralReply(interaction, { content: `\`${riotId}\` is currently linked to ${mentions}${shared}` });
     return;
 }
 

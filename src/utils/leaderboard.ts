@@ -57,8 +57,14 @@ export async function handleLeaderboardAction(interaction: ButtonInteraction | C
 
 export async function aggregatePlayers(page: number, skip: number, itemsPerPage: number, termId: string) {
     const pipeline = [
-        { // Find players with games this term
+        { // Find ranked players (a public, PUUID-linked account) with games this term. Unranked players have no elo.
             $match: {
+                accounts: {
+                    $elemMatch: {
+                        visibility: "public",
+                        puuid: { $type: "string" },
+                    },
+                },
                 stats: {
                     $elemMatch: {
                         termId: termId,
@@ -110,7 +116,7 @@ export async function aggregatePlayers(page: number, skip: number, itemsPerPage:
             return;
         }
 
-        const classifiedPlayers = players.map(player => new Player(player.id, player.username, player.altUsername, player.stats));
+        const classifiedPlayers = players.map(player => Player.from(player as unknown as Player));
         leaderboardCache.set(createKey(page, termId), classifiedPlayers);
     }
 

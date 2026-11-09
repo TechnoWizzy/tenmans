@@ -34,10 +34,16 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     }
     profileStore.set<number>(player.id, Date.now() + (20 * 1000));
 
-    const profile = await Tracker.fetchProfile(player.username);
-
-    if (!profile) {
+    let profile: ProfileResponse;
+    try {
+        profile = await Tracker.fetchProfile(player.username);
+    } catch {
         await ephemeralReply(interaction, { content: `Unable to fetch <@${target.id}>'s profile from Tracker. Please try again later.` });
+        return;
+    }
+
+    if (!profile?.data) {
+        await ephemeralReply(interaction, { content: `<@${target.id}>'s tracker profile (**${player.username}**) is private.` });
         return;
     }
 

@@ -185,3 +185,7 @@ dist
 .backfill-cache/
 backfill-plan.json
 backfill-report.json
+
+# Account migration
+.migrate-cache/
+accounts-plan.json

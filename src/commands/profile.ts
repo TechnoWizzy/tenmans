@@ -5,6 +5,7 @@ import {Player, PlayerStats, RankEmote} from "../models/player.ts";
 import {Tracker} from "../utils/tracker.ts";
 import NodeCache from "node-cache";
 import {TermManager} from "../utils/term.ts";
+import {formatAccounts} from "../utils/register.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("profile")
@@ -92,6 +93,10 @@ function createProfileEmbed(member: GuildMember, player: Player, userPlayer: Pla
             inline: true,
         });
     }
+
+    const unrankedNote = player.isRanked() ? ""
+        : "\n*Unranked: no public tracker profile is linked, so stats are frozen.*";
+    embed.addFields({ name: "Accounts", value: formatAccounts(player) + unrankedNote });
 
     return embed;
 }

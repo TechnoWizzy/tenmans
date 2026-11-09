@@ -4,8 +4,6 @@ import {Command} from "./command.ts";
 import {Player, PlayerStats} from "../models/player.ts";
 import {Game} from "../models/game.ts";
 import {TermManager} from "../utils/term.ts";
-import {confirmReregistration} from "../utils/register.ts";
-import {propagateGameChange} from "../utils/game.ts";
 import {Tracker} from "../utils/tracker.ts";
 
 const builder = new SlashCommandBuilder()
@@ -66,47 +64,10 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             break;
         }
 
-        case 3: {
-            let count = 0;
-            const players = await Player.fetchAll();
-            for (const player of players) {
-                try {
-                    await interaction.guild.members.fetch(player.id);
-                } catch {
-                    count++;
-                    const games = await Game.fetchByPlayerId(player.id);
-                    for (const game of games) {
-                        for (let i = 0; i < game.players.length; i++ ) {
-                            const gamePlayer = game.players[i];
-                            if (gamePlayer.id == player.id) {
-                                game.players[i] = new Player(gamePlayer.id, player.id, player.altUsername, gamePlayer.stats);
-                            }
-                        }
-                        for (let i = 0; i < game.teamRed.players.length; i++ ) {
-                            const redPlayer = game.teamRed.players[i];
-                            if (redPlayer.id == player.id) {
-                                game.teamRed.players[i] = new Player(redPlayer.id, player.id, player.altUsername, redPlayer.stats);
-                            }
-                        }
-                        for (let i = 0; i < game.teamBlue.players.length; i++ ) {
-                            const bluePlayer = game.teamBlue.players[i];
-                            if (bluePlayer.id == player.id) {
-                                game.teamBlue.players[i] = new Player(bluePlayer.id, player.id, player.altUsername, bluePlayer.stats);
-                            }
-                        }
-
-                        await game.save();
-                    }
-                }
-            }
-
-            await ephemeralReply(interaction, { content: `${count}/${players.length} players caught leaving` });
-            break;
-        }
-
+        case 3:
         case 4: {
-            const game = await Game.fetch(152);
-            await propagateGameChange(interaction, game, true);
+            // Retired: these rewrote and replayed legacy games, which are now frozen
+            await ephemeralReply(interaction, { content: `Test ${testNumber} has been retired.` });
             break;
         }
 
