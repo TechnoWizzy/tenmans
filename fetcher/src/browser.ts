@@ -77,6 +77,19 @@ async function clickChallengeCheckbox(frame: Frame, page: Page) {
     return true;
 }
 
+// Calls the API with fetch() from inside the page, as tracker's own scripts do
+async function requestFromPage(page: Page, apiUrl: string): Promise<BrowserResponse> {
+    const result = await page.evaluate(async (url) => {
+        const response = await fetch(url, { credentials: "include", headers: { accept: "application/json" } });
+        return {
+            status: response.status,
+            contentType: response.headers.get("content-type") ?? "application/json",
+            body: await response.text(),
+        };
+    }, apiUrl);
+    return { ...result, url: apiUrl };
+}
+
 // Statuses tracker answers with when it wants the captcha solved
 function isChallengeStatus(status: number) {
     return status == 429 || status == 403;
@@ -270,7 +283,14 @@ export class Browser {
                 }
 
                 if (!response) {
-                    throw new Error(`${pageUrl} did not request ${apiUrl} (page title: "${title}")`);
+                    // Tracker sometimes renders the page server-side and skips the API call. Make the call ourselves
+                    // from the page, as the site would, so it carries the same session and Cloudflare clearance.
+                    const fallback = await requestFromPage(page, apiUrl).catch((e) => {
+                        throw new Error(`${pageUrl} did not request ${apiUrl} (page title: "${title}")`, { cause: e });
+                    });
+                    console.log(`Requested the API from the page instead: ${fallback.status}`);
+                    if (fallback.status >= 400 && DEBUG) console.log(`[debug] body: ${fallback.body.slice(0, 300)}`);
+                    return after && fallback.status < 400 ? await after(page, fallback) : fallback;
                 }
             }
 
