@@ -245,9 +245,34 @@ export class Browser {
                 };
             }
 
-            let response = await apiResponse.catch((e) => {
-                throw new Error(`${pageUrl} did not request ${apiUrl}`, { cause: e });
-            });
+            let response = await apiResponse.catch(() => null);
+
+            if (!response) {
+                // The page never called the API. Cloudflare can interpose a challenge after the first paint (so the
+                // title check above misses it) or a block page; record what was served so it can be diagnosed.
+                const title = await page.title().catch(() => "");
+                console.log(`${pageUrl} did not request the API (page title: "${title}")`);
+                await debugSnapshot(page, "no-api-request");
+
+                if (findChallengeFrame(page)) {
+                    console.log("Cloudflare widget on the page, waiting for it to verify");
+                    const result = await solveChallenge(page, target);
+                    if (result.kind == "response") {
+                        response = result.response;
+                    } else if (result.kind == "solved") {
+                        console.log("Captcha passed, reloading");
+                        const retryResponse = waitForApi(page);
+                        await page.reload({ waitUntil: "domcontentloaded" });
+                        response = await retryResponse.catch(() => null);
+                    } else {
+                        console.log(`Captcha not passed: ${result.reason}`);
+                    }
+                }
+
+                if (!response) {
+                    throw new Error(`${pageUrl} did not request ${apiUrl} (page title: "${title}")`);
+                }
+            }
 
             if (isChallengeStatus(response.status())) {
                 console.log(`${response.status()} from ${response.url()}, waiting for the captcha`);
