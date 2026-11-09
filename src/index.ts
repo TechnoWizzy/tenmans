@@ -1,6 +1,6 @@
 import {Client, EmbedBuilder, Events, type Interaction, TextChannel} from "discord.js";
 import {BOT_OPTIONS, ephemeralReply, getEnv} from "./utils/utils.ts";
-import {confirmRegistration} from "./utils/register.ts";
+import {confirmRegistration, decideAccountRequest} from "./utils/register.ts";
 import {handleLeaderboardAction} from "./utils/leaderboard.ts";
 import {handleGameAction} from "./utils/game.ts";
 import {handleQueueAction} from "./utils/queue.ts";
@@ -152,6 +152,16 @@ async function interactionCreate(interaction: Interaction) {
                         return;
                     }
                     await confirmRegistration(interaction, userId, username);
+                    break;
+                }
+
+                case "account-request": {
+                    await interaction.deferReply({ flags: 'Ephemeral' });
+                    if (!isAdmin) {
+                        await ephemeralReply(interaction, { content: "You don't have permission to use this button." });
+                        return;
+                    }
+                    await decideAccountRequest(interaction, args[1] == "approve", args[2], args[3]);
                     break;
                 }
 
