@@ -77,17 +77,34 @@ async function clickChallengeCheckbox(frame: Frame, page: Page) {
     return true;
 }
 
-// Calls the API with fetch() from inside the page, as tracker's own scripts do
-async function requestFromPage(page: Page, apiUrl: string): Promise<BrowserResponse> {
-    const result = await page.evaluate(async (url) => {
-        const response = await fetch(url, { credentials: "include", headers: { accept: "application/json" } });
-        return {
-            status: response.status,
-            contentType: response.headers.get("content-type") ?? "application/json",
-            body: await response.text(),
-        };
-    }, apiUrl);
-    return { ...result, url: apiUrl };
+/**
+ * Loads the API URL directly in the page. A top-level navigation is not subject to CORS (an in-page fetch of a
+ * challenged API response fails opaquely with "Failed to fetch"), and if Cloudflare challenges it, the widget
+ * renders on the page where {@link solveChallenge} can pass it.
+ */
+async function requestByNavigation(page: Page, apiUrl: string, target: string): Promise<BrowserResponse> {
+    let response = await page.goto(apiUrl, { waitUntil: "domcontentloaded" });
+    if (!response) throw new Error(`No response navigating to ${apiUrl}`);
+
+    if (isChallengeStatus(response.status())) {
+        console.log(`${response.status()} navigating to the API, waiting for the captcha`);
+        const result = await solveChallenge(page, target);
+        if (result.kind == "response") {
+            response = result.response;
+        } else if (result.kind == "solved") {
+            console.log("Captcha passed, reloading");
+            response = (await page.reload({ waitUntil: "domcontentloaded" })) ?? response;
+        } else {
+            console.log(`Captcha not passed: ${result.reason}`);
+        }
+    }
+
+    return {
+        status: response.status(),
+        contentType: response.headers()["content-type"] ?? "application/json",
+        body: await response.text(),
+        url: apiUrl,
+    };
 }
 
 // Statuses tracker answers with when it wants the captcha solved
@@ -283,12 +300,12 @@ export class Browser {
                 }
 
                 if (!response) {
-                    // Tracker sometimes renders the page server-side and skips the API call. Make the call ourselves
-                    // from the page, as the site would, so it carries the same session and Cloudflare clearance.
-                    const fallback = await requestFromPage(page, apiUrl).catch((e) => {
+                    // Tracker sometimes renders the page server-side and skips the API call. Load the API ourselves
+                    // in the same page, so it carries the same session and Cloudflare clearance.
+                    const fallback = await requestByNavigation(page, apiUrl, target).catch((e) => {
                         throw new Error(`${pageUrl} did not request ${apiUrl} (page title: "${title}")`, { cause: e });
                     });
-                    console.log(`Requested the API from the page instead: ${fallback.status}`);
+                    console.log(`Loaded the API directly instead: ${fallback.status}`);
                     if (fallback.status >= 400 && DEBUG) console.log(`[debug] body: ${fallback.body.slice(0, 300)}`);
                     return after && fallback.status < 400 ? await after(page, fallback) : fallback;
                 }
