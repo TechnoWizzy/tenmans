@@ -183,3 +183,17 @@ export function removeFormatChars(value: string) {
         .replace('.', '\.')
 }
 
+/** Escapes a string for use as a literal inside a RegExp (Riot IDs can contain `.`, `(` and the like) */
+export function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Builds a case-insensitive, exact-match RegExp for a Riot ID */
+export function riotIdRegex(riotId: string) {
+    return new RegExp(`^${escapeRegex(riotId.trim())}$`, "i");
+}
+
+export function sameRiotId(a?: string, b?: string) {
+    return !!a && !!b && a.trim().toLowerCase() == b.trim().toLowerCase();
+}
+

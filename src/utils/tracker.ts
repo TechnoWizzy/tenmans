@@ -12,8 +12,9 @@ export class Tracker {
     private static lock = new Mutex();
     private static profileRateLimiter = new RateLimiter(1000);
     private static matchCache = new NodeCache({ stdTTL: 60 * 60 });
-    private static profileCache = new NodeCache();
-    private static pendingProfiles = new Map<string, Promise<ProfileResponse | null>>();
+    // Short TTL: profiles change visibility and names, and lookups decide stats eligibility
+    private static profileCache = new NodeCache({ stdTTL: 10 * 60 });
+    private static pendingProfiles = new Map<string, Promise<ProfileResponse>>();
 
     public static setMatchData(matchId: string, data: MatchResponse) {
         this.matchCache.set(matchId, data);
@@ -75,9 +76,41 @@ export class Tracker {
             { cause: lastError });
     }
 
+    /**
+     * Resolves a Riot ID to its account. Public profiles carry the account's PUUID; private profiles exist but
+     * expose nothing; not-found means no account currently has that Riot ID (e.g. it was renamed).
+     *
+     * Tracker answers 451 for a private profile (the Fetcher turns that into an empty body) and 404 for an
+     * unknown Riot ID. Anything else is reported as an error so callers can fail open.
+     */
+    public static async lookupAccount(riotId: string): Promise<AccountLookup> {
+        try {
+            const profile = await this.fetchProfile(riotId);
+            const info = profile?.data?.platformInfo;
+            if (!info) {
+                return { status: "private" };
+            }
+            if (!info.platformUserId) {
+                return { status: "error", error: new Error(`Profile ${riotId} has no account id`) };
+            }
+            return { status: "public", puuid: info.platformUserId, riotId: info.platformUserHandle ?? riotId };
+        } catch (e) {
+            if (e instanceof FetchError && e.status == HttpStatusCode.NotFound) {
+                return { status: "not-found" };
+            }
+            console.log(`Failed to look up account ${riotId}`, e);
+            return { status: "error", error: e };
+        }
+    }
+
+    /**
+     * Fetches a tracker profile. Resolves to an empty object for a private profile.
+     *
+     * @throws {FetchError} If the profile could not be retrieved (404 when the Riot ID does not exist).
+     */
     public static async fetchProfile(
         riotId: string
-    ): Promise<ProfileResponse | null> {
+    ): Promise<ProfileResponse> {
         const cached = this.profileCache.get<ProfileResponse>(riotId);
 
         if (cached) {
@@ -103,20 +136,12 @@ export class Tracker {
 
     private static async fetchProfileFromApi(
         riotId: string
-    ): Promise<ProfileResponse | null> {
+    ): Promise<ProfileResponse> {
         await this.profileRateLimiter.wait();
-
-        try {
-            const data = await Fetcher.fetchProfile(riotId);
-
-            if (data != null) {
-                this.profileCache.set(riotId, data);
-            }
-
-            return data;
-        } catch (e) {
-            console.log(`Failed to fetch profile ${riotId}`, e);
-            return null;
+        const data = await Fetcher.fetchProfile(riotId);
+        if (data != null) {
+            this.profileCache.set(riotId, data);
         }
+        return data;
     }
 }

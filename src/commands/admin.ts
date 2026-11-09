@@ -10,7 +10,8 @@ import {calculateDate, createCustomId, ephemeralReply, formatDate, getEnv, reply
 import {handleGameAction} from "../utils/game.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
-import {Game} from "../models/game.ts";
+import {CURRENT_GAME_VERSION, Game} from "../models/game.ts";
+import {formatAccounts, linkRiotAccount} from "../utils/register.ts";
 import {TermManager} from "../utils/term.ts";
 import {QueueHandler} from "../queue/queue_handler.ts";
 import {Database} from "../database/database.ts";
@@ -19,44 +20,44 @@ const builder = new SlashCommandBuilder()
     .setName("admin")
     .setDescription("10-mans management commands")
     .addSubcommand((subcommand) => subcommand
-        .setName("register")
-        .setDescription("Registers a new player")
+        .setName("link-account")
+        .setDescription("link a Riot account to a player, registering them if needed")
         .addUserOption((option) => option
             .setName("user")
-            .setDescription("the discord user to be registered")
+            .setDescription("the discord user")
             .setRequired(true)
         )
         .addStringOption((option) => option
             .setName("riot-id")
-            .setDescription("the Riot ID of the user (Name#Tag)")
+            .setDescription("the Riot ID (Name#Tag)")
             .setRequired(true)
+        )
+        .addBooleanOption((option) => option
+            .setName("primary")
+            .setDescription("make it the player's primary account (display name), default false")
+            .setRequired(false)
         )
     )
     .addSubcommand((subcommand) => subcommand
-        .setName("re-register")
-        .setDescription("change a registered player's username")
+        .setName("unlink-account")
+        .setDescription("unlink a Riot account from a player")
         .addUserOption((option) => option
             .setName("user")
-            .setDescription("the discord user to be reregistered")
+            .setDescription("the discord user")
             .setRequired(true)
         )
         .addStringOption((option) => option
             .setName("riot-id")
-            .setDescription("the new Riot ID of the user (Name#Tag)")
+            .setDescription("the Riot ID (Name#Tag)")
             .setRequired(true)
         )
     )
     .addSubcommand((subcommand) => subcommand
-        .setName("set-alt")
-        .setDescription("change a registered player's alt username")
+        .setName("accounts")
+        .setDescription("list a player's linked Riot accounts")
         .addUserOption((option) => option
             .setName("user")
-            .setDescription("the discord user to be reregistered")
-            .setRequired(true)
-        )
-        .addStringOption((option) => option
-            .setName("alt-riot-id")
-            .setDescription("the alt Riot ID of the user (Name#Tag)")
+            .setDescription("the discord user")
             .setRequired(true)
         )
     )
@@ -160,75 +161,44 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-        case "register": {
+        case "link-account": {
             const user = interaction.options.getUser("user", true);
-            const username = interaction.options.getString("riot-id", true);
-            const existingPlayer = await Player.fetchByUsername(username);
-            if (existingPlayer != null) {
-                await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** - Please re-register them first to free this username` });
-                return;
-            }
-            await new Player(user.id, username, "").save();
-            await ephemeralReply(interaction, { content: `Player **${username}** has been registered` });
+            const riotId = interaction.options.getString("riot-id", true);
+            const primary = interaction.options.getBoolean("primary", false) ?? false;
+            const { message } = await linkRiotAccount(user.id, riotId, primary);
+            await ephemeralReply(interaction, { content: `<@${user.id}>: ${message}` });
             break;
         }
-        case "re-register": {
+
+        case "unlink-account": {
             const user = interaction.options.getUser("user", true);
-            const username = interaction.options.getString("riot-id", true);
+            const riotId = interaction.options.getString("riot-id", true);
             const player = await Player.fetch(user.id);
             if (!player) {
                 await ephemeralReply(interaction, { content: `Player is not currently registered` });
                 return;
             }
-
-            const existingPlayer = await Player.fetchByUsername(username);
-            if (existingPlayer != null) {
-                await ephemeralReply(interaction, { content: `Another user is already registered as **${username}** - Please re-register them first to free this username` });
+            if (player.accounts.length == 1 && player.findAccount(riotId)) {
+                await ephemeralReply(interaction, { content: `**${riotId}** is <@${user.id}>'s only account. Link another account first.` });
                 return;
             }
-
-            const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
-                new ButtonBuilder()
-                    .setCustomId(createCustomId("re-register",user.id, username, Date.now()))
-                    .setStyle(ButtonStyle.Primary)
-                    .setLabel("Confirm"),
-            )
-
-            const profileURL = getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(username)
-            await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
+            if (!player.unlinkAccount(riotId)) {
+                await ephemeralReply(interaction, { content: `**${riotId}** is not linked to <@${user.id}>` });
+                return;
+            }
+            await player.saveAccounts();
+            await ephemeralReply(interaction, { content: `Unlinked **${riotId}** from <@${user.id}>` });
             break;
         }
 
-        case "set-alt": {
+        case "accounts": {
             const user = interaction.options.getUser("user", true);
-            const altUsername = interaction.options.getString("alt-riot-id", true);
             const player = await Player.fetch(user.id);
             if (!player) {
                 await ephemeralReply(interaction, { content: `Player is not currently registered` });
                 return;
             }
-
-            const existingPlayer = await Player.fetchByUsername(altUsername);
-            if (existingPlayer != null) {
-                await ephemeralReply(interaction, { content: `Another user is already registered with **${altUsername}**` });
-                return;
-            }
-
-            const existingAltPlayer = await Player.fetchByAltUsername(altUsername);
-            if (existingAltPlayer != null) {
-                await ephemeralReply(interaction, { content: `Another user is already registered with **${altUsername}**` });
-                return;
-            }
-
-            const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
-                new ButtonBuilder()
-                    .setCustomId(createCustomId("set-alt",user.id, altUsername, Date.now()))
-                    .setStyle(ButtonStyle.Primary)
-                    .setLabel("Confirm"),
-            )
-
-            const profileURL = getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(altUsername)
-            await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) and verify the profile. Then, click "Confirm"`, components: [ component ] });
+            await ephemeralReply(interaction, { content: `<@${user.id}>'s accounts:\n${formatAccounts(player)}` });
             break;
         }
 
@@ -307,12 +277,19 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
 
             if (!gameId) {
                 const gameId = await Database.games.countDocuments();
-                const game = await new Game(gameId, TermManager.currentTerm.Id, []).save();
+                const game = await new Game(gameId, TermManager.currentTerm.Id, [], undefined, undefined, undefined,
+                    [], false, undefined, CURRENT_GAME_VERSION).save();
                 await handleGameAction(interaction, game, "upload-data");
                 return;
             }
             if (attachment) {
-                const game = await new Game(gameId, TermManager.currentTerm.Id, []).save();
+                const existing = await Database.games.findOne({ id: gameId });
+                if (existing && (existing.version ?? 1) < CURRENT_GAME_VERSION) {
+                    await ephemeralReply(interaction, { content: `Game ${gameId} predates linked Riot accounts and is frozen. It can no longer be changed.` });
+                    return;
+                }
+                const game = await new Game(gameId, TermManager.currentTerm.Id, [], undefined, undefined, undefined,
+                    [], false, undefined, CURRENT_GAME_VERSION).save();
                 await handleGameAction(interaction, game, "upload-data");
             }
             else {
@@ -399,18 +376,12 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
  * Requires the Officer role to be used.
  *e
  * Subcommands:
- * - **re-register**:
- *   - Name: "re-register".
- *   - Description: "change a registered player's username".
- *   - Options:
- *     - User option:
- *       - Name: "user".
- *       - Description: "the discord user to be reregistered".
- *       - Required: true.
- *     - String option:
- *       - Name: "riot-id".
- *       - Description: "the new Riot ID of the user (Name#Tag)".
- *       - Required: true.
+ * - **link-account**: link a Riot account to a player (registering them if needed). Options: user, riot-id,
+ *   primary (optional, makes it their display name). Accounts with a private tracker profile are unranked.
+ *
+ * - **unlink-account**: unlink a Riot account from a player. Options: user, riot-id.
+ *
+ * - **accounts**: list a player's linked Riot accounts. Options: user.
  *
  * - **reset-player**:
  *   - Name: "reset-player".

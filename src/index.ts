@@ -1,6 +1,6 @@
 import {Client, EmbedBuilder, Events, type Interaction, TextChannel} from "discord.js";
 import {BOT_OPTIONS, ephemeralReply, getEnv} from "./utils/utils.ts";
-import {confirmAltUsername, confirmRegistration, confirmReregistration} from "./utils/register.ts";
+import {confirmRegistration} from "./utils/register.ts";
 import {handleLeaderboardAction} from "./utils/leaderboard.ts";
 import {handleGameAction} from "./utils/game.ts";
 import {handleQueueAction} from "./utils/queue.ts";
@@ -14,6 +14,7 @@ import {Settings} from "./settings/settings.ts";
 import {Game} from "./models/game.ts";
 import {TermManager} from "./utils/term.ts";
 import {Fetcher} from "./utils/fetcher.ts";
+import {MatchScanner} from "./utils/scanner.ts";
 import {PlayerController} from "./controllers/player.ts";
 import {ExceptionController} from "./controllers/exception.ts";
 
@@ -47,6 +48,7 @@ async function ready(client: Client) {
         await TermManager.loadTerms();
         await CommandHandler.registerCommands(client);
         await QueueHandler.loadQueue(client, getCommitMessage());
+        await MatchScanner.resume();
         client.user?.setActivity(settings.status)
         console.log("TenMans is ready at " + client.readyAt?.toISOString());
         console.log(`Current Term: ${TermManager.currentTerm.Name}`);
@@ -150,34 +152,6 @@ async function interactionCreate(interaction: Interaction) {
                         return;
                     }
                     await confirmRegistration(interaction, userId, username);
-                    break;
-                }
-
-                case "re-register": {
-                    await interaction.deferReply({ flags: 'Ephemeral' });
-                    const userId = args[1];
-                    const username = args[2];
-                    const date = args[3];
-                    const then = new Date(Number(date));
-                    if (Date.now() - then.getTime() > (30 * 1000)) {
-                        await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
-                        return;
-                    }
-                    await confirmReregistration(interaction, userId, username);
-                    break;
-                }
-
-                case "set-alt": {
-                    await interaction.deferReply({ flags: 'Ephemeral' });
-                    const userId = args[1];
-                    const altUsername = args[2];
-                    const date = args[3];
-                    const then = new Date(Number(date));
-                    if (Date.now() - then.getTime() > (30 * 1000)) {
-                        await ephemeralReply(interaction, { content: "This button has expired. Please try registering again.." });
-                        return;
-                    }
-                    await confirmAltUsername(interaction, userId, altUsername);
                     break;
                 }
 

@@ -2,30 +2,48 @@ import {Database} from "../database/database.ts";
 import {TermManager} from "../utils/term.ts";
 import type {HexColorString} from "discord.js";
 import {Game} from "./game.ts";
+import {riotIdRegex, sameRiotId} from "../utils/utils.ts";
+
+/**
+ * A Riot account linked to a player. A player may link any number of accounts, and an account may be linked to
+ * more than one player (shared accounts) - which player played on it is decided per game, see `Participant`.
+ *
+ * Only accounts with a known PUUID and a public tracker profile are ranked: games played on them count toward
+ * stats and elo. Private accounts can queue, but they are unranked.
+ */
+export interface RiotAccount {
+    /** Most recently known Name#Tag */
+    riotId: string;
+    /** Riot account id, only known when the tracker profile was public */
+    puuid?: string;
+    visibility: AccountVisibility;
+    /** When the account was last looked up on tracker */
+    verifiedAt?: Date;
+}
 
 /**
  * Represents a tenmans player
  */
 export class Player {
     public readonly id: string;
-    public readonly username: string;
-    public readonly altUsername: string;
+    /** Display name: the Riot ID of the primary (first) account */
+    public username: string;
+    public accounts: RiotAccount[];
     public readonly stats: PlayerStats[];
 
     /**
-     * Creates a new instance of the player class. This constructor should be called on all Players
-     * retrieved from Mongo, as those objects are not instances of the Player class - rather the Player type.
-     * Player types are unable to call class methods.
+     * Creates a new instance of the player class. Use {@link Player.from} for documents retrieved from Mongo,
+     * as those objects are not instances of the Player class - rather the Player type.
      *
      * @param {string} id - The unique identifier for the player. This is the same as their Discord ID
-     * @param {string} username - The username of the player. This is their full RiotID
-     * @param altUsername
-     * @param {PlayerStats} [stats=new PlayerStats()] - The player's statistics. Defaults to a new `PlayerStats` instance.
+     * @param {string} username - The display name of the player, the Riot ID of their primary account
+     * @param {RiotAccount[]} accounts - The Riot accounts linked to this player, primary first
+     * @param {PlayerStats[]} [stats=[]] - The player's statistics per term
      */
-    public constructor(id: string, username: string, altUsername: string, stats: PlayerStats[] = []) {
+    public constructor(id: string, username: string, accounts: RiotAccount[] = [], stats: PlayerStats[] = []) {
         this.id = id;
         this.username = username;
-        this.altUsername = altUsername;
+        this.accounts = accounts.map(account => ({...account}));
         this.stats = stats.map(stat => {
             const agents = stat.agents?.map(agent => {
                 return new AgentStats(agent.id, agent.name, agent.color, agent.games, agent.wins, agent.losses,
@@ -34,6 +52,72 @@ export class Player {
             return new PlayerStats(stat.games, stat.wins, stat.losses, stat.kills, stat.assists, stat.deaths,
                 stat.headshots, stat.totalshots, stat.elo, stat.acs, stat.totalAcs, stat.agentId, agents, stat.termId);
         });
+    }
+
+    /**
+     * Builds a Player from a Mongo document (or a player snapshot embedded in a game). Legacy snapshots have no
+     * accounts, and some very old ones store a single stats object instead of an array.
+     */
+    public static from(doc: { id: string, username: string, accounts?: RiotAccount[], stats?: PlayerStats[] | PlayerStats }): Player {
+        const stats = doc.stats == undefined ? [] : Array.isArray(doc.stats) ? doc.stats : [doc.stats];
+        return new Player(doc.id, doc.username, doc.accounts ?? [], stats);
+    }
+
+    public static isRankedAccount(account?: RiotAccount) {
+        return !!account?.puuid && account.visibility == "public";
+    }
+
+    /** Whether any linked account is ranked. Unranked players have no elo; their existing stats are frozen. */
+    public isRanked() {
+        return this.accounts.some(account => Player.isRankedAccount(account));
+    }
+
+    public findAccount(riotId: string) {
+        return this.accounts.find(account => sameRiotId(account.riotId, riotId));
+    }
+
+    public findAccountByPuuid(puuid: string) {
+        return this.accounts.find(account => account.puuid == puuid);
+    }
+
+    /**
+     * Adds or refreshes a linked account. An existing account is matched by PUUID first (it survives renames),
+     * then by Riot ID. The display name follows the primary account.
+     *
+     * @param update - The account as last seen
+     * @param primary - Move the account to the front, making it the display name
+     * @return The stored account
+     */
+    public linkAccount(update: RiotAccount, primary: boolean = false): RiotAccount {
+        let account = (update.puuid ? this.findAccountByPuuid(update.puuid) : undefined) ?? this.findAccount(update.riotId);
+        if (account) {
+            account.riotId = update.riotId;
+            account.visibility = update.visibility;
+            account.puuid = update.puuid ?? account.puuid;
+            account.verifiedAt = update.verifiedAt ?? account.verifiedAt;
+        } else {
+            account = {...update};
+            this.accounts.push(account);
+        }
+
+        // A stale name-only entry with the same Riot ID is the same account: keep one
+        const kept = account;
+        this.accounts = this.accounts.filter(other => other === kept || !sameRiotId(other.riotId, kept.riotId)
+            || (other.puuid != undefined && other.puuid != kept.puuid));
+
+        if (primary) {
+            this.accounts = [kept, ...this.accounts.filter(other => other !== kept)];
+        }
+        this.username = this.accounts[0]?.riotId ?? this.username;
+        return kept;
+    }
+
+    /** @return Whether an account was removed */
+    public unlinkAccount(riotId: string): boolean {
+        const before = this.accounts.length;
+        this.accounts = this.accounts.filter(account => !sameRiotId(account.riotId, riotId));
+        this.username = this.accounts[0]?.riotId ?? this.username;
+        return this.accounts.length != before;
     }
 
     public getStats(termId: string) {
@@ -67,6 +151,9 @@ export class Player {
      * Saves the current instance of the player to the database. If the player does not exist, it creates a new record.
      * Throws an error if the save operation is unsuccessful.
      *
+     * Note this writes stats too. Players embedded in games are snapshots, so only save those through the stats
+     * pipeline; use {@link saveAccounts} to persist account changes alone.
+     *
      * @return {Promise<this>} Returns the saved instance of the player.
      */
     public async save(): Promise<Player> {
@@ -79,37 +166,47 @@ export class Player {
     }
 
     /**
+     * Persists only the stats. Used by the stats pipeline, whose players are game snapshots: their accounts may be
+     * older than the stored ones (e.g. an account linked after the queue popped) and must not overwrite them.
+     */
+    public async saveStats(): Promise<Player> {
+        const result = await Database.players.updateOne({ id: this.id }, { $set: { stats: this.stats } });
+        if (!result.acknowledged) throw new Error(`Unable to save stats for player: ${this.id}`);
+        return this;
+    }
+
+    /** Persists only the linked accounts and display name, leaving the stored stats untouched */
+    public async saveAccounts(): Promise<Player> {
+        const result = await Database.players.updateOne(
+            { id: this.id },
+            { $set: { accounts: this.accounts, username: this.username } }
+        );
+        if (!result.acknowledged) throw new Error(`Unable to save accounts for player: ${this.id}`);
+        return this;
+    }
+
+    /**
      * Fetches a player record from the database using the provided ID.
      *
      * @param {string} id - The unique identifier of the player to be fetched.
      * @return {Promise<Player|null>} Returns a Player object if a record is found, otherwise null.
      */
     public static async fetch(id: string): Promise<Player | null> {
-        const query = { id: id };
-        const player = await Database.players.findOne(query);
+        const player = await Database.players.findOne({ id: id });
         if (!player) return null;
-        return new Player(player.id, player.username, player.altUsername, player.stats);
+        return Player.from(player);
     }
 
-    /**
-     * Fetches a player by their username from the database.
-     *
-     * @param {string} username - The username of the player to be fetched.
-     * @return {Promise<Player|null>} A promise that resolves to a Player instance if a player is found, or null if
-     * no player exists with the given username.
-     */
-    public static async fetchByUsername(username: string): Promise<Player | null> {
-        const query = { username: new RegExp(`^${username}$`, 'i') };
-        const player = await Database.players.findOne(query);
-        if (!player) return null;
-        return new Player(player.id, player.username, player.altUsername, player.stats);
+    /** Fetches every player with an account currently known by this Riot ID (more than one if it is shared) */
+    public static async fetchByRiotId(riotId: string): Promise<Player[]> {
+        const players = await Database.players.find({ "accounts.riotId": riotIdRegex(riotId) }).toArray();
+        return players.map(player => Player.from(player));
     }
 
-    public static async fetchByAltUsername(altUsername: string): Promise<Player | null> {
-        const query = { altUsername: new RegExp(`^${altUsername}$`, 'i') };
-        const player = await Database.players.findOne(query);
-        if (!player) return null;
-        return new Player(player.id, player.username, player.altUsername, player.stats);
+    /** Fetches every player with this account linked (more than one if it is shared) */
+    public static async fetchByPuuid(puuid: string): Promise<Player[]> {
+        const players = await Database.players.find({ "accounts.puuid": puuid }).toArray();
+        return players.map(player => Player.from(player));
     }
 
     /**
@@ -119,8 +216,9 @@ export class Player {
      */
     public static async fetchAll(): Promise<Player[]> {
         const players = await Database.players.find().toArray();
-        return players.map(player => new Player(player.id, player.username, player.altUsername, player.stats));
+        return players.map(player => Player.from(player));
     }
+
 
     /**
      * Calculates the Elo rating change based on the team's performance, opponent's Elo, and match outcome.
@@ -159,7 +257,7 @@ export class Player {
      * @return The corresponding emojiID based on the adjusted elo.
      */
     public getEmote(termId?: string, delta: number = 0) {
-        if (!termId) return RankEmote.Unrated;
+        if (!termId || !this.isRanked()) return RankEmote.Unrated;
         const elo = this.getStats(termId).elo + delta;
         if (elo >= 1100) return RankEmote.Radiant
         if (elo >= 1000) return RankEmote.ImmortalIII;

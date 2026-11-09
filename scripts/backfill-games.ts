@@ -169,8 +169,9 @@ function loadManual(path?: string): Map<number, string> {
     return manual;
 }
 
-function rosterOverlap(match: MatchResponse, players: { username: string, altUsername?: string }[]) {
-    const names = new Set(players.flatMap(p => [p.username, p.altUsername])
+function rosterOverlap(match: MatchResponse, players: { username: string, altUsername?: string, accounts?: { riotId: string }[] }[]) {
+    // Legacy game snapshots still carry altUsername in Mongo; newer ones carry accounts
+    const names = new Set(players.flatMap(p => [p.username, p.altUsername, ...(p.accounts ?? []).map(a => a.riotId)])
         .filter((n): n is string => !!n)
         .map(n => n.toLowerCase()));
     return match.data.segments
@@ -391,7 +392,9 @@ const command = positionals[0];
 await Database.connect();
 try {
     if (command == "plan") await plan();
-    else if (command == "apply") await apply();
+    // Games from before linked Riot accounts are frozen and their stats are never recomputed, so apply - which
+    // replays whole terms - is disabled. plan still works as a read-only report.
+    else if (command == "apply") throw new Error("apply is disabled: games before linked Riot accounts are frozen.");
     else throw new Error("Usage: bun scripts/backfill-games.ts <plan|apply> [options]");
     process.exit(0);
 } catch (e) {
