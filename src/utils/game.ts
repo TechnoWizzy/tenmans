@@ -295,6 +295,11 @@ export async function parseGameStats(game: Game, modifiedPlayers: Map<string, Pl
     await game.save();
     const eloChange = new Map<string, number>();
 
+    // Team averages use everyone's elo from before this game. Computing them inside the loop would let earlier
+    // players' updates leak into later players' averages, making results depend on roster order.
+    const teamRedElo = game.getTeamElo(game.teamRed);
+    const teamBlueElo = game.getTeamElo(game.teamBlue);
+
     // Win/Loss stats + elo
     for (const player of game.players) {
         const participant = game.getParticipant(player.id);
@@ -305,8 +310,8 @@ export async function parseGameStats(game: Game, modifiedPlayers: Map<string, Pl
         const isRed = participant.team == "Red";
         const team = isRed ? game.teamRed : game.teamBlue;
         const opponent = isRed ? game.teamBlue : game.teamRed;
-        const teamElo = game.getTeamElo(team);
-        const opponentElo = game.getTeamElo(opponent);
+        const teamElo = isRed ? teamRedElo : teamBlueElo;
+        const opponentElo = isRed ? teamBlueElo : teamRedElo;
         const eloDelta = player.getEloChange(teamElo, opponentElo, opponent.score, team.hasWon, game.termId);
 
         const stats = player.getStats(game.termId);
