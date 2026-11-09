@@ -6,10 +6,13 @@
  *   1. plan   Look up every active player's username and alt on tracker and record whether each account is
  *             public (with its PUUID), private, or no longer exists. Read-only.
  *
- *             bun scripts/migrate-accounts.ts plan [--active-since 2026-08-01] [--delay-ms 10000] [--out accounts-plan.json]
+ *             bun scripts/migrate-accounts.ts plan [--active-since 2026-08-01] [--delay-ms 60000]
+ *                 [--batch-size 20] [--batch-pause-ms 900000] [--out accounts-plan.json]
  *
- *             --delay-ms pauses between tracker lookups (default 10s): looking players up too quickly makes
- *             tracker put a Cloudflare captcha in front of every profile.
+ *             Tracker rate limits hard (Cloudflare 1015 bans lasting hours), so lookups are spread out:
+ *             --delay-ms between lookups (default 60s, randomised by +/-25%), and a longer --batch-pause-ms
+ *             (default 15 min) after every --batch-size lookups (default 20). That is roughly 50 lookups an hour.
+ *             A failed lookup backs off 10, 20 then 40 minutes before giving up.
  *
  *             Players without a game since --active-since (default: every player) are not looked up; their
  *             names are migrated as unverified, unranked accounts until they run /register.
@@ -38,7 +41,9 @@ const {values: args, positionals} = parseArgs({
     allowPositionals: true,
     options: {
         "active-since": {type: "string"},
-        "delay-ms": {type: "string", default: "10000"},
+        "delay-ms": {type: "string", default: "60000"},
+        "batch-size": {type: "string", default: "20"},
+        "batch-pause-ms": {type: "string", default: "900000"},
         out: {type: "string", default: "accounts-plan.json"},
         plan: {type: "string", default: "accounts-plan.json"},
         commit: {type: "boolean", default: false},
@@ -66,11 +71,35 @@ function cachePath(riotId: string) {
     return join(CACHE_DIR, `${encodeURIComponent(riotId.toLowerCase())}.json`);
 }
 
-// Cloudflare's guidance for tracker's rate limit (error 1015): wait 30s, double on each retry, stop after 5
-const BACKOFF_START_MS = 30 * 1000;
-const MAX_RETRIES = 5;
+// Tracker's bans outlast Cloudflare's advertised guidance, so back off in minutes rather than seconds and give up
+// early: every retry is another request against the limit
+const BACKOFF_START_MS = 10 * 60 * 1000;
+const MAX_RETRIES = 3;
 
 class RateLimitedError extends Error {}
+
+function isCached(riotId: string) {
+    return existsSync(cachePath(riotId));
+}
+
+function minutes(ms: number) {
+    return `${Math.round(ms / 60000)}m`;
+}
+
+// Spreads requests out: a jittered delay after every lookup, plus a long pause after every batch
+let requestsMade = 0;
+async function pace() {
+    requestsMade++;
+    const batchSize = Number(args["batch-size"]);
+    if (batchSize > 0 && requestsMade % batchSize == 0) {
+        const pause = Number(args["batch-pause-ms"]);
+        console.log(`${requestsMade} lookups made, pausing ${minutes(pause)} before the next batch`);
+        await Bun.sleep(pause);
+        return;
+    }
+    const delay = Number(args["delay-ms"]);
+    await Bun.sleep(delay * (0.75 + Math.random() * 0.5));
+}
 
 async function lookup(riotId: string): Promise<AccountLookup> {
     const path = cachePath(riotId);
@@ -82,17 +111,24 @@ async function lookup(riotId: string): Promise<AccountLookup> {
         const result = await Tracker.lookupAccount(riotId);
         if (result.status != "error") {
             writeFileSync(path, JSON.stringify(result));
-            await Bun.sleep(Number(args["delay-ms"]));
+            await pace();
             return result;
         }
         if (attempt >= MAX_RETRIES) {
             throw new RateLimitedError(`Tracker lookups kept failing (${riotId}, ${MAX_RETRIES} retries). `
-                + `Wait a while, then re-run plan: it continues from the cache. Consider a larger --delay-ms.`);
+                + `Wait a few hours, then re-run plan: it continues from the cache.`);
         }
         const wait = BACKOFF_START_MS * 2 ** attempt;
-        console.log(`Lookup of ${riotId} failed, waiting ${wait / 1000}s before retry ${attempt + 1}/${MAX_RETRIES}`);
+        console.log(`Lookup of ${riotId} failed, waiting ${minutes(wait)} before retry ${attempt + 1}/${MAX_RETRIES}`);
         await Bun.sleep(wait);
     }
+}
+
+function legacyNames(legacy: { username: string, altUsername?: string }) {
+    return [legacy.username, legacy.altUsername]
+        .filter((name): name is string => !!name && !DISCORD_ID_REGEX.test(name.trim()))
+        .map(name => name.trim())
+        .filter((name, i, all) => all.findIndex(other => other.toLowerCase() == name.toLowerCase()) == i);
 }
 
 async function plan() {
@@ -110,14 +146,21 @@ async function plan() {
     }
 
     const docs = await Database.players.find().toArray();
+    const legacyDocs = docs as unknown as { id: string, username: string, altUsername?: string }[];
+
+    const pending = legacyDocs
+        .filter(doc => !activeIds || activeIds.has(doc.id))
+        .flatMap(legacyNames)
+        .filter(name => !isCached(name)).length;
+    const batchSize = Number(args["batch-size"]);
+    const batches = batchSize > 0 ? Math.floor(pending / batchSize) : 0;
+    const estimate = pending * Number(args["delay-ms"]) + batches * Number(args["batch-pause-ms"]);
+    console.log(`${pending} lookups to make, roughly ${minutes(estimate)}`);
+
     const players: PlannedPlayer[] = [];
-    for (const [index, doc] of docs.entries()) {
-        const legacy = doc as unknown as { id: string, username: string, altUsername?: string };
+    for (const [index, legacy] of legacyDocs.entries()) {
         const active = !activeIds || activeIds.has(legacy.id);
-        const names = [legacy.username, legacy.altUsername]
-            .filter((name): name is string => !!name && !DISCORD_ID_REGEX.test(name.trim()))
-            .map(name => name.trim())
-            .filter((name, i, all) => all.findIndex(other => other.toLowerCase() == name.toLowerCase()) == i);
+        const names = legacyNames(legacy);
 
         const accounts: PlannedAccount[] = [];
         for (const riotId of names) {
