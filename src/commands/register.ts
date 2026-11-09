@@ -5,11 +5,11 @@ import {
     type Guild,
     SlashCommandBuilder
 } from "discord.js";
-import {createCustomId, ephemeralReply, getEnv} from "../utils/utils.ts";
+import {createCustomId, ephemeralReply} from "../utils/utils.ts";
 import {Command} from "./command.ts";
 import {Player} from "../models/player.ts";
 import {Tracker} from "../utils/tracker.ts";
-import {PRIVATE_PROFILE_NOTICE} from "../utils/register.ts";
+import {planAccountChange, PRIVATE_PROFILE_NOTICE, profileUrl, toAccount} from "../utils/register.ts";
 
 const builder = new SlashCommandBuilder()
     .setName("register")
@@ -21,8 +21,9 @@ const builder = new SlashCommandBuilder()
     )
 
 /**
- * Registers a player, or - for registered players - links a Riot account (new account, renamed account, or a
- * profile made public) and makes it their primary account. Past games are not affected.
+ * Registers a player, or - for registered players - updates a linked account (renamed, or profile made public),
+ * replaces their accounts when none is ranked, or asks the mods to approve another account. Past games are not
+ * affected.
  */
 async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
     const player = await Player.fetch(interaction.user.id);
@@ -38,6 +39,12 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
         return;
     }
 
+    const change = planAccountChange(player, toAccount(riotId, lookup));
+    if (change == "deny-private") {
+        await ephemeralReply(interaction, { content: `**${riotId}** has a private tracker profile, so it cannot be added as another account. Make the profile public on tracker.gg and run \`/register\` again.` });
+        return;
+    }
+
     const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
         new ButtonBuilder()
             .setCustomId(createCustomId("register", interaction.user.id, riotId, Date.now()))
@@ -45,10 +52,16 @@ async function execute(interaction: ChatInputCommandInteraction, _: Guild) {
             .setLabel("Confirm"),
     )
 
-    const profileURL = getEnv("TRACKER_URL_PROFILE") + encodeURIComponent(riotId)
-    const action = player ? `link **${riotId}** as your primary account` : `register as **${riotId}**`;
-    const notice = lookup.status == "private" ? `\n\n${PRIVATE_PROFILE_NOTICE}` : "";
-    await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileURL}) to verify the profile is yours, then click "Confirm" to ${action}. If it is wrong, dismiss and try again.${notice}`, components: [ component ] });
+    const action = {
+        register: `register as **${riotId}**`,
+        update: `update **${riotId}**`,
+        replace: `replace your current account with **${riotId}**`,
+        request: `ask the mods to approve **${riotId}** as another account`,
+    }[change];
+    const notice = lookup.status == "private" ? `
+
+${PRIVATE_PROFILE_NOTICE}` : "";
+    await ephemeralReply(interaction, { content: `Please click this [**Link**](${profileUrl(riotId)}) to verify the profile is yours, then click "Confirm" to ${action}. If it is wrong, dismiss and try again.${notice}`, components: [ component ] });
 }
 
 export class RegisterCommand extends Command {
