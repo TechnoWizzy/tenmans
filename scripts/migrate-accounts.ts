@@ -66,14 +66,33 @@ function cachePath(riotId: string) {
     return join(CACHE_DIR, `${encodeURIComponent(riotId.toLowerCase())}.json`);
 }
 
+// Cloudflare's guidance for tracker's rate limit (error 1015): wait 30s, double on each retry, stop after 5
+const BACKOFF_START_MS = 30 * 1000;
+const MAX_RETRIES = 5;
+
+class RateLimitedError extends Error {}
+
 async function lookup(riotId: string): Promise<AccountLookup> {
     const path = cachePath(riotId);
     if (existsSync(path)) return JSON.parse(readFileSync(path, "utf8"));
-    const result = await Tracker.lookupAccount(riotId);
-    // Errors are retried on the next run
-    if (result.status != "error") writeFileSync(path, JSON.stringify(result));
-    await Bun.sleep(Number(args["delay-ms"]));
-    return result;
+
+    // A failed lookup almost always means tracker is rate limiting or challenging us: back off and retry the
+    // same account instead of moving on, which would only keep the limit going
+    for (let attempt = 0; ; attempt++) {
+        const result = await Tracker.lookupAccount(riotId);
+        if (result.status != "error") {
+            writeFileSync(path, JSON.stringify(result));
+            await Bun.sleep(Number(args["delay-ms"]));
+            return result;
+        }
+        if (attempt >= MAX_RETRIES) {
+            throw new RateLimitedError(`Tracker lookups kept failing (${riotId}, ${MAX_RETRIES} retries). `
+                + `Wait a while, then re-run plan: it continues from the cache. Consider a larger --delay-ms.`);
+        }
+        const wait = BACKOFF_START_MS * 2 ** attempt;
+        console.log(`Lookup of ${riotId} failed, waiting ${wait / 1000}s before retry ${attempt + 1}/${MAX_RETRIES}`);
+        await Bun.sleep(wait);
+    }
 }
 
 async function plan() {
