@@ -250,15 +250,14 @@ export class Player {
     }
 
     /**
-     * Determines the emojiID corresponding to the player's elo, optionally adjusted by an additional delta value.
+     * Determines the emojiID corresponding to the player's elo.
      *
      * @param termId The termId to specify which term stats should be considered
-     * @param delta An optional numerical adjustment to the player's elo. Defaults to 0.
-     * @return The corresponding emojiID based on the adjusted elo.
+     * @return The corresponding emojiID based on the player's elo.
      */
-    public getEmote(termId?: string, delta: number = 0) {
+    public getEmote(termId?: string) {
         if (!termId || !this.isRanked()) return RankEmote.Unrated;
-        const elo = this.getStats(termId).elo + delta;
+        const elo = this.getStats(termId).elo;
         if (elo >= 1100) return RankEmote.Radiant
         if (elo >= 1000) return RankEmote.ImmortalIII;
         if (elo >= 900) return RankEmote.ImmortalII;

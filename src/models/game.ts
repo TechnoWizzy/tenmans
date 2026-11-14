@@ -208,7 +208,7 @@ export class Game {
         const acs = stats.acs;
         const elo = stats.elo
         const eloDeltaString = `(${eloDelta > 0 ? "+" : ""}${eloDelta})`;
-        const emote = `<:test:${player.getEmote(this.termId, eloDelta)}>`;
+        const emote = `<:test:${player.getEmote(this.termId)}>`;
         return `${emote}: **${username}** - ${elo} ${eloDeltaString} elo - ${acs} acs`;
     }
 
